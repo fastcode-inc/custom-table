@@ -1,7 +1,7 @@
 import { Component, Inject, OnInit, TemplateRef } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { MTExColumn } from 'src/app/models/tableExtModels';
-import { CustomTableService } from 'src/app/service/custom-table.service';
+import { MTExColumn } from '../../models/tableExtModels';
+import { MatTableExtService } from '../../mat-table-ext.service';
 
 @Component({
   selector: 'app-editing',
@@ -20,7 +20,7 @@ export class EditingComponent implements OnInit {
   constructor(
     public dialogRef: MatDialogRef<EditingComponent>,
     @Inject(MAT_DIALOG_DATA) public dialogData: any,
-    public service: CustomTableService
+    public service: MatTableExtService
   ) { }
   
   ngOnInit(): void {

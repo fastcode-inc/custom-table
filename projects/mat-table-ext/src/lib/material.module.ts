@@ -52,7 +52,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
     A11yModule,
     CdkAccordionModule,
     ClipboardModule,
-    // CdkMenuModule,
+    CdkMenuModule,
     CdkStepperModule,
     CdkTableModule,
     CdkTreeModule,
@@ -95,7 +95,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
     OverlayModule,
     PortalModule,
     ScrollingModule,
-    // DialogModule,
+    DialogModule,
     MatFormFieldModule
   ]
 })

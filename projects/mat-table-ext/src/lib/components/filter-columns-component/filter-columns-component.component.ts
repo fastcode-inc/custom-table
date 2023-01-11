@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { UntypedFormControl } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 
 @Component({
   selector: 'app-filter-columns-component',
@@ -9,11 +9,11 @@ import { UntypedFormControl } from '@angular/forms';
 export class FilterColumnsComponentComponent implements OnInit {
   @Input() obj!: any;
   @Output() filterOutput: EventEmitter<any> = new EventEmitter<any>();
-  stringCtrl: UntypedFormControl = new UntypedFormControl();
-  numberCtrl: UntypedFormControl = new UntypedFormControl();
-  dateCtrl: UntypedFormControl = new UntypedFormControl();
-  booleanCtrl: UntypedFormControl = new UntypedFormControl();
-  selectionCtrl: UntypedFormControl = new UntypedFormControl();
+  stringCtrl: FormControl = new FormControl();
+  numberCtrl: FormControl = new FormControl();
+  dateCtrl: FormControl = new FormControl();
+  booleanCtrl: FormControl = new FormControl();
+  selectionCtrl: FormControl = new FormControl();
 
   public type: any;
   constructor() {}
