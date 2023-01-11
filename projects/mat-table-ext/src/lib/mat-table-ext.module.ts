@@ -13,11 +13,11 @@ import { EditingComponent } from '../lib/components/editing/editing.component';
 import { FilterColumnsComponentComponent } from '../lib/components/filter-columns-component/filter-columns-component.component';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
+import { BrowserModule } from '@angular/platform-browser';
 
 
 @NgModule({
   declarations: [
-
     MatTableExtComponent,
     ResizeColumnDirective,
     ColumnPinningComponent,
@@ -26,6 +26,7 @@ import { TranslateModule } from '@ngx-translate/core';
   ],
   imports: [
     CommonModule,
+    BrowserModule,
     TranslateModule.forChild(),
     MatTableModule,
     FormsModule,
