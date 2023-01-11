@@ -1,0 +1,19 @@
+.main-dialog-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.main-dialog-container mat-dialog-content {
+    overflow-y: auto;
+    margin: 0px;
+    padding: 0 0 0 20px;
+}
+
+.dialog-title-container {
+    display: flex;
+    align-items: center;
+}
+
+.spacer {
+    flex-grow: 1;
+}
