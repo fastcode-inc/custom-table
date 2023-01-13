@@ -59,9 +59,15 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "projects/mat-table-ext-example/src/favicon.ico",
-              "projects/mat-table-ext-example/src/assets"
+              "projects/mat-table-ext-example/src/assets",
+              {
+                "glob": "**/*",
+                "input": "projects/mat-table-ext/assets",
+                "output": "/assets/"
+              }
             ],
             "styles": [
+              "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
               "projects/mat-table-ext-example/src/styles.scss"
             ],
             "scripts": []

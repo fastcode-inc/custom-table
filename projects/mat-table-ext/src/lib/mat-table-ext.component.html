@@ -43,7 +43,7 @@
     <mat-menu #columnMenu="matMenu" (closed)="resetMenuChecks()">
         <div class="toolbar-menu-container" *ngIf="hideShowMenuCtrl" [formGroup]="hideShowMenuGroup"
             (click)="$event.stopPropagation()">
-            <h4>Visible Columns</h4>
+            <h4 class="column-headers">Visible Columns</h4>
             <mat-form-field appearance="fill" style="width: -webkit-fill-available;">
                 <mat-label>Filter Columns</mat-label>
                 <input matInput [(ngModel)]="showHideFilter" (ngModelChange)="filterColumns($event)"
@@ -57,7 +57,7 @@
             </div>
         </div>
         <div class="toolbar-menu-container" *ngIf="columnPinMenuCtrl" (click)="$event.stopPropagation()">
-            <h4>Pin Columns</h4>
+            <h4 class="column-headers">Pin Columns</h4>
             <form class="example-form">
                 <mat-form-field appearance="fill" style="width: -webkit-fill-available;">
                     <mat-label>Filter Columns</mat-label>

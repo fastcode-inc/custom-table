@@ -1,9 +1,29 @@
 {
   "name": "mat-table-ext",
   "version": "0.0.1",
+  "description": "The mat-table-ext is a powerful material table component used to display tabular data  with extra features.",
+  "keywords": ["matTableExt", "matTable", "tableExt", "mat-table-ext"],
+  "author": {
+    "name": "Samples Contribute",
+    "email": "abc@gmail.com",
+    "url": "http://blog.sample.me/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sample/matTableExt"
+  },
   "peerDependencies": {
-    "@angular/common": "^13.2.0",
-    "@angular/core": "^13.2.0"
+    "@angular/animations": "^14.2.0",
+    "@angular/cdk": "^14.2.4",
+    "@angular/common": "^14.2.0",
+    "@angular/compiler": "^14.2.0",
+    "@angular/core": "^14.2.0",
+    "@angular/forms": "^14.2.0",
+    "@angular/material": "^14.2.4",
+    "@angular/platform-browser": "^14.2.0",
+    "@angular/platform-browser-dynamic": "^14.2.0",
+    "@angular/router": "^14.2.0",
+    "@ngx-translate/core": "^14.0.0"
   },
   "dependencies": {
     "tslib": "^2.3.0"

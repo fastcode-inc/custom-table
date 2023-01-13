@@ -203,7 +203,9 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
       this.updateColumnsHideShow(this.hideShowMenuGroup.value);
     }
   }
-
+/** 
+ * @description set the properties of the table
+ */
   setPropertyValue(changes: SimpleChanges) {
     let keys = Object.keys(changes);
     keys.forEach((property) => {
@@ -400,7 +402,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
         ) {
           expression = expression.substring(0, expression.length - 2);
         }
-        result = eval(expression);
+        // result = eval(expression);
       }
       if (!result) {
         return false;
@@ -587,8 +589,10 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
       }`;
   }
 
-  /**create form control for columns for hiding and and pinning purpose*/
-
+  /**
+   * @description create form control for columns for hiding and and pinning purpose
+   * @param columns list of columns to be displayed
+   */
   setToolbarMenuControls(columns: MTExColumn[]) {
     if (columns.length > 0 && this.showToolbar) {
       const group = this.formBuildersService.group({});
@@ -600,6 +604,11 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
     }
   }
 
+  /**
+   * 
+   * @param column current column
+   * @param event mouse event used to set the menu position
+   */
   openPinnablePropertyMenu(column: MTExColumn, event: MouseEvent): void {
     this.menuX = event.clientX;
     this.menuY = event.clientY;
@@ -666,6 +675,11 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   onScroll(event: any) {
     this.scroll.emit(event);
   }
+  /**
+   * 
+   * @param row row to be toggled
+   * @param index index of toggled row
+   */
   //function to emit event when user select or deselect row.
   setSelectedRows(row: any, index: number) {
     this.selection.toggle(row);
@@ -708,12 +722,13 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   }
 
   addIconsToRegistry() {
+    let y = this.domSanitizer.bypassSecurityTrustResourceUrl(`../../assets/pinRight.svg`);
     let iconNames = ['pinLeft', 'pinRight', 'pinNone', 'pinned', 'pinIcon'];
     iconNames.forEach((icon) => {
       this.matIconRegistry.addSvgIcon(
         icon,
         this.domSanitizer.bypassSecurityTrustResourceUrl(
-          `../assets/customIcons/${icon}.svg`
+          `../../assets/${icon}.svg`
         )
       );
     });
