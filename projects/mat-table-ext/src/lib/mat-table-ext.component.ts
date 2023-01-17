@@ -18,7 +18,7 @@ import {
   ViewChild,
   ViewEncapsulation,
 } from '@angular/core';
-import { UntypedFormBuilder, FormControl, UntypedFormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { MatPaginator } from '@angular/material/paginator';
@@ -37,6 +37,7 @@ import {
 import { MatTableExtService } from '../lib/mat-table-ext.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';
+import * as XLSX from "xlsx";
 @Component({
   selector: 'mat-table-ext',
   templateUrl: 'mat-table-ext.component.html',
@@ -138,7 +139,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   currentRowIndex: number = -1;
   currentRow: any = {};
   cellEditing: any = {};
-  hideShowMenuGroup!: UntypedFormGroup;
+  hideShowMenuGroup!: FormGroup;
   cellTemplate!: TemplateRef<any>;
   menuX: number = 0;
   menuY: number = 0;
@@ -167,7 +168,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   constructor(
     public dialog: MatDialog,
     public service: MatTableExtService,
-    public formBuildersService: UntypedFormBuilder,
+    public formBuildersService: FormBuilder,
     public domSanitizer: DomSanitizer,
     public matIconRegistry: MatIconRegistry
   ) {
@@ -402,7 +403,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
         ) {
           expression = expression.substring(0, expression.length - 2);
         }
-        // result = eval(expression);
+        result = eval(expression);
       }
       if (!result) {
         return false;
@@ -732,5 +733,17 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
         )
       );
     });
+  }
+  exportTable(type: string) {
+    /* pass here the table id */
+    let element = document.getElementById('matTableExt');
+    const ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(element);
+
+    /* generate workbook and add the worksheet */
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+
+    /* save to file */
+    XLSX.writeFile(wb, 'ExcelSheet.xlsx');
   }
 }

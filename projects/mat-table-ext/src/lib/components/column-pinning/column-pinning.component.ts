@@ -14,9 +14,7 @@ export class ColumnPinningComponent implements OnInit {
     right: "pinRight",
     none: "pinNone",
   };
-  public index: number = 0;
-
-
+  
   constructor() { }
   ngOnInit(): void {
   }

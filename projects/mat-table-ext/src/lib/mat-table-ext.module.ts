@@ -6,7 +6,6 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTableExtComponent } from '../lib/mat-table-ext.component';
 import { ResizeColumnDirective } from '../lib/directives/resize-column.directive';
-import { CdkTableExporterModule, MatTableExporterModule } from 'mat-table-exporter';
 import { ColumnPinningComponent } from '../lib/components/column-pinning/column-pinning.component';
 import { EditingComponent } from '../lib/components/editing/editing.component';
 import { FilterColumnsComponentComponent } from '../lib/components/filter-columns-component/filter-columns-component.component';
@@ -56,9 +55,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTreeModule } from '@angular/material/tree';
-import { OverlayModule } from '@angular/cdk/overlay';
-import { CdkMenuModule } from '@angular/cdk/menu';
-import { DialogModule } from '@angular/cdk/dialog';
 
 
 @NgModule({
@@ -80,12 +76,9 @@ import { DialogModule } from '@angular/cdk/dialog';
     MatNativeDateModule,
     HttpClientModule,
     MatFormFieldModule,
-    MatTableExporterModule,
-    CdkTableExporterModule,
     A11yModule,
     CdkAccordionModule,
     ClipboardModule,
-    CdkMenuModule,
     CdkStepperModule,
     CdkTableModule,
     CdkTreeModule,
@@ -124,10 +117,8 @@ import { DialogModule } from '@angular/cdk/dialog';
     MatToolbarModule,
     MatTooltipModule,
     MatTreeModule,
-    OverlayModule,
     PortalModule,
     ScrollingModule,
-    DialogModule,
     MatFormFieldModule
   ],
   exports: [
@@ -136,8 +127,6 @@ import { DialogModule } from '@angular/cdk/dialog';
     ColumnPinningComponent,
     EditingComponent,
     FilterColumnsComponentComponent,
-    MatTableExporterModule,
-    CdkTableExporterModule
   ],
 })
 export class MatTableExtModule { }

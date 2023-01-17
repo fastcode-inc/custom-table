@@ -21,9 +21,9 @@
     "@angular/platform-browser-dynamic": "^14.2.12",
     "@angular/router": "^14.2.12",
     "@ngx-translate/core": "^14.0.0",
-    "mat-table-exporter": "^10.2.4",
     "ngx-translate": "^0.0.1-security",
     "rxjs": "~7.5.0",
+    "xlsx": "^0.18.5",
     "zone.js": "~0.11.4"
   },
   "devDependencies": {

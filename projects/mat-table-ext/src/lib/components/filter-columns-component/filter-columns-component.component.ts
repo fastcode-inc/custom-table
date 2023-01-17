@@ -14,8 +14,6 @@ export class FilterColumnsComponentComponent implements OnInit {
   dateCtrl: FormControl = new FormControl();
   booleanCtrl: FormControl = new FormControl();
   selectionCtrl: FormControl = new FormControl();
-
-  public type: any;
   constructor() {}
   ngOnInit(): void {
     this.stringCtrl.valueChanges.subscribe((value) => {

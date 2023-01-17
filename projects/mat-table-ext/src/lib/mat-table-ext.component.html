@@ -33,8 +33,8 @@
     </mat-toolbar>
     <mat-menu #menu="matMenu" (closed)="menuClosed()" id="exportMenu">
         <ng-container *ngIf="exportMenuCtrl">
-            <mat-option (click)="exporter.exportTable('xlsx')">Export to Excel</mat-option>
-            <mat-option (click)="exporter.exportTable('csv')">Export to CSV</mat-option>
+            <mat-option (click)="exportTable('xlsx')">Export to Excel</mat-option>
+            <mat-option (click)="exportTable('csv')">Export to CSV</mat-option>
         </ng-container>
     </mat-menu>
     <div style="visibility: hidden; position:fixed" #columnMenuTrigger="matMenuTrigger" [matMenuTriggerFor]="columnMenu"
@@ -74,8 +74,8 @@
     <mat-progress-bar *ngIf="loadingIndicator" mode="indeterminate"></mat-progress-bar>
     <section id="tableContainer" class="mat-table-ext-container" (scroll)="onScroll($event)"
         [style.height]="tableHeight ? tableHeight :'max-content'">
-        <table mat-table [dataSource]="dataSource" matSort cdkDropList cdkDropListOrientation="horizontal"
-            matTableExporter #exporter="matTableExporter" multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
+        <table mat-table id="matTableExt" [dataSource]="dataSource" matSort cdkDropList cdkDropListOrientation="horizontal"
+             multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
             (click)="saveCellEditing()" [style.width]="scrollbarH?'max-content':'100%'">
             <!-- Row selection column -->
             <ng-container matColumnDef="select">
