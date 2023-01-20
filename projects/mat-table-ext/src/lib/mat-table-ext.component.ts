@@ -7,7 +7,12 @@ import {
 } from '@angular/animations';
 import { SelectionModel } from '@angular/cdk/collections';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { AfterViewInit, EventEmitter, Output } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  EventEmitter,
+  Output,
+} from '@angular/core';
 import {
   Component,
   Input,
@@ -37,7 +42,8 @@ import {
 import { MatTableExtService } from '../lib/mat-table-ext.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';
-import * as XLSX from "xlsx";
+import * as XLSX from 'xlsx';
+import * as FileSaver from 'file-saver';
 @Component({
   selector: 'mat-table-ext',
   templateUrl: 'mat-table-ext.component.html',
@@ -49,7 +55,7 @@ import * as XLSX from "xlsx";
       state('expanded', style({ height: '*' })),
       transition(
         'expanded <=> collapsed',
-        animate('225ms cubic-bezier(0.4, 0.0, 0.2, 1)')
+        animate('300ms cubic-bezier(0.4, 0.0, 0.2, 1)')
       ),
     ]),
   ],
@@ -109,8 +115,10 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   @Output() popupChange: EventEmitter<any> = new EventEmitter<RowChange>();
   @Output() rowDeleted: EventEmitter<any> = new EventEmitter<any>();
   @Output() scroll: EventEmitter<any> = new EventEmitter<any>();
-  @Output() selectionChanged: EventEmitter<RowSelectionChange> = new EventEmitter<any>();
-  @Output() expansionChange: EventEmitter<ExpansionChange> = new EventEmitter<any>();
+  @Output() selectionChanged: EventEmitter<RowSelectionChange> =
+    new EventEmitter<any>();
+  @Output() expansionChange: EventEmitter<ExpansionChange> =
+    new EventEmitter<any>();
 
   columnPinningOptions: MTExColumnPinOption[] = [];
   exportMenuCtrl: boolean = false;
@@ -123,7 +131,6 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   showHideColumnsArray: MTExColumn[] = [];
   columnsList: string[] = [];
   columnsArray: MTExColumn[] = [];
-  headersFilters: MTExColumn[] = [];
   headersFiltersIds: string[] = [];
   columnsToDisplayWithExpand: string[] = [];
   selection = new SelectionModel<any>(false, []);
@@ -148,6 +155,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
     { filter: false, name: 'edit', show: false },
     { filter: false, name: 'popup', show: false },
     { filter: false, name: 'delete', show: false },
+    { filter: false, name: 'expand', show: false },
   ];
   inputPropertyKeys: string[] = [
     'dataSource',
@@ -170,7 +178,8 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
     public service: MatTableExtService,
     public formBuildersService: FormBuilder,
     public domSanitizer: DomSanitizer,
-    public matIconRegistry: MatIconRegistry
+    public matIconRegistry: MatIconRegistry,
+    private cdr: ChangeDetectorRef
   ) {
     //used to add custom icons to registry
     this.addIconsToRegistry();
@@ -204,9 +213,9 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
       this.updateColumnsHideShow(this.hideShowMenuGroup.value);
     }
   }
-/** 
- * @description set the properties of the table
- */
+  /**
+   * @description set the properties of the table
+   */
   setPropertyValue(changes: SimpleChanges) {
     let keys = Object.keys(changes);
     keys.forEach((property) => {
@@ -244,8 +253,26 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
     columnFilter: (value: any) => this.setColumnFilter(value.currentValue),
     globalSearch: (value: any) =>
       (this.dataSource.filterPredicate = this.createFilter()),
-    expandRows: (value: any) =>
-      (this.columnsToDisplayWithExpand = [...this.displayedColumns, 'expand']),
+    expandRows: (value: any) => {
+      this.loadingIndicator = true;
+      this.dataSource = new MatTableDataSource(this.tableData);
+      if (value.currentValue == true) {
+        if (!this.displayedColumns.includes('expand')) {
+          this.displayedColumns.push('expand');
+          this.columnsToDisplayWithExpand = [...this.displayedColumns];
+        }
+      } else {
+        this.columnsToDisplayWithExpand = [...this.displayedColumns];
+        if (this.displayedColumns.includes('expand')) {
+          let index = this.displayedColumns.indexOf('expand');
+          this.displayedColumns.splice(index, 1);
+        }
+        this.expandedElement = null;
+      }
+      setTimeout(() => {
+        this.loadingIndicator = false;
+      }, 200);
+    },
     sorting: (value: any) => (this.dataSource.sort = this.sort),
   };
 
@@ -266,21 +293,19 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
 
   setColumnFilter(value: boolean) {
     if (value) {
-      this.headersFiltersIds = this.columnsArray.map(
-        (column, i) => column.field + '_' + i
-      );
-      let array: MTExColumn[] = [];
+      let array: string[] = [];
       this.columnsArray.forEach((column, i) => {
-        let obj = {
-          type: column?.type,
-          field: column?.field + '_' + i,
-        };
-        array.push(obj);
+        if (
+          this.dynamicDisplayedColumns.filter((a) => a.name == column?.field)[0]
+            .show
+        ) {
+          array.push(column?.field + '_' + i);
+        }
       });
-      this.headersFilters = array;
+      this.headersFiltersIds = array;
       this.dataSource.filterPredicate = this.createFilter();
+      let x=this.cdr.detectChanges();
     } else {
-      this.headersFilters = [];
       this.headersFiltersIds = [];
       this.dataSource.filter = '';
     }
@@ -351,6 +376,9 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
 
   showHideColumn(name: string, value: boolean) {
     this.dynamicDisplayedColumns.filter((a) => a.name == name)[0].show = value;
+    if (this.columnFilter) {
+      this.setColumnFilter(true);
+    }
   }
 
   showSelectionColumn(name: string, value: boolean) {
@@ -398,7 +426,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
         });
         if (
           expression.charAt(expression.length - 2) +
-          expression.charAt(expression.length - 1) ==
+            expression.charAt(expression.length - 1) ==
           '||'
         ) {
           expression = expression.substring(0, expression.length - 2);
@@ -586,8 +614,9 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
     if (!row) {
       return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
     }
-    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row.position + 1
-      }`;
+    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${
+      row.position + 1
+    }`;
   }
 
   /**
@@ -606,7 +635,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   }
 
   /**
-   * 
+   *
    * @param column current column
    * @param event mouse event used to set the menu position
    */
@@ -677,7 +706,6 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
     this.scroll.emit(event);
   }
   /**
-   * 
    * @param row row to be toggled
    * @param index index of toggled row
    */
@@ -723,7 +751,9 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   }
 
   addIconsToRegistry() {
-    let y = this.domSanitizer.bypassSecurityTrustResourceUrl(`../../assets/pinRight.svg`);
+    let y = this.domSanitizer.bypassSecurityTrustResourceUrl(
+      `../../assets/pinRight.svg`
+    );
     let iconNames = ['pinLeft', 'pinRight', 'pinNone', 'pinned', 'pinIcon'];
     iconNames.forEach((icon) => {
       this.matIconRegistry.addSvgIcon(
@@ -734,16 +764,123 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
       );
     });
   }
-  exportTable(type: string) {
-    /* pass here the table id */
-    let element = document.getElementById('matTableExt');
-    const ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(element);
 
-    /* generate workbook and add the worksheet */
+  exportTable(type: string) {
+    var element = document.getElementById('matTableExt');
+    var ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(element);
+    let keys = Object.keys(ws);
+    let extracolumns = ['popup', 'delete', 'select', 'edit'];
+    // this.delete_rows(ws,1,1);
+    keys.forEach((key) => {
+      if (ws[key]?.v && typeof ws[key]?.v === 'string') {
+        if (extracolumns.includes(ws[key].v.toLowerCase())) {
+          delete ws[key];
+        }
+      }
+    });
     const wb: XLSX.WorkBook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-
-    /* save to file */
-    XLSX.writeFile(wb, 'ExcelSheet.xlsx');
+    if (type == 'xlsx') {
+      XLSX.writeFile(wb, 'ExcelSheet.xlsx');
+    } else if (type === 'csv') {
+      let csv = XLSX.utils.sheet_to_csv(ws);
+      FileSaver.saveAs(new Blob([csv]), `CSVSheet.csv`);
+    }
   }
+  returnIndex(value: string): number {
+    return Number(value.split('_')[1]);
+  }
+  clamp_range(range: XLSX.Range) {
+	if(range.e.r >= (1<<20)) range.e.r = (1<<20)-1;
+	if(range.e.c >= (1<<14)) range.e.c = (1<<14)-1;
+	return range;
+}
+
+crefregex = /(^|[^._A-Z0-9])([$]?)([A-Z]{1,2}|[A-W][A-Z]{2}|X[A-E][A-Z]|XF[A-D])([$]?)([1-9]\d{0,5}|10[0-3]\d{4}|104[0-7]\d{3}|1048[0-4]\d{2}|10485[0-6]\d|104857[0-6])(?![_.\(A-Za-z0-9])/g;
+
+/*
+	deletes `nrows` rows STARTING WITH `start_row`
+	- ws         = worksheet object
+	- start_row  = starting row (0-indexed) | default 0
+	- nrows      = number of rows to delete | default 1
+*/
+ delete_rows(ws: any, start_row: number, nrows: number) {
+	if(!ws) throw new Error("operation expects a worksheet");
+	var dense = Array.isArray(ws);
+	if(!nrows) nrows = 1;
+	if(!start_row) start_row = 0;
+
+	/* extract original range */
+	var range = XLSX.utils.decode_range(ws["!ref"]);
+	var R = 0, C = 0;
+
+	var formula_cb = ($0: any, $1: any, $2: string, $3: string, $4: string, $5: string)=> {
+		var _R = XLSX.utils.decode_row($5), _C = XLSX.utils.decode_col($3);
+		if(_R >= start_row) {
+			_R -= nrows;
+			if(_R < start_row) return "#REF!";
+		}
+		return $1+($2=="$" ? $2+$3 : XLSX.utils.encode_col(_C))+($4=="$" ? $4+$5 : XLSX.utils.encode_row(_R));
+	};
+
+	var addr, naddr;
+	/* move cells and update formulae */
+	if(dense) {
+		for(R = start_row + nrows; R <= range.e.r; ++R) {
+			if(ws[R]) ws[R].forEach((cell: { f: string; }) => { cell.f = cell.f.replace(this.crefregex, formula_cb); });
+			ws[R-nrows] = ws[R];
+		}
+		ws.length -= nrows;
+		for(R = 0; R < start_row; ++R) {
+			if(ws[R]) ws[R].forEach((cell: { f: string; }) => { cell.f = cell.f.replace(this.crefregex, formula_cb); });
+		}
+	} else {
+		for(R = start_row + nrows; R <= range.e.r; ++R) {
+			for(C = range.s.c; C <= range.e.c; ++C) {
+				addr = XLSX.utils.encode_cell({r:R, c:C});
+				naddr = XLSX.utils.encode_cell({r:R-nrows, c:C});
+				if(!ws[addr]) { delete ws[naddr]; continue; }
+				if(ws[addr].f) ws[addr].f = ws[addr].f.replace(this.crefregex, formula_cb);
+				ws[naddr] = ws[addr];
+			}
+		}
+		for(R = range.e.r; R > range.e.r - nrows; --R) {
+			for(C = range.s.c; C <= range.e.c; ++C) {
+				addr = XLSX.utils.encode_cell({r:R, c:C});
+				delete ws[addr];
+			}
+		}
+		for(R = 0; R < start_row; ++R) {
+			for(C = range.s.c; C <= range.e.c; ++C) {
+				addr = XLSX.utils.encode_cell({r:R, c:C});
+				if(ws[addr] && ws[addr].f) ws[addr].f = ws[addr].f.replace(this.crefregex, formula_cb);
+			}
+		}
+	}
+
+	/* write new range */
+	range.e.r -= nrows;
+	if(range.e.r < range.s.r) range.e.r = range.s.r;
+	ws["!ref"] = XLSX.utils.encode_range(this.clamp_range(range));
+
+	/* merge cells */
+	if(ws["!merges"]) ws["!merges"].forEach((merge: string, idx: string | number) => {
+		var mergerange;
+		switch(typeof merge) {
+			case 'string': mergerange = XLSX.utils.decode_range(merge); break;
+			case 'object': mergerange = merge; break;
+			default: throw new Error("Unexpected merge ref " + merge);
+		}
+		if(mergerange.s.r >= start_row) {
+			mergerange.s.r = Math.max(mergerange.s.r - nrows, start_row);
+			if(mergerange.e.r < start_row + nrows) { delete ws["!merges"][idx]; return; }
+		} else if(mergerange.e.r >= start_row) mergerange.e.r = Math.max(mergerange.e.r - nrows, start_row);
+		this.clamp_range(mergerange);
+		ws["!merges"][idx] = mergerange;
+	});
+	if(ws["!merges"]) ws["!merges"] = ws["!merges"].filter((x: any)=> { return !!x; });
+
+	/* rows */
+	if(ws["!rows"]) ws["!rows"].splice(start_row, nrows);
+}
 }

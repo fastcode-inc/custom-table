@@ -5,130 +5,92 @@ import { CustomTableService } from './service/custom-table.service';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  styleUrls: ['./app.component.scss'],
 })
 export class AppComponent {
   title = 'mat-table-ext-example';
   isLoading: boolean = false;
-  public dataSource: any = new MatTableDataSource([{
-    "id": 0,
-    "name": "Ramsey Cummings",
-    "gender": "male",
-    "age": 52,
-    "address": {
-      "state": "South Carolina",
-      "city": "Glendale"
-    }
-  },
+  public dataSource: any = new MatTableDataSource([
     {
-      "id": 1,
-      "name": "Stefanie Huff",
-      "gender": "female",
-      "age": 70,
-      "address": {
-        "state": "Arizona",
-        "city": "Beaverdale"
-      }
+      id: 0,
+      name: 'Ramsey Cummings',
+      gender: 'male',
+      age: 52,
     },
     {
-      "id": 2,
-      "name": "Mabel David",
-      "gender": "female",
-      "age": 52,
-      "address": {
-        "state": "New Mexico",
-        "city": "Grazierville"
-      }
+      id: 1,
+      name: 'Stefanie Huff',
+      gender: 'female',
+      age: 70,
     },
     {
-      "id": 3,
-      "name": "Frank Bradford",
-      "gender": "male",
-      "age": 61,
-      "address": {
-        "state": "Wisconsin",
-        "city": "Saranap"
-      }
+      id: 2,
+      name: 'Mabel David',
+      gender: 'female',
+      age: 52,
     },
     {
-      "id": 4,
-      "name": "Forbes Levine",
-      "gender": "male",
-      "age": 34,
-      "address": {
-        "state": "Vermont",
-        "city": "Norris"
-      }
+      id: 3,
+      name: 'Frank Bradford',
+      gender: 'male',
+      age: 61,
     },
     {
-      "id": 5,
-      "name": "Santiago Mcclain",
-      "gender": "male",
-      "age": 38,
-      "address": {
-        "state": "Montana",
-        "city": "Bordelonville"
-      }
+      id: 4,
+      name: 'Forbes Levine',
+      gender: 'male',
+      age: 34,
     },
     {
-      "id": 6,
-      "name": "Merritt Booker",
-      "gender": "male",
-      "age": 33,
-      "address": {
-        "state": "New Jersey",
-        "city": "Aguila"
-      }
+      id: 5,
+      name: 'Santiago Mcclain',
+      gender: 'male',
+      age: 38,
     },
     {
-      "id": 7,
-      "name": "Oconnor Wade",
-      "gender": "male",
-      "age": 18,
-      "address": {
-        "state": "Virginia",
-        "city": "Kenmar"
-      }
+      id: 6,
+      name: 'Merritt Booker',
+      gender: 'male',
+      age: 33,
     },
     {
-      "id": 8,
-      "name": "Leigh Beasley",
-      "gender": "female",
-      "age": 53,
-      "address": {
-        "state": "Texas",
-        "city": "Alfarata"
-      }
+      id: 7,
+      name: 'Oconnor Wade',
+      gender: 'male',
+      age: 18,
     },
     {
-      "id": 9,
-      "name": "Johns Wood",
-      "gender": "male",
-      "age": 52,
-      "address": {
-        "state": "Maine",
-        "city": "Witmer"
-      }
-    }]);
+      id: 8,
+      name: 'Leigh Beasley',
+      gender: 'female',
+      age: 53,
+    },
+    {
+      id: 9,
+      name: 'Johns Wood',
+      gender: 'male',
+      age: 52,
+    },
+  ]);
   stickyColumn: any = false;
   columnResizable: any = false;
   stickyFooter: any = false;
   stickyHeader: any = false;
-  inlineRowEditing: any = true;
-  popupRowEditing: any = true;
+  inlineRowEditing: any = false;
+  popupRowEditing: any = false;
   inCellEditing: any = false;
   deleteRow: any = false;
   stripedRows: any = false;
   rowSelection: any = false;
   multiRowSelection: any = false;
-  simpleFilter: any = false;
+  simpleFilter: any = true;
   selectionFilter: any = false;
-  toolbarToggle: any = false;
+  toolbarToggle: any = true;
   toolbarHeight: string = '';
   showFirstLastButtons: any = false;
   columnPinnable: any = false;
   columnHidable: any = false;
-  exportButtonEnable: any = false;
+  exportButtonEnable: any = true;
   @ViewChild('cellTemplate1') cellTemplate1!: TemplateRef<any>;
   @ViewChild('cellTemplate2') cellTemplate2!: TemplateRef<any>;
 
@@ -137,7 +99,7 @@ export class AppComponent {
       header: 'ID',
       field: 'id',
       type: 'number',
-      headerTooltip: { value: 'ID', tooltipPosition: 'above' },
+      headerTooltip: { value: 'ID', tooltipPosition: 'below' },
       width: '',
     },
     { header: 'Name', field: 'name', type: 'string' },
@@ -148,7 +110,6 @@ export class AppComponent {
       type: 'selection',
       options: ['male', 'female'],
     },
-    { header: 'Address', field: 'address', type: 'string' },
     // ]
     //   public columns: MTExColumn[] = [
     //     { header: 'ID', field: 'id' , width:'250px'},
@@ -186,14 +147,14 @@ export class AppComponent {
   headerTemplateRefCtrl: any = false;
   cellTemplateRefCtrl: any = false;
   toolbarTemplateRefCtrl: any = false;
-  popupTemplateRefCtrl: any = true;
-  inlineTemplateRefCtrl: any = true;
-  cellEditingTemplateRefCtrl: any = true;
+  popupTemplateRefCtrl: any = false;
+  inlineTemplateRefCtrl: any = false;
+  cellEditingTemplateRefCtrl: any = false;
   constructor(public service: CustomTableService) {
     // this.loadPage(10);
   }
 
-  ngOnInit(): void { }
+  ngOnInit(): void {}
 
   showhidecolumn(op: string) {
     switch (op) {
