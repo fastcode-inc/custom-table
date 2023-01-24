@@ -1,5 +1,4 @@
 <mat-card class="main-table-ext-container mat-elevation-z8" [style.width]="tableWidth">
-    {{columnFilter}}
     <mat-form-field style="padding-left:24px" appearance="standard" *ngIf="globalSearch">
         <mat-label>Search</mat-label>
         <input matInput [ngModel]="globalFilter" (ngModelChange)="applyFilter($event)" placeholder="Ex. Mia" #input>
@@ -112,7 +111,7 @@
                 <td mat-cell *matCellDef="let row ;let i=dataIndex">
                     <div *ngIf="!row.editable && !cellEditing[i +'_'+column.field]"
                         (dblclick)="cellEditing[i +'_'+column.field] = inCellEditing;setCellData(row,i)"
-                        matTooltip="{{column.cellTooltip}}">
+                        matTooltip="{{column.cellTooltip?.value}}" [matTooltipPosition]="column?.cellTooltip?.tooltipPosition!" >
                         <span
                             *ngIf="!cellTemplateRef && !column?.cellTemplate && !cellTemplateRefMap[column.field]">{{row[column.field]}}</span>
                         <ng-container *ngIf="cellTemplateRefMap[column.field]"
@@ -205,8 +204,8 @@
                 </ng-container>
             </div>
             <ng-container matColumnDef="edit" stickyEnd="false">
-                <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="!dndColumns" *matHeaderCellDef
-                    mat-sort-header class="action-column-cells"> Edit </th>
+                <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
+                     class="action-column-cells"> Edit </th>
                 <td mat-cell *matCellDef="let row; let i = dataIndex" class="inline-edit-column-cell">
                     <mat-icon class="edit-column-icons" *ngIf="!row.editable && !row.editmodal" aria-hidden="false"
                         (click)="enableInlineEditing(row,i)" fontIcon="edit_note">
@@ -221,8 +220,8 @@
                 <td mat-footer-cell *matFooterCellDef> edit </td>
             </ng-container>
             <ng-container matColumnDef="popup" stickyEnd="false">
-                <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="!dndColumns" *matHeaderCellDef
-                    mat-sort-header class="action-column-cells"> Popup
+                <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
+                    class="action-column-cells"> Popup
                 </th>
                 <td mat-cell *matCellDef="let row; let i = index">
                     <mat-icon aria-hidden="false" (click)="openEditingDialog(row,i)" fontIcon="edit">
@@ -232,8 +231,8 @@
             </ng-container>
 
             <ng-container matColumnDef="delete">
-                <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="!dndColumns" *matHeaderCellDef
-                    mat-sort-header class="action-column-cells"> Delete
+                <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
+                    class="action-column-cells"> Delete
                 </th>
                 <td mat-cell *matCellDef="let row;let i=dataIndex">
                     <mat-icon (click)="deleteRow(row,i)" aria-hidden="false" aria-label="Example home icon"
@@ -242,16 +241,6 @@
                 </td>
                 <td mat-footer-cell *matFooterCellDef></td>
             </ng-container>
-            <!-- <ng-container *ngIf="expandRows" matColumnDef="expand">
-                <th mat-header-cell *matHeaderCellDef aria-label="row actions">&nbsp;</th>
-                <td mat-cell *matCellDef="let element">
-                    <button mat-icon-button aria-label="expand row"
-                        (click)="(expandedElement = expandedElement === element ? null : element); $event.stopPropagation()">
-                        <mat-icon *ngIf="expandedElement !== element">keyboard_arrow_down</mat-icon>
-                        <mat-icon *ngIf="expandedElement === element">keyboard_arrow_up</mat-icon>
-                    </button>
-                </td>
-            </ng-container> -->
             <!-- Expanded Content Column - The detail row is made up of this one column that spans across all columns -->
             <ng-container *ngIf="expandRows" matColumnDef="expandedDetail">
                 <td mat-cell *matCellDef="let element;let i=dataIndex "
@@ -264,27 +253,21 @@
                     </div>
                 </td>
             </ng-container>
-            <ng-container >
-                <ng-container *ngIf="headersFiltersIds.length>0">
-                    <ng-container *ngFor="let ids of headersFiltersIds; let i=index" [matColumnDef]="ids">
-                        <th mat-header-cell *matHeaderCellDef>
-                            <div class="filters-container" [class.animate]="toggleFilters">
-                                <app-filter-columns-component [obj]="columnsArray[returnIndex(ids)]"
-                                    (filterOutput)="applySingleFilter($event,columnsArray[returnIndex(ids)])"></app-filter-columns-component>
-                            </div>
-                        </th>
-                    </ng-container>s
-                </ng-container>
+            <ng-container *ngFor="let ids of headersFiltersIds; let i=index" [matColumnDef]="ids">
+                <th mat-header-cell *matHeaderCellDef>
+                    <div class="filters-container"  [class.animate]="toggleFilters">
+                        <app-filter-columns-component [obj]="columnsArray[returnIndex(ids)]"
+                            (filterOutput)="applySingleFilter($event,columnsArray[returnIndex(ids)])"></app-filter-columns-component>
+                    </div>
+                </th>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef=" getDisplayedColumns(); sticky: stickyHeader"></tr>
             <tr mat-row *matRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex;" class="data-row"
                 [ngClass]="{'data-row':expandRows,'stripedRows':(stripedRows &&  i % 2 == 1),'hoverClass':rowHover, 'hidden':hiddenCtrl.isSelected(row) && hideRows,'example-expanded-row':expandedElement === row}"
                 (click)="expandRow(row, row !== expandedElement,i)">
             </tr>
-            <ng-container *ngIf="headersFiltersIds.length>0">
-                <tr style="height: 0px;" mat-header-row class="no-default-height" *matHeaderRowDef="headersFiltersIds">
-                </tr>
-            </ng-container>
+            <tr style="height: 0px;" mat-header-row class="no-default-height" *matHeaderRowDef="headersFiltersIds">
+            </tr>
             <ng-container *ngIf="expandRows" >
                 <tr style="height: 0px;" mat-row *matRowDef="let row; columns: ['expandedDetail']"
                     [ngClass]="{'example-detail-row': (expandRows && row === expandedElement),'expand-row':row !== expandedElement}">

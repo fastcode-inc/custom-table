@@ -99,7 +99,6 @@ export class AppComponent {
       header: 'ID',
       field: 'id',
       type: 'number',
-      headerTooltip: { value: 'ID', tooltipPosition: 'below' },
       width: '',
     },
     { header: 'Name', field: 'name', type: 'string' },

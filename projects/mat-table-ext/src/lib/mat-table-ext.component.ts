@@ -291,6 +291,10 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
     this.showSelectionColumn('select', value);
   }
 
+  /**
+   *
+   * @param value
+   */
   setColumnFilter(value: boolean) {
     if (value) {
       let array: string[] = [];
@@ -304,7 +308,6 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
       });
       this.headersFiltersIds = array;
       this.dataSource.filterPredicate = this.createFilter();
-      let x=this.cdr.detectChanges();
     } else {
       this.headersFiltersIds = [];
       this.dataSource.filter = '';
@@ -768,16 +771,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   exportTable(type: string) {
     var element = document.getElementById('matTableExt');
     var ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(element);
-    let keys = Object.keys(ws);
-    let extracolumns = ['popup', 'delete', 'select', 'edit'];
-    // this.delete_rows(ws,1,1);
-    keys.forEach((key) => {
-      if (ws[key]?.v && typeof ws[key]?.v === 'string') {
-        if (extracolumns.includes(ws[key].v.toLowerCase())) {
-          delete ws[key];
-        }
-      }
-    });
+    ws = this.writeSheetData(ws);
     const wb: XLSX.WorkBook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
     if (type == 'xlsx') {
@@ -790,97 +784,78 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   returnIndex(value: string): number {
     return Number(value.split('_')[1]);
   }
-  clamp_range(range: XLSX.Range) {
-	if(range.e.r >= (1<<20)) range.e.r = (1<<20)-1;
-	if(range.e.c >= (1<<14)) range.e.c = (1<<14)-1;
-	return range;
-}
 
-crefregex = /(^|[^._A-Z0-9])([$]?)([A-Z]{1,2}|[A-W][A-Z]{2}|X[A-E][A-Z]|XF[A-D])([$]?)([1-9]\d{0,5}|10[0-3]\d{4}|104[0-7]\d{3}|1048[0-4]\d{2}|10485[0-6]\d|104857[0-6])(?![_.\(A-Za-z0-9])/g;
+  writeSheetData(ws: XLSX.WorkSheet): XLSX.WorkSheet {
+    let displayedColumns = this.getDisplayedColumns();
+    var nMerges = this.getMergeIndex(ws['!merges'] || []);
+    var merges = ws['!merges'] || [];
+    let data: XLSX.WorkSheet = {
+      '!cols': [],
+      '!rows': [],
+      '!merges': nMerges,
+    };
+    var range = XLSX.utils.decode_range(ws['!ref'] || '');
+    let extracolumns = ['popup', 'delete', 'select', 'edit'];
+    let keys = Object.keys(ws);
+    let nKey = 'A';
+    keys.forEach((key, i) => {
+      if (ws[key]?.v && typeof ws[key]?.v === 'string') {
+        if (
+          !extracolumns.includes(ws[key].v.toLowerCase()) &&
+          displayedColumns.includes(ws[key].v.toLowerCase())
+        ) {
+          let lastRowIndex = range?.e?.r;
+          data[key] = ws[key];
+          let chr = key.charAt(0);
+          for (let j = 2; j <= lastRowIndex; j++) {
+            if (
+              ws[chr + (j + 1)] !== undefined &&
+              (typeof ws[chr + (j + 1)].v === 'string' ||
+                typeof ws[chr + (j + 1)].v === 'number')
+            ) {
+                data[nKey + j] = ws[chr + (j + 1)];              
+            }
 
-/*
-	deletes `nrows` rows STARTING WITH `start_row`
-	- ws         = worksheet object
-	- start_row  = starting row (0-indexed) | default 0
-	- nrows      = number of rows to delete | default 1
-*/
- delete_rows(ws: any, start_row: number, nrows: number) {
-	if(!ws) throw new Error("operation expects a worksheet");
-	var dense = Array.isArray(ws);
-	if(!nrows) nrows = 1;
-	if(!start_row) start_row = 0;
-
-	/* extract original range */
-	var range = XLSX.utils.decode_range(ws["!ref"]);
-	var R = 0, C = 0;
-
-	var formula_cb = ($0: any, $1: any, $2: string, $3: string, $4: string, $5: string)=> {
-		var _R = XLSX.utils.decode_row($5), _C = XLSX.utils.decode_col($3);
-		if(_R >= start_row) {
-			_R -= nrows;
-			if(_R < start_row) return "#REF!";
-		}
-		return $1+($2=="$" ? $2+$3 : XLSX.utils.encode_col(_C))+($4=="$" ? $4+$5 : XLSX.utils.encode_row(_R));
-	};
-
-	var addr, naddr;
-	/* move cells and update formulae */
-	if(dense) {
-		for(R = start_row + nrows; R <= range.e.r; ++R) {
-			if(ws[R]) ws[R].forEach((cell: { f: string; }) => { cell.f = cell.f.replace(this.crefregex, formula_cb); });
-			ws[R-nrows] = ws[R];
-		}
-		ws.length -= nrows;
-		for(R = 0; R < start_row; ++R) {
-			if(ws[R]) ws[R].forEach((cell: { f: string; }) => { cell.f = cell.f.replace(this.crefregex, formula_cb); });
-		}
-	} else {
-		for(R = start_row + nrows; R <= range.e.r; ++R) {
-			for(C = range.s.c; C <= range.e.c; ++C) {
-				addr = XLSX.utils.encode_cell({r:R, c:C});
-				naddr = XLSX.utils.encode_cell({r:R-nrows, c:C});
-				if(!ws[addr]) { delete ws[naddr]; continue; }
-				if(ws[addr].f) ws[addr].f = ws[addr].f.replace(this.crefregex, formula_cb);
-				ws[naddr] = ws[addr];
-			}
-		}
-		for(R = range.e.r; R > range.e.r - nrows; --R) {
-			for(C = range.s.c; C <= range.e.c; ++C) {
-				addr = XLSX.utils.encode_cell({r:R, c:C});
-				delete ws[addr];
-			}
-		}
-		for(R = 0; R < start_row; ++R) {
-			for(C = range.s.c; C <= range.e.c; ++C) {
-				addr = XLSX.utils.encode_cell({r:R, c:C});
-				if(ws[addr] && ws[addr].f) ws[addr].f = ws[addr].f.replace(this.crefregex, formula_cb);
-			}
-		}
-	}
-
-	/* write new range */
-	range.e.r -= nrows;
-	if(range.e.r < range.s.r) range.e.r = range.s.r;
-	ws["!ref"] = XLSX.utils.encode_range(this.clamp_range(range));
-
-	/* merge cells */
-	if(ws["!merges"]) ws["!merges"].forEach((merge: string, idx: string | number) => {
-		var mergerange;
-		switch(typeof merge) {
-			case 'string': mergerange = XLSX.utils.decode_range(merge); break;
-			case 'object': mergerange = merge; break;
-			default: throw new Error("Unexpected merge ref " + merge);
-		}
-		if(mergerange.s.r >= start_row) {
-			mergerange.s.r = Math.max(mergerange.s.r - nrows, start_row);
-			if(mergerange.e.r < start_row + nrows) { delete ws["!merges"][idx]; return; }
-		} else if(mergerange.e.r >= start_row) mergerange.e.r = Math.max(mergerange.e.r - nrows, start_row);
-		this.clamp_range(mergerange);
-		ws["!merges"][idx] = mergerange;
-	});
-	if(ws["!merges"]) ws["!merges"] = ws["!merges"].filter((x: any)=> { return !!x; });
-
-	/* rows */
-	if(ws["!rows"]) ws["!rows"].splice(start_row, nrows);
-}
+          }
+          nKey = String.fromCharCode(nKey.charCodeAt(0) + 1);
+        }
+      }
+    });
+    if (this.rowSelection) {
+      let chr = 'A';
+      for (let i = 1; i < (range.e.c)+1; i++) { 
+        data[chr + 1] = data[String.fromCharCode(chr.charCodeAt(0) + 1) + 1];
+        chr = String.fromCharCode(chr.charCodeAt(0) + 1);
+        if (i == (range.e.c)) {
+          data[chr + 1] = undefined;
+        }
+      }  
+    }
+    if (this.rowSelection && this.expandRows) {
+      merges.forEach(merge => {
+        data['A' + merge.s.r] = ws['A' + (merge.s.r + 1)];
+      })
+    }
+    range.e.r--;
+    let nRef = XLSX.utils.encode_range(range);
+    data['!ref'] = nRef;
+    data['!fullref'] = nRef;
+    return data;
+  }
+  getMergeIndex(merges: any[]) {
+    var arr: any[] = [];
+    merges.forEach((element: any) => {
+      arr.push({
+        e: {
+          r: element.e.r == 0 ? element.e.r : element.e.r - 1,
+          c: element.e.c,
+        },
+        s: {
+          r: element.s.r == 0 ? element.s.r : element.s.r - 1,
+          c: element.s.c,
+        },
+      });
+    });
+    return arr;
+  }
 }
