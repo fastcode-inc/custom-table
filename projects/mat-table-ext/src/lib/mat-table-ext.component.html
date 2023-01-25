@@ -1,5 +1,5 @@
 <mat-card class="main-table-ext-container mat-elevation-z8" [style.width]="tableWidth">
-    <mat-form-field style="padding-left:24px" appearance="standard" *ngIf="globalSearch">
+    <mat-form-field class="global-search-field" appearance="fill" *ngIf="globalSearch">
         <mat-label>Search</mat-label>
         <input matInput [ngModel]="globalFilter" (ngModelChange)="applyFilter($event)" placeholder="Ex. Mia" #input>
     </mat-form-field>
@@ -74,8 +74,8 @@
     <mat-progress-bar *ngIf="loadingIndicator" mode="indeterminate"></mat-progress-bar>
     <section id="tableContainer" class="mat-table-ext-container" (scroll)="onScroll($event)"
         [style.height]="tableHeight ? tableHeight :'max-content'">
-        <table mat-table id="matTableExt" [dataSource]="dataSource" matSort cdkDropList cdkDropListOrientation="horizontal"
-             multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
+        <table mat-table [id]="'matTableExt'+tableID" [dataSource]="dataSource" matSort cdkDropList
+            cdkDropListOrientation="horizontal" multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
             (click)="saveCellEditing()" [style.width]="scrollbarH?'max-content':'100%'">
             <!-- Row selection column -->
             <ng-container matColumnDef="select">
@@ -102,7 +102,7 @@
                     [columnsResizable]="columnResizable" [index]="i">
                     <span *ngIf="!headerTemplateRef" matTooltip="{{column.headerTooltip?.value}}"
                         [matTooltipPosition]="column?.headerTooltip?.tooltipPosition!" mat-sort-header
-                        [disabled]="!sorting">{{column.header}}</span>
+                        [disabled]="!sorting || column.disabled === true">{{column.header}}</span>
                     <ng-container *ngIf="headerTemplateRef" [ngTemplateOutlet]="headerTemplateRef"
                         [ngTemplateOutletContext]="{data:column}"></ng-container>
                     <ng-container *ngIf="column.headerTemplate" [ngTemplateOutlet]="column.headerTemplate"
@@ -111,7 +111,8 @@
                 <td mat-cell *matCellDef="let row ;let i=dataIndex">
                     <div *ngIf="!row.editable && !cellEditing[i +'_'+column.field]"
                         (dblclick)="cellEditing[i +'_'+column.field] = inCellEditing;setCellData(row,i)"
-                        matTooltip="{{column.cellTooltip?.value}}" [matTooltipPosition]="column?.cellTooltip?.tooltipPosition!" >
+                        matTooltip="{{column.cellTooltip?.value}}"
+                        [matTooltipPosition]="column?.cellTooltip?.tooltipPosition!">
                         <span
                             *ngIf="!cellTemplateRef && !column?.cellTemplate && !cellTemplateRefMap[column.field]">{{row[column.field]}}</span>
                         <ng-container *ngIf="cellTemplateRefMap[column.field]"
@@ -205,7 +206,7 @@
             </div>
             <ng-container matColumnDef="edit" stickyEnd="false">
                 <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
-                     class="action-column-cells"> Edit </th>
+                    class="action-column-cells"> Edit </th>
                 <td mat-cell *matCellDef="let row; let i = dataIndex" class="inline-edit-column-cell">
                     <mat-icon class="edit-column-icons" *ngIf="!row.editable && !row.editmodal" aria-hidden="false"
                         (click)="enableInlineEditing(row,i)" fontIcon="edit_note">
@@ -255,7 +256,7 @@
             </ng-container>
             <ng-container *ngFor="let ids of headersFiltersIds; let i=index" [matColumnDef]="ids">
                 <th mat-header-cell *matHeaderCellDef>
-                    <div class="filters-container"  [class.animate]="toggleFilters">
+                    <div class="filters-container" [class.animate]="toggleFilters">
                         <app-filter-columns-component [obj]="columnsArray[returnIndex(ids)]"
                             (filterOutput)="applySingleFilter($event,columnsArray[returnIndex(ids)])"></app-filter-columns-component>
                     </div>
@@ -268,7 +269,7 @@
             </tr>
             <tr style="height: 0px;" mat-header-row class="no-default-height" *matHeaderRowDef="headersFiltersIds">
             </tr>
-            <ng-container *ngIf="expandRows" >
+            <ng-container *ngIf="expandRows">
                 <tr style="height: 0px;" mat-row *matRowDef="let row; columns: ['expandedDetail']"
                     [ngClass]="{'example-detail-row': (expandRows && row === expandedElement),'expand-row':row !== expandedElement}">
                 </tr>

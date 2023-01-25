@@ -11,7 +11,6 @@ import { EditingComponent } from '../lib/components/editing/editing.component';
 import { FilterColumnsComponentComponent } from '../lib/components/filter-columns-component/filter-columns-component.component';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { A11yModule } from '@angular/cdk/a11y';
 import { CdkAccordionModule } from '@angular/cdk/accordion';
@@ -67,15 +66,11 @@ import { MatTreeModule } from '@angular/material/tree';
   ],
   imports: [
     CommonModule,
-    BrowserModule,
-    BrowserAnimationsModule,
     TranslateModule.forChild(),
     MatTableModule,
     FormsModule,
     ReactiveFormsModule,
     MatNativeDateModule,
-    HttpClientModule,
-    MatFormFieldModule,
     A11yModule,
     CdkAccordionModule,
     ClipboardModule,

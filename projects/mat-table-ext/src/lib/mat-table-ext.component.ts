@@ -43,7 +43,6 @@ import { MatTableExtService } from '../lib/mat-table-ext.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';
 import * as XLSX from 'xlsx';
-import * as FileSaver from 'file-saver';
 @Component({
   selector: 'mat-table-ext',
   templateUrl: 'mat-table-ext.component.html',
@@ -119,7 +118,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
     new EventEmitter<any>();
   @Output() expansionChange: EventEmitter<ExpansionChange> =
     new EventEmitter<any>();
-
+  tableID = new Date().getTime();
   columnPinningOptions: MTExColumnPinOption[] = [];
   exportMenuCtrl: boolean = false;
   columnPinMenuCtrl: boolean = false;
@@ -187,7 +186,10 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
       this.tableData = this.dataSource.data;
     }
   }
-
+/**
+ * 
+ * @param changes changes captured each time user changes property value.
+ */
   ngOnChanges(changes: SimpleChanges) {
     this.setPropertyValue(changes);
   }
@@ -769,17 +771,12 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   }
 
   exportTable(type: string) {
-    var element = document.getElementById('matTableExt');
+    var element = document.getElementById('matTableExt' + this.tableID);
     var ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(element);
     ws = this.writeSheetData(ws);
     const wb: XLSX.WorkBook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-    if (type == 'xlsx') {
-      XLSX.writeFile(wb, 'ExcelSheet.xlsx');
-    } else if (type === 'csv') {
-      let csv = XLSX.utils.sheet_to_csv(ws);
-      FileSaver.saveAs(new Blob([csv]), `CSVSheet.csv`);
-    }
+    XLSX.writeFile(wb, `tablesheets.${type}`);
   }
   returnIndex(value: string): number {
     return Number(value.split('_')[1]);

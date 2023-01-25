@@ -1,7 +1,60 @@
 import { Component, TemplateRef, ViewChild } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { CustomTableService } from './service/custom-table.service';
-
+import { MTExColumn } from '../../../mat-table-ext/src/lib/models/tableExtModels';
+export const EXAMPLE_DATA: any[] = [
+  {
+    position: 1,
+    name: 'Boron',
+    weight: 10.811,
+    symbol: 'B',
+    gender: 'male',
+    mobile: '13198765432',
+    tele: '567891234',
+    city: 'Berlin',
+    address: 'Bernauer Str.111,13355',
+    date: '1423456765768',
+    website: 'www.matero.com',
+    company: 'matero',
+    email: 'Boron@gmail.com',
+    status: false,
+    cost: 4,
+  },
+  {
+    position: 2,
+    name: 'Helium',
+    weight: 8.0026,
+    symbol: 'He',
+    gender: 'female',
+    mobile: '13034676675',
+    tele: '80675432',
+    city: 'Shanghai',
+    address: '88 Songshan Road',
+    date: '1423456765768',
+    website: 'www.matero.com',
+    company: 'matero',
+    email: 'Helium@gmail.com',
+    status: true,
+    cost: 5,
+  },
+  {
+    position: 3,
+    name: 'Nitrogen',
+    weight: 14.0067,
+    symbol: 'N',
+    gender: 'male',
+    mobile: '15811112222',
+    tele: '345678912',
+    city: 'Sydney',
+    address: 'Circular Quay, Sydney NSW 2000',
+    date: '1423456765768',
+    website: 'www.matero.com',
+    company: 'matero',
+    email: 'Nitrogen@gmail.com',
+    status: true,
+    cost: 2,
+  },
+];
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -10,68 +63,7 @@ import { CustomTableService } from './service/custom-table.service';
 export class AppComponent {
   title = 'mat-table-ext-example';
   isLoading: boolean = false;
-  public dataSource: any = new MatTableDataSource([
-    {
-      id: 0,
-      name: 'Ramsey Cummings',
-      gender: 'male',
-      age: 52,
-    },
-    {
-      id: 1,
-      name: 'Stefanie Huff',
-      gender: 'female',
-      age: 70,
-    },
-    {
-      id: 2,
-      name: 'Mabel David',
-      gender: 'female',
-      age: 52,
-    },
-    {
-      id: 3,
-      name: 'Frank Bradford',
-      gender: 'male',
-      age: 61,
-    },
-    {
-      id: 4,
-      name: 'Forbes Levine',
-      gender: 'male',
-      age: 34,
-    },
-    {
-      id: 5,
-      name: 'Santiago Mcclain',
-      gender: 'male',
-      age: 38,
-    },
-    {
-      id: 6,
-      name: 'Merritt Booker',
-      gender: 'male',
-      age: 33,
-    },
-    {
-      id: 7,
-      name: 'Oconnor Wade',
-      gender: 'male',
-      age: 18,
-    },
-    {
-      id: 8,
-      name: 'Leigh Beasley',
-      gender: 'female',
-      age: 53,
-    },
-    {
-      id: 9,
-      name: 'Johns Wood',
-      gender: 'male',
-      age: 52,
-    },
-  ]);
+  public dataSource: any = new MatTableDataSource(EXAMPLE_DATA);
   stickyColumn: any = false;
   columnResizable: any = false;
   stickyFooter: any = false;
@@ -94,44 +86,21 @@ export class AppComponent {
   @ViewChild('cellTemplate1') cellTemplate1!: TemplateRef<any>;
   @ViewChild('cellTemplate2') cellTemplate2!: TemplateRef<any>;
 
-  public columns: any[] = [
-    {
-      header: 'ID',
-      field: 'id',
-      type: 'number',
-      width: '',
-    },
-    { header: 'Name', field: 'name', type: 'string' },
-    { header: 'Age', field: 'age', type: 'date' },
-    {
-      header: 'Gender',
-      field: 'gender',
-      type: 'selection',
-      options: ['male', 'female'],
-    },
-    // ]
-    //   public columns: MTExColumn[] = [
-    //     { header: 'ID', field: 'id' , width:'250px'},
-    //     { header: 'Name', field: 'name', width: '250px'},
-    //     { header: 'Weight', field: 'weight', width: '250px'},
-    //     { header: 'Symbol', field: 'symbol', width: '250px', options:['A','B','C','D','E','F']},
-    // ]
-
-    // public columns: MTExColumn[] = [
-    //     { header: '', field: 'position', type:'string' },
-    //   { header: 'Name', field: 'name', type: 'string' },
-    //   { header: 'tags', field: 'tag.0.value', type: 'string' },
-    //   { header: 'Weight', field: 'weight', type: 'string' },
-    // { header: 'Symbol', field: 'symbol', type: 'string' },
-    // { header: 'Gender', field: 'gender', type: 'string' },
-    // { header: 'Mobile', field: 'mobile', type: 'string' },
-    // { header: 'City', field: 'city', type: 'string' },
-    // { header: 'Address', field: 'address', type: 'string' },
-    // { header: 'Date', field: 'date', type: 'string' },
-    // { header: 'Website', field: 'website', type: 'string' },
-    // { header: 'Company', field: 'company', type: 'string' },
-    // { header: 'Email', field: 'email', type: 'string' },
-    //   { header: 'Status', field: 'status', type: 'boolean',  },
+  public columns: MTExColumn[] = [
+    { header: 'Position', field: 'position', width: '200px',type:'string' },
+    { header: 'Name', field: 'name', width: '200px', pinned: 'left', type: 'string' },
+    { header: 'Weight', field: 'weight', width: '200px', pinned: 'left', type: 'string' },
+    { header: 'Symbol', field: 'symbol', width: '200px', type: 'string' },
+    { header: 'Gender', field: 'gender', width: '200px', type: 'selection',options:['male','female'] },
+    { header: 'Mobile', field: 'mobile', width: '200px', type: 'string' },
+    { header: 'Tele', field: 'tele', width: '200px', type: 'string' },
+    { header: 'City', field: 'city', width: '200px', type: 'string' },
+    { header: 'Address', field: 'address', width: '200px', type: 'string' },
+    { header: 'Date', field: 'date', width: '200px', type: 'string' },
+    { header: 'Website', field: 'website', width: '200px', type: 'string' },
+    { header: 'Company', field: 'company', width: '200px', type: 'string' },
+    { header: 'Email', field: 'email', width: '200px', pinned: 'right', type: 'string' },
+    { header: 'Status', field: 'status', type: 'boolean', width: '200px' }
   ];
   multiSelectRow: any = true;
   topSearchFilter: any = false;
