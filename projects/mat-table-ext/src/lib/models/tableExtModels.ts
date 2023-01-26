@@ -1,6 +1,6 @@
 import { TemplateRef } from '@angular/core';
 import { Observable } from 'rxjs';
-/** Column definition of grid. */
+/** Column definition of mat-table-ext. */
 export interface MTExColumn {
   field: string;
   options?: string[];
@@ -11,6 +11,7 @@ export interface MTExColumn {
   cellTooltip?: TooltipProp;
   pinned?: 'left' | 'right';
   width?: string;
+  disabled?: boolean;
   minWidth?: string;
   maxWidth?: string;
   hide?: boolean;
@@ -18,6 +19,7 @@ export interface MTExColumn {
   cellTemplate?: TemplateRef<any> | null;
   headerTemplate?: TemplateRef<any> | null;
 }
+
 export interface DisplayColumn {
   filter: boolean;
   name: string;
@@ -62,6 +64,15 @@ export declare type TooltipPosition =
 /** Cell template. */
 export interface MTExCellTemplate {
   [key: string]: TemplateRef<any>;
+}
+export interface FilterSearchValue {
+  [key: string]: any;
+}
+export interface MTExRow {
+  [key: string]: any;
+}
+export interface ColumnVisibility {
+  [key: string]: any;
 }
 
 export interface MTExColumnPinOption {
