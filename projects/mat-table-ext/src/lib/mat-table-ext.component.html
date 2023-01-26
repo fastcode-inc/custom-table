@@ -1,7 +1,7 @@
 <mat-card class="main-table-ext-container mat-elevation-z8" [style.width]="tableWidth">
     <mat-form-field class="global-search-field" appearance="fill" *ngIf="globalSearch">
         <mat-label>Search</mat-label>
-        <input matInput [ngModel]="globalFilter" (ngModelChange)="applyFilter($event)" placeholder="Ex. Mia" #input>
+        <input matInput [ngModel]="globalFilter" (ngModelChange)="applyGlobalFilter($event)" placeholder="Ex. Mia" #input>
     </mat-form-field>
     <mat-toolbar class="toolbar-container" *ngIf="showToolbar" [style.height]="toolbarHeight?toolbarHeight:'50px'">
         <span class="toolbar-title" *ngIf="toolbarTitle">{{toolbarTitle}}</span>
@@ -225,7 +225,7 @@
                     class="action-column-cells"> Popup
                 </th>
                 <td mat-cell *matCellDef="let row; let i = index">
-                    <mat-icon aria-hidden="false" (click)="openEditingDialog(row,i)" fontIcon="edit">
+                    <mat-icon aria-hidden="false" (click)="openEditingDialog(row)" fontIcon="edit">
                     </mat-icon>
                 </td>
                 <td mat-footer-cell *matFooterCellDef></td>
@@ -258,7 +258,7 @@
                 <th mat-header-cell *matHeaderCellDef>
                     <div class="filters-container" [class.animate]="toggleFilters">
                         <app-filter-columns-component [obj]="columnsArray[returnIndex(ids)]"
-                            (filterOutput)="applySingleFilter($event,columnsArray[returnIndex(ids)])"></app-filter-columns-component>
+                            (filterOutput)="applyColumnFilter($event,columnsArray[returnIndex(ids)])"></app-filter-columns-component>
                     </div>
                 </th>
             </ng-container>

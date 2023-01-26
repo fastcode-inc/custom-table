@@ -91,16 +91,7 @@ export class AppComponent {
     { header: 'Name', field: 'name', width: '200px', pinned: 'left', type: 'string' },
     { header: 'Weight', field: 'weight', width: '200px', pinned: 'left', type: 'string' },
     { header: 'Symbol', field: 'symbol', width: '200px', type: 'string' },
-    { header: 'Gender', field: 'gender', width: '200px', type: 'selection',options:['male','female'] },
-    { header: 'Mobile', field: 'mobile', width: '200px', type: 'string' },
-    { header: 'Tele', field: 'tele', width: '200px', type: 'string' },
-    { header: 'City', field: 'city', width: '200px', type: 'string' },
-    { header: 'Address', field: 'address', width: '200px', type: 'string' },
-    { header: 'Date', field: 'date', width: '200px', type: 'string' },
-    { header: 'Website', field: 'website', width: '200px', type: 'string' },
-    { header: 'Company', field: 'company', width: '200px', type: 'string' },
-    { header: 'Email', field: 'email', width: '200px', pinned: 'right', type: 'string' },
-    { header: 'Status', field: 'status', type: 'boolean', width: '200px' }
+    { header: 'Gender', field: 'gender', width: '200px', type: 'selection',options:['male','female'] }
   ];
   multiSelectRow: any = true;
   topSearchFilter: any = false;

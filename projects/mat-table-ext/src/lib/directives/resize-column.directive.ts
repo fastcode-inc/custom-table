@@ -57,7 +57,7 @@ export class ResizeColumnDirective implements OnInit, OnChanges {
             this.removeDragElementFromDom();
         }
     }
-
+    
     onMouseDown = (event: MouseEvent) => {
         this.pressed = true;
         this.startX = event.pageX;
@@ -90,6 +90,9 @@ export class ResizeColumnDirective implements OnInit, OnChanges {
             this.renderer.removeClass(this.table, "resizing");
         }
     };
+    /**
+     * @description This method is used remove resizing handlers from the table headers when column resizing is disabled.
+     */
     removeDragElementFromDom() {
         let ele = document.getElementById('resizeHolderSpan')
         if (ele && ele !== null && ele !== undefined) {

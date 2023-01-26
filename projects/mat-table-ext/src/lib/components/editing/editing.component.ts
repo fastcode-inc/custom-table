@@ -26,7 +26,10 @@ export class EditingComponent implements OnInit {
   ngOnInit(): void {
     this.setData(this.dialogData);
   }
-
+/**
+ * @description This method is used to set data for editing.
+ * @param value dialog Data
+ */
   setData(value: any) {
     let row = value.row;
     let types: any = {};
@@ -48,7 +51,10 @@ export class EditingComponent implements OnInit {
     this.types = types;
     this.setTemplateRef(value);
   }
-
+/**
+ * @description This method is used to set the data when data comes in from cus template.
+ * @param value template value
+ */
   setTemplateRef(value: any) {
     if (value.templateRef !== undefined) {
       this.templateRow = { ...value.row };
@@ -71,7 +77,9 @@ export class EditingComponent implements OnInit {
       this.templateRef = value.templateRef;
     }
   }
-
+/**
+ * @description This method is triggered when dialog is closed and also emits the dialog closed event data.
+ */
   closeDialog() {
     let rowData = { ...this.dialogData.row };
     this.keys.forEach((key: any) => {
@@ -83,10 +91,12 @@ export class EditingComponent implements OnInit {
     this.dialogRef.close(rowData);
   }
 
-  closeTemplateDialogMap = (row: any, keys: string[], types: string[]) => {
-    this.closeTemplateDialog(row, keys, types);
-  };
-
+  /**
+   * @description This method is called when the dialog is closed custom template action.
+   * @param row row to be edited.
+   * @param keys keys of columns
+   * @param types column types
+   */
   closeTemplateDialog(row: any, keys: string[], types: string[]) {
     let rowData = { ...row };
     keys.forEach((key: any) => {

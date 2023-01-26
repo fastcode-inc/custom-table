@@ -65,6 +65,15 @@ export declare type TooltipPosition =
 export interface MTExCellTemplate {
   [key: string]: TemplateRef<any>;
 }
+export interface FilterSearchValue {
+  [key: string]: any;
+}
+export interface MTExRow {
+  [key: string]: any;
+}
+export interface ColumnVisibility {
+  [key: string]: any;
+}
 
 export interface MTExColumnPinOption {
   label: string | Observable<string>;

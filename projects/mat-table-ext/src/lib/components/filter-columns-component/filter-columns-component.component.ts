@@ -32,6 +32,10 @@ export class FilterColumnsComponentComponent implements OnInit {
       this.checkValue(value);
     });
   }
+  /**
+   * @description This method is make value is valid and not null.
+   * @param value value to check its type.
+   */
   checkValue(value: any) {
     if (value || value == '') {
       this.emitOutput(value);
@@ -39,7 +43,10 @@ export class FilterColumnsComponentComponent implements OnInit {
       this.emitOutput('');
     }
   }
-
+/**
+ * @description This method will emit seach value to parent component.
+ * @param value value on which base table rows are filtered. 
+ */
   emitOutput(value: any) {
     let obj = { [this.obj.field]: value };
     this.filterOutput.emit(obj);
