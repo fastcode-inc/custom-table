@@ -1,19 +1,12 @@
 {
-  "name": "mat-table-sample",
-  "version": "0.0.63",
-  "description": "this is a sample table of material.",
+  "name": "samplwe-table-ext",
+  "version": "0.0.67",
+  "description": "The mat-table-ext is a powerful material table extension component used to display tabular data with extra features.",
   "keywords": [
-    "Hamza"
+    "mat-table",
+    "mat-table-ext",
+    "material table extension"
   ],
-  "author": {
-    "name": "Samples Contribute",
-    "email": "abc@gmail.com",
-    "url": "http://blog.sample.me/"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/sample/tableSample"
-  },
   "peerDependencies": {
     "@angular/animations": "^14.2.0",
     "@angular/cdk": "^14.2.4",
