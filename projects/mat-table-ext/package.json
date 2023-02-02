@@ -1,11 +1,18 @@
 {
-  "name": "samplwe-table-ext",
-  "version": "0.0.67",
+  "name": "mat-table-ext",
+  "version": "0.0.1",
   "description": "The mat-table-ext is a powerful material table extension component used to display tabular data with extra features.",
   "keywords": [
     "mat-table",
     "mat-table-ext",
-    "material table extension"
+    "material table extension",
+    "angular material",
+    "data grid",
+    "angular",
+    "material data table",
+    "angular-material",
+    "angular-component"
+
   ],
   "peerDependencies": {
     "@angular/animations": "^14.2.0",

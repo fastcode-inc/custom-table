@@ -873,14 +873,14 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
  */
   addIconsToRegistry() {
     let y = this.domSanitizer.bypassSecurityTrustResourceUrl(
-      `../../assets/pinRight.svg`
+      `assets/pinRight.svg`
     );
     let iconNames = ['pinLeft', 'pinRight', 'pinNone', 'pinned', 'pinIcon'];
     iconNames.forEach((icon) => {
       this.matIconRegistry.addSvgIcon(
         icon,
         this.domSanitizer.bypassSecurityTrustResourceUrl(
-          `../../assets/${icon}.svg`
+          `assets/${icon}.svg`
         )
       );
     });
