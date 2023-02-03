@@ -1,27 +1,43 @@
-# MatTableExt
+# Mat Table Extension
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 13.2.5.
+This library was generated with [Angular CLI](https://github.com/angular/angular-cli) version 14.2.10.
 
-## Development server
+## Installation
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
+At first, you should install the Angular Material and setup it. [Learn more about the setup](https://material.angular.io/guide/getting-started).
 
-## Code scaffolding
+Install the Extension library:
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+```bash
+$ npm i mat-table-ext
+```
 
-## Build
+## Setup
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+Import the MatTableExtModule into imports array.
 
-## Running unit tests
+```ts
+import { MatTableExtModule } from 'mat-table-ext';
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+@NgModule({
+  ...
+  imports: [MatTableExtModule,...],
+  ...
+})
+export class YourAppModule {
+}
+```
+```
+After adding the MatTableExtModule to your application, 
+Now you have to add path of assets of table into your application.
+Add following into your angular.json file under build and test(if required)
+ {
+   "assets": [
+     {
+       "glob": "**/*",
+       "input": "./node_modules/mat-table-ext/assets",
+       "output": "/assets/"
+     }
+   ]
+ }
+```
