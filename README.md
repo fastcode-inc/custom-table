@@ -1,7 +1,9 @@
 # Mat Table Extension
 
 This library was generated with [Angular CLI](https://github.com/angular/angular-cli) version 14.2.10.
+## Documentation
 
+Check out the [demos and APIs](https://fastcode-inc.github.io/custom-table-doc).
 ## Installation
 
 At first, you should install the Angular Material and setup it. [Learn more about the setup](https://material.angular.io/guide/getting-started).
@@ -41,3 +43,6 @@ Add following into your angular.json file under build and test(if required)
    ]
  }
 ```
+## License
+
+MIT
