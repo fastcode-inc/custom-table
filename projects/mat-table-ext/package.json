@@ -1,6 +1,6 @@
 {
   "name": "mat-table-ext",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "The mat-table-ext is a powerful material table extension component used to display tabular data with extra features.",
   "homepage": "https://fastcode-inc.github.io/custom-table-doc",
   "keywords": [
@@ -14,6 +14,10 @@
     "angular-material",
     "angular-component"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fastcode-inc/custom-table"
+  },
   "peerDependencies": {
     "@angular/animations": "^14.2.0",
     "@angular/cdk": "^14.2.4",
