@@ -1,6 +1,6 @@
 {
   "name": "mat-table-ext",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "The mat-table-ext is a powerful material table extension component used to display tabular data with extra features.",
   "homepage": "https://fastcode-inc.github.io/custom-table-doc",
   "keywords": [
