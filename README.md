@@ -3,10 +3,10 @@
 This library was generated with [Angular CLI](https://github.com/angular/angular-cli) version 14.2.10.
 ## Documentation
 
-Check out the [demos and APIs](https://fastcode-inc.github.io/custom-table-doc).
+Check out the [demos and API](https://fastcode-inc.github.io/custom-table-doc).
 ## Installation
 
-At first, you should install the Angular Material and setup it. [Learn more about the setup](https://material.angular.io/guide/getting-started).
+First, you should install and set up Angular Material. [Learn more about the setup](https://material.angular.io/guide/getting-started).
 
 Install the Extension library:
 
@@ -30,9 +30,8 @@ export class YourAppModule {
 }
 ```
 ```
-After adding the MatTableExtModule to your application, 
-Now you have to add path of assets of table into your application.
-Add following into your angular.json file under build and test(if required)
+After adding the MatTableExtModule to your application, add the path of assets of table to your application.
+Add the following to your angular.json file under build and test (if required).
  {
    "assets": [
      {
