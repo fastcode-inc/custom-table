@@ -3,10 +3,10 @@
 This library was generated with [Angular CLI](https://github.com/angular/angular-cli) version 14.2.10.
 ## Documentation
 
-Check out the [demos and APIs](https://fastcode-inc.github.io/custom-table-doc).
+Check out the [demos and API](https://fastcode-inc.github.io/custom-table-doc).
 ## Installation
 
-At first, you should install the Angular Material and setup it. [Learn more about the setup](https://material.angular.io/guide/getting-started).
+First, you should install and set up Angular Material. [Learn more about the setup](https://material.angular.io/guide/getting-started).
 
 Install the Extension library:
 
@@ -42,6 +42,16 @@ Add following into your angular.json file under build and test(if required)
      }
    ]
  }
+```
+## Theming
+
+After import modules, you can define a can theme for mat-table-ext. [More details about theming.](https://material.angular.io/guide/theming).
+
+
+```ts
+@use '../node_modules/mat-table-ext/assets/theming' as mtex;
+
+@include mtex.mat-table-ext-theme($your-custom-theme);
 ```
 ## License
 
