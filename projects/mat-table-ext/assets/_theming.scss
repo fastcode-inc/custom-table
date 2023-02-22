@@ -1,0 +1,7 @@
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+// Create a theme.
+@mixin mat-table-ext-theme($theme-or-color-config) {
+   @include mat.all-component-themes($theme-or-color-config)
+}
