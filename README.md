@@ -42,6 +42,16 @@ Add the following to your angular.json file under build and test (if required).
    ]
  }
 ```
+## Theming
+
+After import modules, you can define a can theme for mat-table-ext. [More details about theming.](https://material.angular.io/guide/theming).
+
+
+```ts
+@use '../node_modules/mat-table-ext/assets/theming' as mtex;
+
+@include mtex.mat-table-ext-theme($your-custom-theme);
+```
 ## License
 
 MIT
