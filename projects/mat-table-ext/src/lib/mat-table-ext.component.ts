@@ -457,7 +457,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
     }
   }
   /**
-   * @description This methohd create filter predicate function which will set search value to table filters
+   * @description This method create filter predicate function which will set search value to table filters
    * for both global and individual colum filtering.
    * @returns returns boolean value to filter rows in table.
    */
