@@ -1,4 +1,4 @@
-<mat-card class="main-table-ext-container mat-elevation-z8" [style.width]="tableWidth">
+<div  [style.width]="tableWidth">
     <mat-form-field class="global-search-field" appearance="fill" *ngIf="globalSearch">
         <mat-label>Search</mat-label>
         <input matInput [ngModel]="globalFilter" (ngModelChange)="applyGlobalFilter($event)" placeholder="Ex. Mia" #input>
@@ -282,4 +282,4 @@
     <mat-paginator *ngIf="showPaginator" [pageSizeOptions]="pageSizeOptions"
         [showFirstLastButtons]="showFirstLastButtons">
     </mat-paginator>
-</mat-card>
+</div>
