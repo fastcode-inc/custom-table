@@ -103,7 +103,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   @Input() exportButtonEnable: boolean = false;
   @Input() pageSizeOptions: number[] = [10, 50, 100];
   @Input() toolbarTemplateRef!: TemplateRef<any> | undefined;
-  @Input() headerTemplateRef!: TemplateRef<any> | undefined;
+  @Input() headerTemplateRef!: TemplateRef<any> | null;
   @Input() cellTemplateRef!: TemplateRef<any> | undefined;
   @Input() expansionTemplateRef!: TemplateRef<any> | undefined;
   @Input() popupEditingTemplateRef!: TemplateRef<any> | undefined;

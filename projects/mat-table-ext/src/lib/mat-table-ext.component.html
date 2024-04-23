@@ -1,7 +1,8 @@
-<div  [style.width]="tableWidth">
+<div [style.width]="tableWidth">
     <mat-form-field class="global-search-field" appearance="fill" *ngIf="globalSearch">
         <mat-label>Search</mat-label>
-        <input matInput [ngModel]="globalFilter" (ngModelChange)="applyGlobalFilter($event)" placeholder="Ex. Mia" #input>
+        <input matInput [ngModel]="globalFilter" (ngModelChange)="applyGlobalFilter($event)" placeholder="Ex. Mia"
+            #input>
     </mat-form-field>
     <mat-toolbar class="toolbar-container" *ngIf="showToolbar" [style.height]="toolbarHeight?toolbarHeight:'50px'">
         <span class="toolbar-title" *ngIf="toolbarTitle">{{toolbarTitle}}</span>
@@ -100,13 +101,14 @@
                 <th mat-header-cell *matHeaderCellDef [style.width]="column.width" [style.maxWidth]="column.maxWidth"
                     [style.minWidth]="column.minWidth" cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="!dndColumns"
                     [columnsResizable]="columnResizable" [index]="i">
-                    <span *ngIf="!headerTemplateRef" matTooltip="{{column.headerTooltip?.value}}"
+
+                    <ng-template *ngIf="column.headerTemplate || headerTemplateRef"
+                        [ngTemplateOutlet]="column.headerTemplate || headerTemplateRef"
+                        [ngTemplateOutletContext]="{data:column}"></ng-template>
+                    <span *ngIf="!headerTemplateRef && !column.headerTemplate"
+                        matTooltip="{{column.headerTooltip?.value}}"
                         [matTooltipPosition]="column?.headerTooltip?.tooltipPosition!" mat-sort-header
                         [disabled]="!sorting || column.disabled === true">{{column.header}}</span>
-                    <ng-container *ngIf="headerTemplateRef" [ngTemplateOutlet]="headerTemplateRef"
-                        [ngTemplateOutletContext]="{data:column}"></ng-container>
-                    <ng-container *ngIf="column.headerTemplate" [ngTemplateOutlet]="column.headerTemplate"
-                        [ngTemplateOutletContext]="{data:column}"></ng-container>
                 </th>
                 <td mat-cell *matCellDef="let row ;let i=dataIndex">
                     <div *ngIf="!row.editable && !cellEditing[i +'_'+column.field]"

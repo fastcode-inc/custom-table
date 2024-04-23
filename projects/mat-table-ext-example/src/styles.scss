@@ -1,5 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
-@use '../../../node_modules/mat-table-ext-sammmm/assets/theming' as mtx;
+@use '../../../node_modules/mat-table-ext/assets/theming' as mtx;
 @use '@angular/material' as mat;
 // Plus imports for other components in your app.
 @include mat.core();
