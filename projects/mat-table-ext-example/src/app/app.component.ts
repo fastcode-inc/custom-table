@@ -1,7 +1,7 @@
-import { Component, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, TemplateRef, ViewChild } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { CustomTableService } from './service/custom-table.service';
-import { MTExColumn } from '../../../mat-table-ext/src/lib/models/tableExtModels';
+import { MTExColumn } from 'mat-table-ext-new/lib/models/tableExtModels';
 export const EXAMPLE_DATA: any[] = [
   {
     position: 1,
@@ -60,7 +60,7 @@ export const EXAMPLE_DATA: any[] = [
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
-export class AppComponent {
+export class AppComponent implements AfterViewInit {
   title = 'mat-table-ext-example';
   isLoading: boolean = false;
   public dataSource: any = new MatTableDataSource(EXAMPLE_DATA);
@@ -85,14 +85,16 @@ export class AppComponent {
   exportButtonEnable: any = true;
   @ViewChild('cellTemplate1') cellTemplate1!: TemplateRef<any>;
   @ViewChild('cellTemplate2') cellTemplate2!: TemplateRef<any>;
+  @ViewChild('headerTemplate2') headerTemplate2!: TemplateRef<any>;
 
-  public columns: MTExColumn[] = [
-    { header: 'Position', field: 'position', width: '200px',type:'string' },
-    { header: 'Name', field: 'name', width: '200px', pinned: 'left', type: 'string' },
-    { header: 'Weight', field: 'weight', width: '200px', pinned: 'left', type: 'string' },
-    { header: 'Symbol', field: 'symbol', width: '200px', type: 'string' },
-    { header: 'Gender', field: 'gender', width: '200px', type: 'selection',options:['male','female'] }
-  ];
+  
+  public columns: MTExColumn[] = []
+  //   { header: 'Position', field: 'position', width: '200px',type:'string', headerTemplate:this.headerTemplate2 },
+  //   { header: 'Name', field: 'name', width: '200px', pinned: 'left', type: 'string' },
+  //   { header: 'Weight', field: 'weight', width: '200px', pinned: 'left', type: 'string' },
+  //   { header: 'Symbol', field: 'symbol', width: '200px', type: 'string' },
+  //   { header: 'Gender', field: 'gender', width: '200px', type: 'selection',options:['male','female'] }
+  // ];
   multiSelectRow: any = true;
   topSearchFilter: any = false;
   tableHeight: string = '';
@@ -111,6 +113,16 @@ export class AppComponent {
   cellEditingTemplateRefCtrl: any = false;
   constructor(public service: CustomTableService) {
     // this.loadPage(10);
+  }
+  ngAfterViewInit(): void {
+    
+  this.columns=[
+    { header: 'Position', field: 'position', width: '200px', type: 'string', headerTemplate: this.headerTemplate2 },
+    { header: 'Name', field: 'name', width: '200px', pinned: 'left', type: 'string' },
+    { header: 'Weight', field: 'weight', width: '200px', pinned: 'left', type: 'string' },
+    { header: 'Symbol', field: 'symbol', width: '200px', type: 'string' },
+    { header: 'Gender', field: 'gender', width: '200px', type: 'selection', options: ['male', 'female'] }
+  ];
   }
 
   ngOnInit(): void {}

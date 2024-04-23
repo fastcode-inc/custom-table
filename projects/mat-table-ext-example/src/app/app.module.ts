@@ -13,7 +13,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
-import { MatTableExtModule } from 'mat-table-ext';
+import { MatTableExtModule } from 'mat-table-ext-new';
 
 @NgModule({
   declarations: [AppComponent],

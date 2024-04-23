@@ -264,7 +264,7 @@
   (scroll)="onScroll($event)"
   (selectionChanged)="onSelectionChange($event)"
   (rowDeleted)="showData($event, 'Delete change')"
-  [headerTemplateRef]="headerTemplateRefCtrl ? headerTemplate : undefined"
+  [headerTemplateRef]="headerTemplateRefCtrl ? headerTemplate : null"
   [cellTemplateRef]="cellTemplateRefCtrl ? cellTemplateRef : undefined"
   [cellTemplateRefMap]="{ id: cellTemplateID }"
   [toolbarTemplateRef]="toolbarTemplateRefCtrl ? toolbarTemplate : undefined"
@@ -277,6 +277,12 @@
 <ng-template #headerTemplate let-data="data">
   <div style="display: flex">
     <mat-icon style="color: purple">bolt</mat-icon
+    ><span style="font-size: 15px; font-style: italic">{{ data.header }}</span>
+  </div>
+</ng-template>
+<ng-template #headerTemplate2 let-data="data">
+  <div style="display: flex">
+    <mat-icon style="color: rgb(0, 105, 128)">bolt</mat-icon
     ><span style="font-size: 15px; font-style: italic">{{ data.header }}</span>
   </div>
 </ng-template>
