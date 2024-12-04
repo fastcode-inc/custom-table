@@ -2,7 +2,7 @@ import { AfterViewInit, Component, TemplateRef, ViewChild } from '@angular/core'
 import { MatTableDataSource } from '@angular/material/table';
 import { CustomTableService } from './service/custom-table.service';
 import { MTExColumn } from 'mat-table-ext-new/lib/models/tableExtModels';
-export const EXAMPLE_DATA: any[] = [
+export var EXAMPLE_DATA: any[] = [
   {
     position: 1,
     name: 'Boron',
@@ -149,6 +149,12 @@ export class AppComponent implements AfterViewInit {
   }
 
   showData(event: any, property: string) {
+    if (property == 'Delete change')
+    {
+     EXAMPLE_DATA.splice(event.fromIndex, 1);
+    this.dataSource = new MatTableDataSource(EXAMPLE_DATA);
+
+    }
     console.log(property, event);
   }
 

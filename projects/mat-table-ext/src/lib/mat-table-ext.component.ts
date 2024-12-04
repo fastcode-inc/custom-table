@@ -636,10 +636,10 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
    * @param index index of the row to be deleted.
    */
   deleteRow(row: any, index: number) {
-    this.tableData.splice(index, 1);
-    this.dataSource = new MatTableDataSource(this.tableData);
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
+    // this.tableData.splice(index, 1);
+    // this.dataSource = new MatTableDataSource(this.tableData);
+    // this.dataSource.paginator = this.paginator;
+    // this.dataSource.sort = this.sort;
     this.rowDeleted.emit({ removedRow: row, fromIndex: index });
   }
 

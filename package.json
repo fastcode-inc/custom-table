@@ -22,6 +22,7 @@
     "@ngx-translate/core": "^14.0.0",
     "mat-table-ext": "^0.0.10",
     "mat-table-ext-new": "^0.0.10",
+    "mat-table-ext-test": "^0.0.11",
     "ngx-translate": "^0.0.1-security",
     "rxjs": "~7.5.0",
     "xlsx": "^0.18.5",
