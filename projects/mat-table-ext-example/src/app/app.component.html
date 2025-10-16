@@ -348,78 +348,80 @@
     </div>
     <mat-dialog-content style="margin-right: 20px">
       <div style="display: flex; flex-direction: column">
-        <ng-container *ngFor="let key of keys">
-          <mat-form-field
-            *ngIf="types[key] == 'number'"
-            color="accent"
-            appearance="outline"
-            class="inline-editing-field"
-          >
-            <mat-label>{{ key | titlecase }}</mat-label>
-            <input
-              matInput
-              type="number"
-              [(ngModel)]="row[key]"
+        @for (key of keys; track key) {
+          @if (types[key] == 'number') {
+            <mat-form-field
               color="accent"
-              [ngModelOptions]="{ standalone: true }"
-            />
-          </mat-form-field>
-
-          <mat-form-field
-            *ngIf="types[key] == 'string'"
-            appearance="outline"
-            color="accent"
-            class="inline-editing-field"
-          >
-            <mat-label>{{ key | titlecase }}</mat-label>
-            <input
-              matInput
-              type="text"
-              [(ngModel)]="row[key]"
-              color="accent"
-              [ngModelOptions]="{ standalone: true }"
-            />
-          </mat-form-field>
-          <mat-form-field
-            *ngIf="types[key] == 'date'"
-            appearance="outline"
-            color="accent"
-            class="inline-editing-field"
-          >
-            <mat-label>{{ key | titlecase }}</mat-label>
-            <input
-              matInput
-              type="text"
-              [(ngModel)]="row[key]"
-              [ngModelOptions]="{ standalone: true }"
-            />
-          </mat-form-field>
-          <mat-form-field
-            *ngIf="types[key] == 'selection'"
-            appearance="outline"
-            color="accent"
-            class="inline-editing-field"
-          >
-            <mat-label>{{ key | titlecase }}</mat-label>
-            <mat-select [value]="row[key].value" [(ngModel)]="row[key].value">
-              <mat-option
-                *ngFor="let option of row[key].options"
-                [value]="option"
-              >
-                {{ option }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <p>
-            <mat-checkbox
-              *ngIf="types[key] == 'boolean'"
-              color="accent"
-              [(ngModel)]="row[key]"
+              appearance="outline"
+              class="inline-editing-field"
             >
               <mat-label>{{ key | titlecase }}</mat-label>
-            </mat-checkbox>
-          </p>
-        </ng-container>
+              <input
+                matInput
+                type="number"
+                [(ngModel)]="row[key]"
+                color="accent"
+                [ngModelOptions]="{ standalone: true }"
+              />
+            </mat-form-field>
+          }
+
+          @if (types[key] == 'string') {
+            <mat-form-field
+              appearance="outline"
+              color="accent"
+              class="inline-editing-field"
+            >
+              <mat-label>{{ key | titlecase }}</mat-label>
+              <input
+                matInput
+                type="text"
+                [(ngModel)]="row[key]"
+                color="accent"
+                [ngModelOptions]="{ standalone: true }"
+              />
+            </mat-form-field>
+          }
+          @if (types[key] == 'date') {
+            <mat-form-field
+              appearance="outline"
+              color="accent"
+              class="inline-editing-field"
+            >
+              <mat-label>{{ key | titlecase }}</mat-label>
+              <input
+                matInput
+                type="text"
+                [(ngModel)]="row[key]"
+                [ngModelOptions]="{ standalone: true }"
+              />
+            </mat-form-field>
+          }
+          @if (types[key] == 'selection') {
+            <mat-form-field
+              appearance="outline"
+              color="accent"
+              class="inline-editing-field"
+            >
+              <mat-label>{{ key | titlecase }}</mat-label>
+              <mat-select [value]="row[key].value" [(ngModel)]="row[key].value">
+                @for (option of row[key].options; track option) {
+                  <mat-option [value]="option">{{ option }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+          @if (types[key] == 'boolean') {
+            <p>
+              <mat-checkbox
+                color="accent"
+                [(ngModel)]="row[key]"
+              >
+                <mat-label>{{ key | titlecase }}</mat-label>
+              </mat-checkbox>
+            </p>
+          }
+        }
       </div>
     </mat-dialog-content>
     <div class="spacer"></div>
@@ -437,68 +439,73 @@
   let-column="data.column"
   let-updateData="data.updateFunc"
 >
-  <mat-form-field
-    *ngIf="column.type == 'number'"
-    appearance="outline"
-    class="inline-editing-field"
-  >
-    <input
-      matInput
-      type="number"
-      [(ngModel)]="row[column.field]"
-      [ngModelOptions]="{ standalone: true }"
-      (ngModelChange)="updateData(row)"
-    />
-  </mat-form-field>
-  <mat-form-field
-    *ngIf="column.type == 'string'"
-    appearance="outline"
-    class="inline-editing-field"
-  >
-    <input
-      matInput
-      type="text"
-      [(ngModel)]="row[column.field]"
-      [ngModelOptions]="{ standalone: true }"
-      (ngModelChange)="updateData(row)"
-    />
-  </mat-form-field>
-  <mat-form-field
-    *ngIf="column.type == 'date'"
-    appearance="outline"
-    class="inline-editing-field"
-  >
-    <input
-      matInput
-      type="date"
-      [(ngModel)]="row[column.field]"
-      [ngModelOptions]="{ standalone: true }"
-      (ngModelChange)="updateData(row)"
-    />
-  </mat-form-field>
-  <mat-form-field
-    *ngIf="column.type == 'selection'"
-    appearance="outline"
-    class="inline-editing-field"
-  >
-    <mat-select
-      [value]="row[column.field]"
-      [(ngModel)]="row[column.field]"
-      (ngModelChange)="updateData(row)"
-      [ngModelOptions]="{ standalone: true }"
+  @if (column.type == 'number') {
+    <mat-form-field
+      appearance="outline"
+      class="inline-editing-field"
     >
-      <mat-option *ngFor="let option of column.options" [value]="option">
-        {{ option }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-  <mat-checkbox
-    (click)="$event.stopPropagation()"
-    (ngModelChange)="updateData(row)"
-    *ngIf="column.type == 'boolean'"
-    color="primary"
-    [(ngModel)]="row[column.field]"
-  ></mat-checkbox>
+      <input
+        matInput
+        type="number"
+        [(ngModel)]="row[column.field]"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="updateData(row)"
+      />
+    </mat-form-field>
+  }
+  @if (column.type == 'string') {
+    <mat-form-field
+      appearance="outline"
+      class="inline-editing-field"
+    >
+      <input
+        matInput
+        type="text"
+        [(ngModel)]="row[column.field]"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="updateData(row)"
+      />
+    </mat-form-field>
+  }
+  @if (column.type == 'date') {
+    <mat-form-field
+      appearance="outline"
+      class="inline-editing-field"
+    >
+      <input
+        matInput
+        type="date"
+        [(ngModel)]="row[column.field]"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="updateData(row)"
+      />
+    </mat-form-field>
+  }
+  @if (column.type == 'selection') {
+    <mat-form-field
+      appearance="outline"
+      class="inline-editing-field"
+    >
+      <mat-select
+        [value]="row[column.field]"
+        [(ngModel)]="row[column.field]"
+        (ngModelChange)="updateData(row)"
+        [ngModelOptions]="{ standalone: true }"
+      >
+        @for (option of column.options; track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  @if (column.type == 'boolean') {
+    <mat-checkbox
+      (click)="$event.stopPropagation()"
+      (ngModelChange)="updateData(row)"
+      color="primary"
+      [(ngModel)]="row[column.field]"
+    ></mat-checkbox>
+  }
 </ng-template>
 <ng-template
   #cellEditing
@@ -506,74 +513,79 @@
   let-column="data.column"
   let-updateData="data.updateFunc"
 >
-  <mat-form-field
-    *ngIf="column.type == 'number'"
-    color="accent"
-    appearance="outline"
-    class="inline-editing-field"
-  >
-    <input
-      matInput
-      type="number"
-      [(ngModel)]="row[column.field]"
-      [ngModelOptions]="{ standalone: true }"
-      (ngModelChange)="updateData(row)"
-    />
-  </mat-form-field>
-
-  <mat-form-field
-    *ngIf="column.type == 'string'"
-    color="accent"
-    appearance="outline"
-    class="inline-editing-field"
-  >
-    <input
-      matInput
-      type="text"
-      [(ngModel)]="row[column.field]"
-      [ngModelOptions]="{ standalone: true }"
-      (ngModelChange)="updateData(row)"
-    />
-  </mat-form-field>
-  <mat-form-field
-    *ngIf="column.type == 'date'"
-    color="accent"
-    appearance="outline"
-    class="inline-editing-field"
-  >
-    <input
-      matInput
-      type="date"
-      [(ngModel)]="row[column.field]"
-      [ngModelOptions]="{ standalone: true }"
-      (ngModelChange)="updateData(row)"
-    />
-  </mat-form-field>
-  <mat-form-field
-    *ngIf="column.type == 'selection'"
-    color="accent"
-    appearance="outline"
-    class="inline-editing-field"
-  >
-    <mat-select
-      [value]="row[column.field]"
-      [(ngModel)]="row[column.field]"
-      (ngModelChange)="updateData(row)"
-      [ngModelOptions]="{ standalone: true }"
+  @if (column.type == 'number') {
+    <mat-form-field
+      color="accent"
+      appearance="outline"
+      class="inline-editing-field"
     >
-      <mat-option *ngFor="let option of column.options" [value]="option">
-        {{ option }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
-  <mat-checkbox
-    (click)="$event.stopPropagation()"
-    color="accent"
-    (ngModelChange)="updateData(row)"
-    *ngIf="column.type == 'boolean'"
-    color="primary"
-    [(ngModel)]="row[column.field]"
-  ></mat-checkbox>
+      <input
+        matInput
+        type="number"
+        [(ngModel)]="row[column.field]"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="updateData(row)"
+      />
+    </mat-form-field>
+  }
+
+  @if (column.type == 'string') {
+    <mat-form-field
+      color="accent"
+      appearance="outline"
+      class="inline-editing-field"
+    >
+      <input
+        matInput
+        type="text"
+        [(ngModel)]="row[column.field]"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="updateData(row)"
+      />
+    </mat-form-field>
+  }
+  @if (column.type == 'date') {
+    <mat-form-field
+      color="accent"
+      appearance="outline"
+      class="inline-editing-field"
+    >
+      <input
+        matInput
+        type="date"
+        [(ngModel)]="row[column.field]"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="updateData(row)"
+      />
+    </mat-form-field>
+  }
+  @if (column.type == 'selection') {
+    <mat-form-field
+      color="accent"
+      appearance="outline"
+      class="inline-editing-field"
+    >
+      <mat-select
+        [value]="row[column.field]"
+        [(ngModel)]="row[column.field]"
+        (ngModelChange)="updateData(row)"
+        [ngModelOptions]="{ standalone: true }"
+      >
+        @for (option of column.options; track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  @if (column.type == 'boolean') {
+    <mat-checkbox
+      (click)="$event.stopPropagation()"
+      color="accent"
+      (ngModelChange)="updateData(row)"
+      color="primary"
+      [(ngModel)]="row[column.field]"
+    ></mat-checkbox>
+  }
 </ng-template>
 <ng-template #ex>
   Lorem ipsum dolor sit amet consectetur adipisicing elit. Ducimus accusantium
