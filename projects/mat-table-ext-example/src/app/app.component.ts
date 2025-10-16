@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, TemplateRef, ViewChild } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { CustomTableService } from './service/custom-table.service';
-import { MTExColumn } from 'mat-table-ext';
+import { MTExColumn } from '../../../mat-table-ext/src/lib/models/tableExtModels';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -14,7 +14,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatTableExtModule } from 'mat-table-ext';
+import { MatTableExtModule } from '../../../mat-table-ext/src/lib/mat-table-ext.module';
 import { TitleCasePipe } from '@angular/common';
 export var EXAMPLE_DATA: any[] = [
   {

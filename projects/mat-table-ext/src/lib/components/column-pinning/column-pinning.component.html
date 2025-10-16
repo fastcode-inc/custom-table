@@ -1,7 +1,9 @@
-<div class="pinning-list-item" *ngFor="let column of columns" style="display: flex; ">
-    <button mat-icon-button >
-        <mat-icon (click)="changeValue(column)" matTooltip="{{column['pinned'] ? (column['pinned'] | titlecase):'None'}}"
-            svgIcon="{{column['pinned'] =='left'|| column['pinned'] =='right' ? icons[column['pinned']]:'pinNone'}}" class="pinning-icon"></mat-icon>
-    </button>
-    <span class="column-headers">{{column.header}}</span>
-</div>
+@for (column of columns; track column.field) {
+    <div class="pinning-list-item" style="display: flex; ">
+        <button mat-icon-button >
+            <mat-icon (click)="changeValue(column)" matTooltip="{{column['pinned'] ? (column['pinned'] | titlecase):'None'}}"
+                svgIcon="{{column['pinned'] =='left'|| column['pinned'] =='right' ? icons[column['pinned']]:'pinNone'}}" class="pinning-icon"></mat-icon>
+        </button>
+        <span class="column-headers">{{column.header}}</span>
+    </div>
+}
