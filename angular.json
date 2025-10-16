@@ -109,10 +109,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "mat-table-ext-example:build:production"
+              "buildTarget": "mat-table-ext-example:build:production"
             },
             "development": {
-              "browserTarget": "mat-table-ext-example:build:development"
+              "buildTarget": "mat-table-ext-example:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -120,7 +120,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "mat-table-ext-example:build"
+            "buildTarget": "mat-table-ext-example:build"
           }
         },
         "test": {
