@@ -1,10 +1,21 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { MTExColumn } from '../../models/tableExtModels';
+import { CommonModule } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { TitleCasePipe } from '@angular/common';
 
 @Component({
   selector: 'app-column-pinning',
   templateUrl: './column-pinning.component.html',
   styleUrls: ['./column-pinning.component.scss'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    MatIconModule,
+    MatTooltipModule,
+    TitleCasePipe
+  ]
 })
 export class ColumnPinningComponent implements OnInit {
   @Input() columns!: MTExColumn[];

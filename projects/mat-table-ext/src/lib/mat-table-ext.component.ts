@@ -23,7 +23,7 @@ import {
   ViewChild,
   ViewEncapsulation,
 } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { MatPaginator } from '@angular/material/paginator';
@@ -46,11 +46,51 @@ import { MatTableExtService } from '../lib/mat-table-ext.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';
 import * as XLSX from 'xlsx';
+import { CommonModule } from '@angular/common';
+import { MatTableModule } from '@angular/material/table';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatIconModule } from '@angular/material/icon';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { DragDropModule } from '@angular/cdk/drag-drop';
+import { ColumnPinningComponent } from './components/column-pinning/column-pinning.component';
+import { FilterColumnsComponentComponent } from './components/filter-columns-component/filter-columns-component.component';
+import { ResizeColumnDirective } from './directives/resize-column.directive';
 @Component({
   selector: 'mat-table-ext',
   templateUrl: 'mat-table-ext.component.html',
   styleUrls: ['mat-table-ext.scss'],
   encapsulation: ViewEncapsulation.None,
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatTableModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatCheckboxModule,
+    MatIconModule,
+    MatPaginatorModule,
+    MatMenuModule,
+    MatButtonModule,
+    MatTooltipModule,
+    MatToolbarModule,
+    MatProgressBarModule,
+    DragDropModule,
+    ColumnPinningComponent,
+    FilterColumnsComponentComponent,
+    ResizeColumnDirective,
+    EditingComponent
+  ],
   animations: [
     trigger('detailExpand', [
       state('collapsed', style({ height: '0px', minHeight: '0' })),

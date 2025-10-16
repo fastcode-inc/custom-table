@@ -108,7 +108,7 @@
                     <span *ngIf="!headerTemplateRef && !column.headerTemplate"
                         matTooltip="{{column.headerTooltip?.value}}"
                         [matTooltipPosition]="column?.headerTooltip?.tooltipPosition!" mat-sort-header
-                        [disabled]="!sorting || column.disabled === true">{{column.header}}</span>
+                        [class.disabled]="!sorting || column.disabled === true">{{column.header}}</span>
                 </th>
                 <td mat-cell *matCellDef="let row ;let i=dataIndex">
                     <div *ngIf="!row.editable && !cellEditing[i +'_'+column.field]"

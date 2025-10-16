@@ -2,11 +2,32 @@ import { Component, Inject, OnInit, TemplateRef } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MTExColumn } from '../../models/tableExtModels';
 import { MatTableExtService } from '../../mat-table-ext.service';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialogModule } from '@angular/material/dialog';
+import { TitleCasePipe } from '@angular/common';
 
 @Component({
   selector: 'app-editing',
   templateUrl: './editing.component.html',
   styleUrls: ['./editing.component.scss'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatCheckboxModule,
+    MatButtonModule,
+    MatDialogModule,
+    TitleCasePipe
+  ]
 })
 export class EditingComponent implements OnInit {
   public templateRef!: TemplateRef<any>;

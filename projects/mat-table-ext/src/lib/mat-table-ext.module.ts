@@ -57,13 +57,7 @@ import { MatTreeModule } from '@angular/material/tree';
 
 
 @NgModule({
-  declarations: [
-    MatTableExtComponent,
-    ResizeColumnDirective,
-    ColumnPinningComponent,
-    EditingComponent,
-    FilterColumnsComponentComponent,
-  ],
+  declarations: [],
   imports: [
     CommonModule,
     TranslateModule.forChild(),
@@ -114,7 +108,12 @@ import { MatTreeModule } from '@angular/material/tree';
     MatTreeModule,
     PortalModule,
     ScrollingModule,
-    MatFormFieldModule
+    MatFormFieldModule,
+    MatTableExtComponent,
+    ResizeColumnDirective,
+    ColumnPinningComponent,
+    EditingComponent,
+    FilterColumnsComponentComponent,
   ],
   exports: [
     MatTableExtComponent,

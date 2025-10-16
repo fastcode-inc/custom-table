@@ -1,7 +1,21 @@
 import { AfterViewInit, Component, TemplateRef, ViewChild } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { CustomTableService } from './service/custom-table.service';
-import { MTExColumn } from 'mat-table-ext-new/lib/models/tableExtModels';
+import { MTExColumn } from 'mat-table-ext';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatTableExtModule } from 'mat-table-ext';
+import { TitleCasePipe } from '@angular/common';
 export var EXAMPLE_DATA: any[] = [
   {
     position: 1,
@@ -59,6 +73,23 @@ export var EXAMPLE_DATA: any[] = [
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatCardModule,
+    MatSlideToggleModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatDividerModule,
+    MatIconModule,
+    MatButtonModule,
+    MatDialogModule,
+    MatSelectModule,
+    MatCheckboxModule,
+    MatTableExtModule,
+    TitleCasePipe
+  ]
 })
 export class AppComponent implements AfterViewInit {
   title = 'mat-table-ext-example';
