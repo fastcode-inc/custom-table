@@ -1,7 +1,7 @@
 <!-- <mat-form-field appearance="legacy">
   <mat-label>Legacy form field</mat-label>
   <input matInput placeholder="Placeholder">
-<mat-icon matSuffix>sentiment_very_satisfied</mat-icon>
+  <mat-icon matSuffix>sentiment_very_satisfied</mat-icon>
   <mat-hint>Hint</mat-hint>
 </mat-form-field> -->
 <mat-card class="result">
@@ -99,7 +99,6 @@
           Row Expandable
         </mat-slide-toggle>
       </section>
-
       <section class="example-section">
         <mat-slide-toggle [(ngModel)]="dragEnable" [disabled]="false">
           Drag & Drop Columns
@@ -227,101 +226,96 @@
   </mat-card-content>
 </mat-card>
 
-<mat-table-ext
-  [dataSource]="dataSource"
-  [columns]="columns"
-  [columnResizable]="columnResizable"
-  [inlineRowEditing]="inlineRowEditing"
-  [inCellEditing]="inCellEditing"
-  [popupRowEditing]="popupRowEditing"
-  [enableDelete]="deleteRow"
-  [rowSelection]="rowSelection"
-  [multiRowSelection]="multiRowSelection"
-  [stickyHeader]="stickyHeader"
-  [stickyFooter]="stickyFooter"
-  [columnFilter]="simpleFilter"
-  [showToolbar]="toolbarToggle"
-  [toolbarHeight]="toolbarHeight"
-  [globalSearch]="topSearchFilter"
-  [expandRows]="isExpandEnable"
-  [expansionTemplateRef]="ex"
-  [dndColumns]="dragEnable"
-  [showPaginator]="paginationEnable"
-  [pageSizeOptions]="[10, 25, 100]"
-  [showFirstLastButtons]="showFirstLastButtons"
-  [columnPinnable]="columnPinnable"
-  [columnHidable]="columnHidable"
-  [exportButtonEnable]="exportButtonEnable"
-  [stripedRows]="stripedRows"
-  [loadingIndicator]="isLoading"
-  [sorting]="sorting"
-  [tableHeight]="tableHeight"
-  [tableWidth]="tableWidth"
-  [scrollbarH]="scrollbarH"
-  (inlineChange)="showData($event, 'inline change')"
-  (popupChange)="showData($event, 'popup change')"
-  (cellChange)="showData($event, 'Cell change')"
-  (scroll)="onScroll($event)"
-  (selectionChanged)="onSelectionChange($event)"
-  (rowDeleted)="showData($event, 'Delete change')"
-  [headerTemplateRef]="headerTemplateRefCtrl ? headerTemplate : null"
-  [cellTemplateRef]="cellTemplateRefCtrl ? cellTemplateRef : undefined"
-  [cellTemplateRefMap]="{ id: cellTemplateID }"
-  [toolbarTemplateRef]="toolbarTemplateRefCtrl ? toolbarTemplate : undefined"
-  [popupEditingTemplateRef]="popupTemplateRefCtrl ? popupEditing : undefined"
-  [inlineEditingTemplateRef]="inlineTemplateRefCtrl ? inlineEditing : undefined"
-  [cellEditingTemplateRef]="
-    cellEditingTemplateRefCtrl ? cellEditing : undefined
-  "
-></mat-table-ext>
+<!-- Apply custom styling using ext-* tokens -->
+<div class="custom-table-demo">
+  <mat-table-ext
+    class="custom-table-demo"
+    [dataSource]="dataSource"
+    [columns]="columns"
+    [columnResizable]="columnResizable"
+    [inlineRowEditing]="inlineRowEditing"
+    [inCellEditing]="inCellEditing"
+    [popupRowEditing]="popupRowEditing"
+    [enableDelete]="deleteRow"
+    [rowSelection]="rowSelection"
+    [multiRowSelection]="multiRowSelection"
+    [stickyHeader]="stickyHeader"
+    [stickyFooter]="stickyFooter"
+    [columnFilter]="simpleFilter"
+    [showToolbar]="toolbarToggle"
+    [toolbarHeight]="toolbarHeight"
+    [globalSearch]="topSearchFilter"
+    [expandRows]="isExpandEnable"
+    [expansionTemplateRef]="ex"
+    [dndColumns]="dragEnable"
+    [showPaginator]="paginationEnable"
+    [pageSizeOptions]="[10, 25, 100]"
+    [showFirstLastButtons]="showFirstLastButtons"
+    [columnPinnable]="columnPinnable"
+    [columnHidable]="columnHidable"
+    [exportButtonEnable]="exportButtonEnable"
+    [stripedRows]="stripedRows"
+    [loadingIndicator]="isLoading"
+    [sorting]="sorting"
+    [tableHeight]="tableHeight"
+    [tableWidth]="tableWidth"
+    [scrollbarH]="scrollbarH"
+    (inlineChange)="showData($event, 'inline change')"
+    (popupChange)="showData($event, 'popup change')"
+    (cellChange)="showData($event, 'Cell change')"
+    (scroll)="onScroll($event)"
+    (selectionChanged)="onSelectionChange($event)"
+    (rowDeleted)="showData($event, 'Delete change')"
+    [headerTemplateRef]="headerTemplateRefCtrl ? headerTemplate : null"
+    [cellTemplateRef]="cellTemplateRefCtrl ? cellTemplateRef : undefined"
+    [cellTemplateRefMap]="{ id: cellTemplateID }"
+    [toolbarTemplateRef]="toolbarTemplateRefCtrl ? toolbarTemplate : undefined"
+    [popupEditingTemplateRef]="popupTemplateRefCtrl ? popupEditing : undefined"
+    [inlineEditingTemplateRef]="inlineTemplateRefCtrl ? inlineEditing : undefined"
+    [cellEditingTemplateRef]="cellEditingTemplateRefCtrl ? cellEditing : undefined"
+  ></mat-table-ext>
+</div>
+
 <ng-template #headerTemplate let-data="data">
-  <div style="display: flex">
-    <mat-icon style="color: purple">bolt</mat-icon
-    ><span style="font-size: 15px; font-style: italic">{{ data.header }}</span>
+  <div class="header-template">
+    <mat-icon class="header-icon">bolt</mat-icon>
+    <span class="header-text">{{ data.header }}</span>
   </div>
 </ng-template>
 <ng-template #headerTemplate2 let-data="data">
-  <div style="display: flex">
-    <mat-icon style="color: rgb(0, 105, 128)">bolt</mat-icon
-    ><span style="font-size: 15px; font-style: italic">{{ data.header }}</span>
+  <div class="header-template">
+    <mat-icon class="header-icon">bolt</mat-icon>
+    <span class="header-text">{{ data.header }}</span>
   </div>
 </ng-template>
 <ng-template #cellTemplateRef let-column="column" let-row="row">
-  <div style="display: flex">
-    <mat-icon style="color: blue">bolt</mat-icon
-    ><span style="font-size: 15px; font-style: italic">{{
-      row[column.field]
-    }}</span>
+  <div class="cell-template">
+    <mat-icon class="cell-icon">bolt</mat-icon>
+    <span class="cell-text">{{ row[column.field] }}</span>
   </div>
 </ng-template>
 <ng-template #cellTemplate1 let-column="column" let-row="row">
-  <div style="display: flex">
-    <mat-icon style="color: green">bolt</mat-icon
-    ><span style="font-size: 15px; font-style: italic">{{
-      row[column.field]
-    }}</span>
+  <div class="cell-template">
+    <mat-icon class="cell-icon">bolt</mat-icon>
+    <span class="cell-text">{{ row[column.field] }}</span>
   </div>
 </ng-template>
 <ng-template #cellTemplate2 let-column="column" let-row="row">
-  <div style="display: flex">
-    <mat-icon style="color: yellow">folder</mat-icon
-    ><span style="font-size: 15px; font-style: italic">{{
-      row[column.field]
-    }}</span>
+  <div class="cell-template">
+    <mat-icon class="cell-icon">folder</mat-icon>
+    <span class="cell-text">{{ row[column.field] }}</span>
   </div>
 </ng-template>
 <ng-template #cellTemplateID let-column="column" let-row="row">
-  <div style="display: flex">
-    <mat-icon style="color: yellow">folder</mat-icon
-    ><span style="font-size: 15px; font-style: italic">{{
-      row[column.field]
-    }}</span>
+  <div class="cell-template">
+    <mat-icon class="cell-icon">folder</mat-icon>
+    <span class="cell-text">{{ row[column.field] }}</span>
   </div>
 </ng-template>
 <ng-template #toolbarTemplate>
-  <div style="display: flex">
+  <div class="toolbar-template">
     <button mat-button>
-      <mat-icon style="color: green">sync</mat-icon>
+      <mat-icon class="toolbar-icon">sync</mat-icon>
     </button>
   </div>
 </ng-template>
@@ -333,21 +327,16 @@
   let-types="data.columnTypes"
   let-close="data.closeDialog"
 >
-  <div style="height: 100%" class="main-dialog-container">
-    <div mat-dialog-title class="dialog-title-container" style="display: flex">
-      <h2 style="margin: 0">Edit Row</h2>
+  <div class="main-dialog-container">
+    <div mat-dialog-title class="dialog-title-container">
+      <h2 class="dialog-title">Edit Row</h2>
       <span class="example-spacer"></span>
-      <button
-        mat-icon-button
-        aria-label="Example icon button with a vertical three dot icon"
-      >
-        <mat-icon mat-dialog-close style="cursor: pointer" fxFlex="5"
-          >close</mat-icon
-        >
+      <button mat-icon-button aria-label="Close dialog">
+        <mat-icon mat-dialog-close class="dialog-close-icon">close</mat-icon>
       </button>
     </div>
-    <mat-dialog-content style="margin-right: 20px">
-      <div style="display: flex; flex-direction: column">
+    <mat-dialog-content>
+      <div class="dialog-content">
         @for (key of keys; track key) {
           @if (types[key] == 'number') {
             <mat-form-field
@@ -360,12 +349,10 @@
                 matInput
                 type="number"
                 [(ngModel)]="row[key]"
-                color="accent"
                 [ngModelOptions]="{ standalone: true }"
               />
             </mat-form-field>
           }
-
           @if (types[key] == 'string') {
             <mat-form-field
               appearance="outline"
@@ -377,7 +364,6 @@
                 matInput
                 type="text"
                 [(ngModel)]="row[key]"
-                color="accent"
                 [ngModelOptions]="{ standalone: true }"
               />
             </mat-form-field>
@@ -416,16 +402,16 @@
               <mat-checkbox
                 color="accent"
                 [(ngModel)]="row[key]"
+                [ngModelOptions]="{ standalone: true }"
               >
-                <mat-label>{{ key | titlecase }}</mat-label>
+                {{ key | titlecase }}
               </mat-checkbox>
             </p>
           }
         }
       </div>
     </mat-dialog-content>
-    <div class="spacer"></div>
-    <mat-dialog-actions style="margin-top: 20px" align="end">
+    <mat-dialog-actions align="end">
       <button mat-raised-button color="accent" mat-dialog-close>Cancel</button>
       <button mat-raised-button color="primary" [mat-dialog-close]="row">
         Save
@@ -501,9 +487,10 @@
   @if (column.type == 'boolean') {
     <mat-checkbox
       (click)="$event.stopPropagation()"
-      (ngModelChange)="updateData(row)"
       color="primary"
       [(ngModel)]="row[column.field]"
+      (ngModelChange)="updateData(row)"
+      [ngModelOptions]="{ standalone: true }"
     ></mat-checkbox>
   }
 </ng-template>
@@ -528,7 +515,6 @@
       />
     </mat-form-field>
   }
-
   @if (column.type == 'string') {
     <mat-form-field
       color="accent"
@@ -581,9 +567,9 @@
     <mat-checkbox
       (click)="$event.stopPropagation()"
       color="accent"
-      (ngModelChange)="updateData(row)"
-      color="primary"
       [(ngModel)]="row[column.field]"
+      (ngModelChange)="updateData(row)"
+      [ngModelOptions]="{ standalone: true }"
     ></mat-checkbox>
   }
 </ng-template>

@@ -1,4 +1,3 @@
-/* You can add global styles to this file, and also import other style files */
 @use '../../../dist/mat-table-ext/assets/theming' as mtx;
 @use '@angular/material' as mat;
 
@@ -22,10 +21,121 @@ $candy-app-theme: mat.define-theme((
     scale: 0,
   ),
 ));
+
+// Custom tokens for overriding defaults
+$custom-table-tokens: (
+  // Container
+  ext-container-background-color: #2196f3,  // Blue background
+  ext-container-border-radius: 12px,
+  ext-container-elevation: 2,
+  
+  // Header
+  ext-header-background-color: #ff2600,    // Red headers
+  ext-header-text-color: #ffffff,          // White text
+  ext-header-container-background-color: #ff2600,
+  ext-header-container-text-color: #ffffff,
+  
+  // Row
+  ext-row-hover-state-layer-color: #ffe0b2, // Light orange hover
+  ext-row-selected-background-color: #ffcc02, // Yellow selection
+  ext-row-container-background-color: #ffffff, // White row background
+  
+  // Cell
+  ext-cell-padding: 20px,                   // Increased padding
+  ext-cell-container-background-color: #ffffff, // White cell background
+  
+  // Checkbox
+  ext-checkbox-selected-checkmark-color: #ff2600, // Red checkboxes
+  ext-checkbox-selected-icon-color: #ff2600,
+  
+  // Paginator
+  ext-paginator-container-background-color: #ffb74d, // Orange paginator
+  ext-paginator-container-text-color: #ffffff,
+
+  // Toolbar
+  ext-toolbar-background-color: #ff2600,    // Red toolbar
+  ext-toolbar-text-color: #ffffff,          // White toolbar text
+  
+  // Filter
+  ext-filter-background-color: #ffffff,     // White filter background
+  ext-filter-border-color: #ff2600,         // Red filter border
+  
+  // Export button
+  ext-export-button-color: #ff2600,         // Red export button
+  ext-export-button-background-color: #ffffff, // White button background
+  
+  // Loading indicator
+  ext-loading-spinner-color: #ff2600,       // Red spinner
+);
+
 // Apply the theme globally
-html {
+:root {
   @include mat.all-component-themes($candy-app-theme);
+  @include mtx.mat-table-ext-theme($candy-app-theme, $custom-table-tokens);
 }
 
-// Apply mat-table-ext theme
-@include mtx.mat-table-ext-theme($candy-app-theme);
+// Custom styling for templates
+.custom-table-demo {
+  .header-template {
+    display: flex;
+    align-items: center;
+
+    .header-icon {
+      color: var(--mat-table-ext-export-button-color);
+    }
+
+    .header-text {
+      font-size: 15px;
+      font-style: italic;
+      color: var(--mat-table-header-text-color);
+    }
+  }
+
+  .cell-template {
+    display: flex;
+    align-items: center;
+
+    .cell-icon {
+      color: var(--mat-table-ext-export-button-color);
+    }
+
+    .cell-text {
+      font-size: 15px;
+      font-style: italic;
+      color: var(--mat-table-cell-text-color);
+    }
+  }
+
+  .toolbar-template {
+    display: flex;
+
+    .toolbar-icon {
+      color: var(--mat-table-ext-toolbar-text-color);
+    }
+  }
+
+  .dialog-title-container {
+    display: flex;
+    align-items: center;
+    margin: 0;
+
+    .dialog-title {
+      margin: 0;
+    }
+
+    .dialog-close-icon {
+      color: var(--mat-table-ext-export-button-color);
+      cursor: pointer;
+    }
+  }
+
+  .dialog-content {
+    display: flex;
+    flex-direction: column;
+    margin-right: 20px;
+  }
+
+  .main-dialog-container {
+    height: 100%;
+  }
+}

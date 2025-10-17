@@ -1,7 +1,368 @@
 @use 'sass:map';
 @use '@angular/material' as mat;
 
-// Create a theme.
-@mixin mat-table-ext-theme($theme-or-color-config) {
-   @include mat.all-component-themes($theme-or-color-config)
+// Extended table styling tokens that override Angular Material 20 table tokens
+$mat-table-ext-default-tokens: (
+  // Container styling
+  ext-container-elevation: 0,
+  ext-container-background-color: var(--mat-sys-color-surface),
+  ext-container-border-radius: 0,
+  ext-container-outline-color: var(--mat-sys-color-outline-variant),
+
+  // Header styling
+  ext-header-background-color: var(--mat-sys-color-surface-container),
+  ext-header-text-color: var(--mat-sys-color-on-surface),
+  ext-header-font-weight: 500,
+  ext-header-font-size: 14px,
+  ext-header-height: 56px,
+  ext-header-container-background-color: var(--mat-sys-color-surface-container),
+  ext-header-container-text-color: var(--mat-sys-color-on-surface),
+
+  // Row styling
+  ext-row-background-color: var(--mat-sys-color-surface),
+  ext-row-hover-background-color: var(--mat-sys-color-surface-container-highest),
+  ext-row-hover-state-layer-color: var(--mat-sys-color-surface-container-highest),
+  ext-row-hover-state-layer-opacity: 0.08,
+  ext-row-selected-background-color: var(--mat-sys-color-primary-container),
+  ext-row-container-background-color: var(--mat-sys-color-surface),
+  ext-row-border-color: var(--mat-sys-color-outline-variant),
+
+  // Cell styling
+  ext-cell-text-color: var(--mat-sys-color-on-surface),
+  ext-cell-font-size: 14px,
+  ext-cell-padding: 16px,
+  ext-cell-min-height: 48px,
+  ext-cell-container-background-color: var(--mat-sys-color-surface),
+  ext-cell-container-text-color: var(--mat-sys-color-on-surface),
+
+  // Striped rows
+  ext-striped-row-background-color: var(--mat-sys-color-surface-container-low),
+
+  // Paginator styling
+  ext-paginator-background-color: var(--mat-sys-color-surface-container),
+  ext-paginator-text-color: var(--mat-sys-color-on-surface),
+  ext-paginator-container-background-color: var(--mat-sys-color-surface-container),
+  ext-paginator-container-text-color: var(--mat-sys-color-on-surface),
+
+  // Toolbar styling
+  ext-toolbar-background-color: var(--mat-sys-color-surface-container),
+  ext-toolbar-text-color: var(--mat-sys-color-on-surface),
+  ext-toolbar-height: 56px,
+
+  // Loading indicator
+  ext-loading-background-color: rgba(var(--mat-sys-color-surface-rgb), 0.8),
+  ext-loading-spinner-color: var(--mat-sys-color-primary),
+
+  // Selection styling
+  ext-selection-checkbox-color: var(--mat-sys-color-primary),
+  ext-checkbox-selected-checkmark-color: var(--mat-sys-color-primary),
+  ext-checkbox-selected-focus-icon-color: var(--mat-sys-color-primary),
+  ext-checkbox-selected-hover-icon-color: var(--mat-sys-color-primary),
+  ext-checkbox-selected-icon-color: var(--mat-sys-color-primary),
+  ext-checkbox-selected-pressed-icon-color: var(--mat-sys-color-primary),
+
+  // Editing styling
+  ext-editing-background-color: var(--mat-sys-color-primary-container),
+  ext-editing-text-color: var(--mat-sys-color-on-primary-container),
+
+  // Filter styling
+  ext-filter-background-color: var(--mat-sys-color-surface-container),
+  ext-filter-border-color: var(--mat-sys-color-outline),
+
+  // Export button styling
+  ext-export-button-color: var(--mat-sys-color-primary),
+  ext-export-button-background-color: var(--mat-sys-color-primary-container),
+
+  // Column resize styling
+  ext-resize-handle-color: var(--mat-sys-color-outline),
+  ext-resize-handle-hover-color: var(--mat-sys-color-primary),
+
+  // Sort header styling
+  ext-sort-header-text-color: var(--mat-sys-color-on-surface),
+  ext-sort-header-hover-background-color: var(--mat-sys-color-surface-container-highest),
+  ext-sort-header-focus-background-color: var(--mat-sys-color-surface-container-highest),
+
+  // Sticky styling
+  ext-sticky-border-color: var(--mat-sys-color-outline-variant),
+
+  // Footer styling
+  ext-footer-background-color: var(--mat-sys-color-surface-container),
+  ext-footer-text-color: var(--mat-sys-color-on-surface),
+);
+
+// Mixin to define custom table tokens
+@mixin mat-table-ext-tokens($tokens: ()) {
+  $merged-tokens: map.merge($mat-table-ext-default-tokens, $tokens);
+
+  // Define CSS custom properties within a style rule
+  :root {
+    // Container
+    --mat-table-container-elevation: #{map.get($merged-tokens, ext-container-elevation)};
+    --mat-table-container-background-color: #{map.get($merged-tokens, ext-container-background-color)};
+    --mat-table-container-border-radius: #{map.get($merged-tokens, ext-container-border-radius)};
+    --mat-table-outline-color: #{map.get($merged-tokens, ext-container-outline-color)};
+
+    // Header
+    --mat-table-header-container-background-color: #{map.get($merged-tokens, ext-header-container-background-color)};
+    --mat-table-header-container-text-color: #{map.get($merged-tokens, ext-header-container-text-color)};
+    --mat-table-header-text-color: #{map.get($merged-tokens, ext-header-text-color)};
+    --mat-table-header-font-weight: #{map.get($merged-tokens, ext-header-font-weight)};
+    --mat-table-header-font-size: #{map.get($merged-tokens, ext-header-font-size)};
+    --mat-table-header-height: #{map.get($merged-tokens, ext-header-height)};
+
+    // Row
+    --mat-table-row-container-background-color: #{map.get($merged-tokens, ext-row-container-background-color)};
+    --mat-table-row-hover-state-layer-color: #{map.get($merged-tokens, ext-row-hover-state-layer-color)};
+    --mat-table-row-hover-state-layer-opacity: #{map.get($merged-tokens, ext-row-hover-state-layer-opacity)};
+    --mat-table-row-selected-background-color: #{map.get($merged-tokens, ext-row-selected-background-color)};
+    --mat-table-row-border-color: #{map.get($merged-tokens, ext-row-border-color)};
+
+    // Cell
+    --mat-table-cell-container-background-color: #{map.get($merged-tokens, ext-cell-container-background-color)};
+    --mat-table-cell-container-text-color: #{map.get($merged-tokens, ext-cell-container-text-color)};
+    --mat-table-cell-text-color: #{map.get($merged-tokens, ext-cell-text-color)};
+    --mat-table-cell-font-size: #{map.get($merged-tokens, ext-cell-font-size)};
+    --mat-table-cell-padding: #{map.get($merged-tokens, ext-cell-padding)};
+    --mat-table-cell-min-height: #{map.get($merged-tokens, ext-cell-min-height)};
+
+    // Striped rows
+    --mat-table-striped-row-background-color: #{map.get($merged-tokens, ext-striped-row-background-color)};
+
+    // Paginator
+    --mat-paginator-container-background-color: #{map.get($merged-tokens, ext-paginator-container-background-color)};
+    --mat-paginator-container-text-color: #{map.get($merged-tokens, ext-paginator-container-text-color)};
+
+    // Toolbar
+    --mat-table-ext-toolbar-background-color: #{map.get($merged-tokens, ext-toolbar-background-color)};
+    --mat-table-ext-toolbar-text-color: #{map.get($merged-tokens, ext-toolbar-text-color)};
+    --mat-table-ext-toolbar-height: #{map.get($merged-tokens, ext-toolbar-height)};
+
+    // Loading indicator
+    --mat-table-ext-loading-background-color: #{map.get($merged-tokens, ext-loading-background-color)};
+    --mat-table-ext-loading-spinner-color: #{map.get($merged-tokens, ext-loading-spinner-color)};
+
+    // Selection
+    --mdc-checkbox-selected-checkmark-color: #{map.get($merged-tokens, ext-checkbox-selected-checkmark-color)};
+    --mdc-checkbox-selected-focus-icon-color: #{map.get($merged-tokens, ext-checkbox-selected-focus-icon-color)};
+    --mdc-checkbox-selected-hover-icon-color: #{map.get($merged-tokens, ext-checkbox-selected-hover-icon-color)};
+    --mdc-checkbox-selected-icon-color: #{map.get($merged-tokens, ext-checkbox-selected-icon-color)};
+    --mdc-checkbox-selected-pressed-icon-color: #{map.get($merged-tokens, ext-checkbox-selected-pressed-icon-color)};
+
+    // Editing
+    --mat-table-ext-editing-background-color: #{map.get($merged-tokens, ext-editing-background-color)};
+    --mat-table-ext-editing-text-color: #{map.get($merged-tokens, ext-editing-text-color)};
+
+    // Filter
+    --mat-table-ext-filter-background-color: #{map.get($merged-tokens, ext-filter-background-color)};
+    --mat-table-ext-filter-border-color: #{map.get($merged-tokens, ext-filter-border-color)};
+
+    // Export button
+    --mat-table-ext-export-button-color: #{map.get($merged-tokens, ext-export-button-color)};
+    --mat-table-ext-export-button-background-color: #{map.get($merged-tokens, ext-export-button-background-color)};
+
+    // Column resize
+    --mat-table-ext-resize-handle-color: #{map.get($merged-tokens, ext-resize-handle-color)};
+    --mat-table-ext-resize-handle-hover-color: #{map.get($merged-tokens, ext-resize-handle-hover-color)};
+
+    // Sort header
+    --mat-table-sort-header-text-color: #{map.get($merged-tokens, ext-sort-header-text-color)};
+    --mat-table-sort-header-hover-background-color: #{map.get($merged-tokens, ext-sort-header-hover-background-color)};
+    --mat-table-sort-header-focus-background-color: #{map.get($merged-tokens, ext-sort-header-focus-background-color)};
+
+    // Sticky
+    --mat-table-sticky-border-color: #{map.get($merged-tokens, ext-sticky-border-color)};
+
+    // Footer
+    --mat-table-footer-background-color: #{map.get($merged-tokens, ext-footer-background-color)};
+    --mat-table-footer-text-color: #{map.get($merged-tokens, ext-footer-text-color)};
+  }
+}
+
+// Mixin to apply styles using the tokens
+@mixin mat-table-ext-styles($tokens: ()) {
+  $merged-tokens: map.merge($mat-table-ext-default-tokens, $tokens);
+
+  .mat-table-ext-container {
+    // Container styles
+    background-color: var(--mat-table-container-background-color);
+    border-radius: var(--mat-table-container-border-radius);
+    @include mat.elevation(map.get($merged-tokens, ext-container-elevation));
+    border: 1px solid var(--mat-table-outline-color);
+
+    // Table
+    .mat-mdc-table {
+      background-color: var(--mat-table-row-container-background-color, var(--mat-sys-color-surface));
+
+      // Header row
+      .mat-mdc-header-row {
+        background-color: var(--mat-table-header-container-background-color);
+        height: var(--mat-table-header-height);
+
+        th.mat-mdc-header-cell {
+          color: var(--mat-table-header-text-color);
+          font-weight: var(--mat-table-header-font-weight);
+          font-size: var(--mat-table-header-font-size);
+          border-bottom: 1px solid var(--mat-table-row-border-color);
+        }
+      }
+
+      // Data rows
+      .mat-mdc-row {
+        background-color: var(--mat-table-row-container-background-color, var(--mat-sys-color-surface));
+        min-height: var(--mat-table-cell-min-height);
+
+        &.stripedRows {
+          background-color: var(--mat-table-striped-row-background-color);
+        }
+
+        &.hoverClass:hover {
+          background-color: var(--mat-table-row-hover-state-layer-color);
+          opacity: var(--mat-table-row-hover-state-layer-opacity);
+        }
+
+        &.example-expanded-row {
+          background-color: var(--mat-table-row-selected-background-color);
+        }
+
+        &.hidden {
+          display: none;
+        }
+
+        td.mat-mdc-cell {
+          color: var(--mat-table-cell-text-color);
+          font-size: var(--mat-table-cell-font-size);
+          padding: var(--mat-table-cell-padding);
+          border-bottom: 1px solid var(--mat-table-row-border-color);
+        }
+      }
+
+      // Footer row
+      .mat-footer-row {
+        background-color: var(--mat-table-footer-background-color);
+
+        td.mat-footer-cell {
+          color: var(--mat-table-footer-text-color);
+          border-top: 1px solid var(--mat-table-row-border-color);
+        }
+      }
+    }
+
+    // Toolbar
+    .toolbar-container {
+      background-color: var(--mat-table-ext-toolbar-background-color);
+      color: var(--mat-table-ext-toolbar-text-color);
+      height: var(--mat-table-ext-toolbar-height);
+
+      .toolbar-title {
+        color: var(--mat-table-ext-toolbar-text-color);
+      }
+
+      .hide-button,
+      .pin-button,
+      .export-button {
+        color: var(--mat-table-ext-export-button-color);
+        background-color: var(--mat-table-ext-export-button-background-color);
+        border-color: var(--mat-table-ext-export-button-color);
+      }
+    }
+
+    // Global search field
+    .global-search-field {
+      .mat-mdc-form-field {
+        background-color: var(--mat-table-ext-filter-background-color);
+        color: var(--mat-table-cell-container-text-color);
+        border: 1px solid var(--mat-table-ext-filter-border-color);
+
+        .mat-mdc-text-field-wrapper {
+          background-color: var(--mat-table-ext-filter-background-color);
+        }
+      }
+    }
+
+    // Menu (e.g., column visibility, pinning, export)
+    .mat-mdc-menu-panel {
+      background-color: var(--mat-table-ext-filter-background-color);
+      color: var(--mat-table-cell-container-text-color);
+
+      .mat-mdc-menu-item {
+        color: var(--mat-table-cell-container-text-color);
+      }
+    }
+
+    // Checkbox
+    .mat-mdc-checkbox {
+      .mdc-checkbox__native-control:checked ~ .mdc-checkbox__background {
+        background-color: var(--mdc-checkbox-selected-icon-color);
+        border-color: var(--mdc-checkbox-selected-icon-color);
+      }
+
+      .mdc-checkbox__checkmark {
+        color: var(--mdc-checkbox-selected-checkmark-color);
+      }
+    }
+
+    // Icons (edit, delete, etc.)
+    .mat-icon {
+      color: var(--mat-table-ext-export-button-color);
+    }
+
+    // Inline editing fields
+    .inline-editing-field {
+      .mat-mdc-form-field {
+        background-color: var(--mat-table-ext-editing-background-color);
+        color: var(--mat-table-ext-editing-text-color);
+
+        .mat-mdc-text-field-wrapper {
+          background-color: var(--mat-table-ext-editing-background-color);
+        }
+      }
+    }
+
+    // Progress bar (loading indicator)
+    .mat-mdc-progress-bar {
+      background-color: var(--mat-table-ext-loading-background-color);
+      --mdc-linear-progress-active-indicator-color: var(--mat-table-ext-loading-spinner-color);
+    }
+
+    // Paginator
+    .mat-mdc-paginator {
+      background-color: var(--mat-paginator-container-background-color);
+      color: var(--mat-paginator-container-text-color);
+    }
+
+    // Column resize handle
+    .mat-column-resize-handle {
+      background-color: var(--mat-table-ext-resize-handle-color);
+
+      &:hover {
+        background-color: var(--mat-table-ext-resize-handle-hover-color);
+      }
+    }
+
+    // Sort header
+    .mat-sort-header-container {
+      color: var(--mat-table-sort-header-text-color);
+
+      &:hover {
+        background-color: var(--mat-table-sort-header-hover-background-color);
+      }
+
+      &:focus {
+        background-color: var(--mat-table-sort-header-focus-background-color);
+      }
+    }
+
+    // Sticky columns/rows
+    [sticky],
+    [stickyEnd] {
+      border-color: var(--mat-table-sticky-border-color);
+    }
+  }
+}
+
+// Main theme mixin
+@mixin mat-table-ext-theme($theme-or-color-config, $tokens: ()) {
+  @include mat.all-component-themes($theme-or-color-config);
+  @include mat-table-ext-tokens($tokens);
+  @include mat-table-ext-styles($tokens);
 }
