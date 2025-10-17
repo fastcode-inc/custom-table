@@ -188,7 +188,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   currentRowIndex: number = -1;
   currentRow: any = {};
   cellEditing: any = {};
-  hideShowMenuGroup!: FormGroup;
+  hideShowMenuGroup: FormGroup = this.formBuilder.group({});
   cellTemplate!: TemplateRef<any>;
   menuX: number = 0;
   menuY: number = 0;
@@ -218,7 +218,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   constructor(
     public dialog: MatDialog,
     public service: MatTableExtService,
-    public formBuildersService: FormBuilder,
+    public formBuilder: FormBuilder,
     public domSanitizer: DomSanitizer,
     public matIconRegistry: MatIconRegistry,
     private cdr: ChangeDetectorRef
@@ -239,6 +239,11 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   ngOnInit() {
     if (this.dataSource) {
       this.dataSource.filterPredicate = this.createFilter();
+    }
+    
+    // Initialize FormGroup if not already initialized
+    if (!this.hideShowMenuGroup || Object.keys(this.hideShowMenuGroup.controls).length === 0) {
+      this.hideShowMenuGroup = this.formBuilder.group({});
     }
   }
 
@@ -767,9 +772,9 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
    */
   setToolbarMenuControls(columns: MTExColumn[]) {
     if (columns.length > 0 && this.showToolbar) {
-      const group = this.formBuildersService.group({});
+      const group = this.formBuilder.group({});
       columns.forEach((column: MTExColumn) => {
-        const control = this.formBuildersService.control(true);
+        const control = this.formBuilder.control(true);
         group.addControl(column.field, control);
       });
       this.hideShowMenuGroup = group;
