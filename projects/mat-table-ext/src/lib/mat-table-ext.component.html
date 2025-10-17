@@ -99,7 +99,7 @@
         [style.height]="tableHeight ? tableHeight :'max-content'">
         <table mat-table [id]="'matTableExt'+tableID" [dataSource]="dataSource" matSort cdkDropList
             cdkDropListOrientation="horizontal" multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
-            (click)="saveCellEditing()" [style.width]="scrollbarH?'max-content':'100%'">
+            (click)="saveCellEditing()" [style.width]="scrollbarH?'max-content':'100%'" class="mat-mdc-table">
             <!-- Row selection column -->
             <ng-container matColumnDef="select">
                 <th mat-header-cell *matHeaderCellDef cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="!dndColumns">
@@ -123,7 +123,7 @@
                     [stickyEnd]="column.pinned == 'right' ? true:false">
                 <th mat-header-cell *matHeaderCellDef [style.width]="column.width" [style.maxWidth]="column.maxWidth"
                     [style.minWidth]="column.minWidth" cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="!dndColumns"
-                    [columnsResizable]="columnResizable" [index]="i">
+                    [columnsResizable]="columnResizable" [index]="i" class="mat-mdc-header-cell">
 
                     @if (column.headerTemplate || headerTemplateRef) {
                         <ng-template [ngTemplateOutlet]="column.headerTemplate || headerTemplateRef"
@@ -135,7 +135,7 @@
                             [class.disabled]="!sorting || column.disabled === true">{{column.header}}</span>
                     }
                 </th>
-                <td mat-cell *matCellDef="let row ;let i=dataIndex">
+                <td mat-cell *matCellDef="let row ;let i=dataIndex" class="mat-mdc-cell">
                     @if (!row.editable && !cellEditing[i +'_'+column.field]) {
                         <div (dblclick)="cellEditing[i +'_'+column.field] = inCellEditing;setCellData(row,i)"
                             matTooltip="{{column.cellTooltip?.value}}"
@@ -317,8 +317,8 @@
                     </th>
                 </ng-container>
             }
-            <tr mat-header-row *matHeaderRowDef=" getDisplayedColumns(); sticky: stickyHeader"></tr>
-            <tr mat-row *matRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex;" class="data-row"
+            <tr mat-header-row *matHeaderRowDef=" getDisplayedColumns(); sticky: stickyHeader" class="mat-mdc-header-row"></tr>
+            <tr mat-row *matRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex;" class="mat-mdc-row data-row"
                 [ngClass]="{'data-row':expandRows,'stripedRows':(stripedRows &&  i % 2 == 1),'hoverClass':rowHover, 'hidden':hiddenCtrl.isSelected(row) && hideRows,'example-expanded-row':expandedElement === row}"
                 (click)="expandRow(row, row !== expandedElement,i)">
             </tr>
@@ -336,7 +336,7 @@
     </section>
     @if (showPaginator) {
         <mat-paginator [pageSizeOptions]="pageSizeOptions"
-            [showFirstLastButtons]="showFirstLastButtons">
+            [showFirstLastButtons]="showFirstLastButtons" class="mat-mdc-paginator">
         </mat-paginator>
     }
 </div>
