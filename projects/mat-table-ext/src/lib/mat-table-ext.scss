@@ -121,7 +121,15 @@ table th:hover .resize-handle {
   width: 15em;
   height: 20em;
 }
-
+.inline-editing-field{
+  padding-top: 5px;
+}
+.inline-editing-field .mat-mdc-text-field-wrapper{
+  height: 40px;
+}
+.inline-editing-field .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex{
+  margin-top: -10px;
+}
 .toolbar-menu-item {
   display: flex;
   height: 3em;
