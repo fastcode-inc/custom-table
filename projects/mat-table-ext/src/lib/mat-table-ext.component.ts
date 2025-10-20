@@ -150,6 +150,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   @Input() inlineEditingTemplateRef!: TemplateRef<any> | undefined;
   @Input() cellEditingTemplateRef!: TemplateRef<any> | undefined;
   @Input() cellTemplateRefMap: CellTemplateRefMap = {};
+  @Input() tableClassName: string = '';
 
   // Table outputs
   @Output() inlineChange: EventEmitter<any> = new EventEmitter<RowChange>();

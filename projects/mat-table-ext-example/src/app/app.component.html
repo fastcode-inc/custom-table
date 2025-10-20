@@ -208,6 +208,19 @@
       </section>
       <mat-divider></mat-divider>
       <section class="example-section">
+        <mat-form-field class="example-full-width" appearance="outline">
+          <mat-label>Table Class Name</mat-label>
+          <input
+            matInput
+            placeholder="e.g., my-custom-table"
+            [(ngModel)]="tableClassName"
+            [disabled]="false"
+          />
+          <!-- <mat-hint>Enter a custom CSS class name for styling</mat-hint> -->
+        </mat-form-field>
+      </section>
+      <mat-divider></mat-divider>
+      <section class="example-section">
         <mat-form-field
           class="example-full-width"
           appearance="outline"
@@ -257,6 +270,7 @@
   [sorting]="sorting"
   [tableHeight]="tableHeight"
   [tableWidth]="tableWidth"
+  [tableClassName]="tableClassName"
   [scrollbarH]="scrollbarH"
   (inlineChange)="showData($event, 'inline change')"
   (popupChange)="showData($event, 'popup change')"

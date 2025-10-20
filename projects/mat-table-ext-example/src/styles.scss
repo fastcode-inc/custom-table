@@ -1,5 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
-@use '../../../dist/mat-table-ext/assets/theming' as mtx;
+@use '../../../projects/mat-table-ext/assets/_theming' as mtx;
 @use '@angular/material' as mat;
 
 // Include core Material Design styles
@@ -29,3 +29,20 @@ html {
 
 // Apply mat-table-ext theme
 @include mtx.mat-table-ext-theme($candy-app-theme);
+
+// Override specific token for testing
+// .mat-table-ext-container {
+//   @include mat.table-overrides((
+//     background-color: orange,
+//     header-headline-color: red,
+//   ));
+// }
+
+// Example: Custom table class styling
+// Users can now specify tableClassName="my-custom-table" and style it like this:
+.my-custom-table {
+  @include mat.table-overrides((
+        background-color: orange,
+       header-headline-color: red,
+     ));
+}

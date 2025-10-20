@@ -99,7 +99,8 @@
         [style.height]="tableHeight ? tableHeight :'max-content'">
         <table mat-table [id]="'matTableExt'+tableID" [dataSource]="dataSource" matSort cdkDropList
             cdkDropListOrientation="horizontal" multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
-            (click)="saveCellEditing()" [style.width]="scrollbarH?'max-content':'100%'" class="mat-mdc-table">
+            (click)="saveCellEditing()" [style.width]="scrollbarH?'max-content':'100%'" 
+            [class]="'mat-mdc-table' + (tableClassName ? ' ' + tableClassName : '')">
             <!-- Row selection column -->
             <ng-container matColumnDef="select">
                 <th mat-header-cell *matHeaderCellDef cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="!dndColumns">

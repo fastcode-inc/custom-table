@@ -130,6 +130,7 @@ export class AppComponent implements AfterViewInit {
   topSearchFilter: any = false;
   tableHeight: string = '';
   tableWidth: string = '';
+  tableClassName: string = '';
   isExpandEnable: any = false;
   dragEnable: any = false;
   sorting: any = false;
