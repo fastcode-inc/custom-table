@@ -124,7 +124,8 @@
                     [stickyEnd]="column.pinned == 'right' ? true:false">
                 <th mat-header-cell *matHeaderCellDef [style.width]="column.width" [style.maxWidth]="column.maxWidth"
                     [style.minWidth]="column.minWidth" cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="!dndColumns"
-                    [columnsResizable]="columnResizable" [index]="i" class="mat-mdc-header-cell">
+                    [columnsResizable]="columnResizable" [index]="i" class="mat-mdc-header-cell"
+                    [mat-sort-header]="column.field" [disabled]="!sorting || column.disabled === true">
 
                     @if (column.headerTemplate || headerTemplateRef) {
                         <ng-template [ngTemplateOutlet]="column.headerTemplate || headerTemplateRef"
@@ -132,7 +133,7 @@
                     }
                     @if (!headerTemplateRef && !column.headerTemplate) {
                         <span matTooltip="{{column.headerTooltip?.value}}"
-                            [matTooltipPosition]="column?.headerTooltip?.tooltipPosition!" mat-sort-header
+                            [matTooltipPosition]="column?.headerTooltip?.tooltipPosition!"
                             [class.disabled]="!sorting || column.disabled === true">{{column.header}}</span>
                     }
                 </th>

@@ -27,7 +27,7 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
+import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { EditingComponent } from '../lib/components/editing/editing.component';
 import {
@@ -80,6 +80,7 @@ import { ResizeColumnDirective } from './directives/resize-column.directive';
     MatCheckboxModule,
     MatIconModule,
     MatPaginatorModule,
+    MatSortModule,
     MatMenuModule,
     MatButtonModule,
     MatTooltipModule,
