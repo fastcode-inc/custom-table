@@ -106,7 +106,16 @@ table th:hover .resize-handle {
 .example-spacer {
   flex: 1 1 auto;
 }
-
+.export-button {
+  .export-button-content {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px; /* Replaces width and space-around for better spacing control */
+    width: 100%; /* Ensures content takes full button width */
+    padding: 0 4px; /* Optional: Adds padding for better spacing */
+  }
+}
 .export-button .mat-button-wrapper {
   display: flex !important;
   width: 8em;

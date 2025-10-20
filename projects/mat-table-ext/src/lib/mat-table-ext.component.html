@@ -38,10 +38,13 @@
             @if (exportButtonEnable) {
                 <button class="export-button" mat-stroked-button color="primary"
                     (click)="openMenu('export',$event)" matTooltip="Table Data Export">
-                    <mat-icon>import_export</mat-icon> <span>Export</span>
+                  <div class="export-button-content">
+                    <mat-icon>import_export</mat-icon>
+                    <span>Export</span>
                     <mat-icon>expand_more</mat-icon>
+                  </div>
                 </button>
-            }
+              }
             <div style="visibility: hidden; position:fixed" [matMenuTriggerFor]="menu" [style.left.px]="menuX"
                 [style.top.px]="menuY"></div>
         </mat-toolbar>

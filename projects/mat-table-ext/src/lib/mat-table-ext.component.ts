@@ -242,12 +242,8 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
  * @param updatedColumns Updated columns array with new pinning states
  */
 updateColumns(updatedColumns: MTExColumn[]) {
-  console.log('updateColumns called with:', updatedColumns);
-  
   // Create a completely new columnsArray to trigger change detection
   this.columnsArray = updatedColumns.map(col => ({ ...col }));
-  
-  console.log('Updated columnsArray:', this.columnsArray);
   
   // Update showHideColumnsArray to keep it in sync
   this.showHideColumnsArray = [...this.columnsArray];
@@ -255,25 +251,20 @@ updateColumns(updatedColumns: MTExColumn[]) {
   // Re-apply column configurations
   this.setColumnsList(this.columnsArray);
   
-  // Force complete table re-render by toggling the flag
-  // this.forceTableRerender = true;
-  this.cdr.detectChanges();
+  // Force complete table re-render by recreating the data source
+  if (this.dataSource) {
+    const currentData = [...this.dataSource.data];
+    this.dataSource = new MatTableDataSource(currentData);
+    this.reCal(); // Re-apply paginator, sort, and filter
+  }
   
-  setTimeout(() => {
-    // this.forceTableRerender = false;
-    this.cdr.detectChanges();
-    
-    // Force complete table re-render by recreating the data source
-    if (this.dataSource) {
-      const currentData = [...this.dataSource.data];
-      this.dataSource = new MatTableDataSource(currentData);
-      this.reCal(); // Re-apply paginator, sort, and filter
-    }
-    
-    if (this.columnFilter) {
-        this.setColumnFilter(true);
-    }
-  }, 0);
+  if (this.columnFilter) {
+      this.setColumnFilter(true);
+  }
+  
+  // Force change detection
+  this.cdr.markForCheck();
+  this.cdr.detectChanges();
 }
   ngOnChanges(changes: SimpleChanges) {
     this.setPropertyValue(changes);
