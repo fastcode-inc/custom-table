@@ -106,14 +106,14 @@ export class AppComponent implements AfterViewInit {
   stripedRows: any = false;
   rowSelection: any = false;
   multiRowSelection: any = false;
-  simpleFilter: any = true;
+  simpleFilter: any = false;
   selectionFilter: any = false;
   toolbarToggle: any = true;
   toolbarHeight: string = '';
   showFirstLastButtons: any = false;
-  columnPinnable: any = false;
+  columnPinnable: any = true;
   columnHidable: any = false;
-  exportButtonEnable: any = true;
+  exportButtonEnable: any = false;
   @ViewChild('cellTemplate1') cellTemplate1!: TemplateRef<any>;
   @ViewChild('cellTemplate2') cellTemplate2!: TemplateRef<any>;
   @ViewChild('headerTemplate2') headerTemplate2!: TemplateRef<any>;
@@ -149,11 +149,15 @@ export class AppComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     
   this.columns=[
-    { header: 'Position', field: 'position', width: '200px', type: 'string', headerTemplate: this.headerTemplate2 },
-    { header: 'Name', field: 'name', width: '200px', pinned: 'left', type: 'string' },
-    { header: 'Weight', field: 'weight', width: '200px', pinned: 'left', type: 'string' },
-    { header: 'Symbol', field: 'symbol', width: '200px', type: 'string' },
-    { header: 'Gender', field: 'gender', width: '200px', type: 'selection', options: ['male', 'female'] }
+    { header: 'Position', field: 'position', pinned: 'left', width: '300px', type: 'string' },
+    { header: 'Name', field: 'name', width: '300px',  type: 'string' },
+    { header: 'Weight', field: 'weight', width: '300px', type: 'string' },
+    { header: 'Symbol', field: 'symbol', width: '300px', type: 'string' },
+    { header: 'Symbol1', field: 'symbol1', width: '300px', type: 'string' },
+    { header: 'Symbol2', field: 'symbol2', width: '300px', type: 'string' },
+    { header: 'Symbol4', field: 'symbol4', width: '300px', type: 'string' },
+    { header: 'Gender', field: 'gender', width: '300px', type: 'selection', options: ['male', 'female'] },
+    { header: 'Gender1', field: 'gender1', width: '300px', type: 'selection', options: ['male', 'female'] },
   ];
   }
 

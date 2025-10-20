@@ -313,8 +313,8 @@
                 </ng-container>
             }
             @for (ids of headersFiltersIds; track ids; let i = $index) {
-                <ng-container [matColumnDef]="ids">
-                    <th mat-header-cell *matHeaderCellDef>
+                <ng-container [matColumnDef]="ids" [sticky]="columnsArray[$index].pinned === 'left'" [stickyEnd]="columnsArray[$index].pinned === 'right'">
+                    <th mat-header-cell *matHeaderCellDef >
                         <div class="filters-container" [class.animate]="toggleFilters">
                             <app-filter-columns-component [obj]="columnsArray[returnIndex(ids)]"
                                 (filterOutput)="applyColumnFilter($event,columnsArray[returnIndex(ids)])"></app-filter-columns-component>
