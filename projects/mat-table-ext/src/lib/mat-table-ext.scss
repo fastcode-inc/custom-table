@@ -56,23 +56,25 @@ tr.example-detail-row {
   width: 20px;
 }
 
+/* Keep for legacy hover, but MDC classes are used below */
 table th:hover .resize-handle {
   opacity: 1;
   transition: 0.3s ease-in-out;
 }
 
-.mat-table.resizing {
+/* UPDATED: use MDC table classes */
+.mat-mdc-table.resizing {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
   cursor: col-resize;
 }
 
-.mat-table .mat-header-cell {
+.mat-mdc-table .mat-mdc-header-cell {
   position: relative;
 }
 
-.mat-table .mat-header-cell:not(:last-child) .resize-holder {
+.mat-mdc-table .mat-mdc-header-cell:not(:last-child) .resize-holder {
   cursor: col-resize;
   width: 20px;
   height: 100%;
@@ -138,9 +140,12 @@ table th:hover .resize-handle {
 .hide-button .mat-button-wrapper,
 .pin-button .mat-button-wrapper {
   display: flex !important;
-  width: 5em;
-  justify-content: space-around;
   align-items: center;
+  gap: 5px;
+}
+
+.pin-button .mat-icon {
+  margin-right: 2px;
 }
 
 .hide-button,
