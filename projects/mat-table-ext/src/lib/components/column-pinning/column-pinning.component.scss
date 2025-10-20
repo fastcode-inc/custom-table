@@ -1,9 +1,32 @@
 .pinning-list-item {
   display: flex;
   justify-content: flex-start;
-  align-items: baseline;
+  align-items: center; /* Vertically center items for a straight line */
+  gap: 12px; /* Add space between button and label */
   height: 3em;
 }
+
 .column-headers {
-  font-family: Roboto, "Helvetica Neue", sans-serif;
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  font-size: 14px; /* Adjust font size for better alignment */
+}
+
+button[mat-icon-button] {
+  background: none; /* Remove any background */
+  border: none; /* Remove border/outline */
+  outline: none; /* Explicitly remove outline */
+  padding: 0; /* Remove padding to keep it compact */
+  line-height: normal; /* Align icon properly */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:focus {
+    outline: none; /* Remove focus outline */
+  }
+}
+
+.pinning-icon {
+  font-size: 24px; /* Adjust icon size */
+  line-height: 1; /* Ensure icon aligns properly */
 }
