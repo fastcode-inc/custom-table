@@ -11,6 +11,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule } from '@angular/material/dialog';
 import { TitleCasePipe } from '@angular/common';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-editing',
@@ -26,6 +27,7 @@ import { TitleCasePipe } from '@angular/common';
     MatCheckboxModule,
     MatButtonModule,
     MatDialogModule,
+    MatIconModule,
     TitleCasePipe
   ]
 })
