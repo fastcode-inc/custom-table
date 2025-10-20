@@ -9,7 +9,7 @@ export interface MTExColumn {
   footerText?: string;
   headerTooltip?: TooltipProp;
   cellTooltip?: TooltipProp;
-  pinned?: 'left' | 'right';
+  pinned?: 'left' | 'right' | null;
   width?: string;
   disabled?: boolean;
   minWidth?: string;

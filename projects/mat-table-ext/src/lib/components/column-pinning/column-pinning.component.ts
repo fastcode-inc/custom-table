@@ -33,27 +33,40 @@ export class ColumnPinningComponent implements OnInit {
    * @param column column of which to set the pin value
    */
   changeValue(column: MTExColumn) {
+    console.log('changeValue called for column:', column);
+    
     if (column.pinned) {
       if (column.pinned == 'left') {
         this.setColumnPinValue(column, 'right');
       } else if (column.pinned == 'right') {
-        this.setColumnPinValue(column, undefined);
+        this.setColumnPinValue(column, null);
       }
     } else {
       this.setColumnPinValue(column, 'left');
     }
-    this.columnsChanged.emit(this.columns);
+    
+    console.log('After setColumnPinValue, columns:', this.columns);
+    
+    // Create a new array reference to trigger change detection
+    this.columnsChanged.emit([...this.columns]);
   }
   /**
    * @description This method is used to set the column pin value.
    * @param column column of which to set the pin value
    * @param value pin value to set
    */
-  setColumnPinValue(column: MTExColumn, value: 'left' | 'right' | undefined) {
-    this.columns.forEach((col) => {
-      if (column?.header == col.header) {
-        col.pinned = value;
+  setColumnPinValue(column: MTExColumn, value: 'left' | 'right' | null) {
+    console.log('setColumnPinValue called with column:', column, 'value:', value);
+    
+    // Create a new array with updated column
+    this.columns = this.columns.map(col => {
+      if (column?.field == col.field) {
+        console.log('Found matching column by field, updating pinned from', col.pinned, 'to', value);
+        return { ...col, pinned: value };
       }
+      return col;
     });
+    
+    console.log('Updated columns array:', this.columns);
   }
 }

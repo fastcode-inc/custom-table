@@ -164,6 +164,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   @Output() expansionChange: EventEmitter<ExpansionChange> =
     new EventEmitter<any>();
   tableID = new Date().getTime();
+  // forceTableRerender = false;
   columnPinningOptions: MTExColumnPinOption[] = [];
   exportMenuCtrl: boolean = false;
   columnPinMenuCtrl: boolean = false;
@@ -216,6 +217,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
     'expandRows',
     'sorting',
   ];
+  
 
   constructor(
     public dialog: MatDialog,
@@ -234,6 +236,45 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
    *
    * @param changes changes captured each time user changes property value.
    */
+
+  /**
+ * Handle column pinning changes from ColumnPinningComponent
+ * @param updatedColumns Updated columns array with new pinning states
+ */
+updateColumns(updatedColumns: MTExColumn[]) {
+  console.log('updateColumns called with:', updatedColumns);
+  
+  // Create a completely new columnsArray to trigger change detection
+  this.columnsArray = updatedColumns.map(col => ({ ...col }));
+  
+  console.log('Updated columnsArray:', this.columnsArray);
+  
+  // Update showHideColumnsArray to keep it in sync
+  this.showHideColumnsArray = [...this.columnsArray];
+
+  // Re-apply column configurations
+  this.setColumnsList(this.columnsArray);
+  
+  // Force complete table re-render by toggling the flag
+  // this.forceTableRerender = true;
+  this.cdr.detectChanges();
+  
+  setTimeout(() => {
+    // this.forceTableRerender = false;
+    this.cdr.detectChanges();
+    
+    // Force complete table re-render by recreating the data source
+    if (this.dataSource) {
+      const currentData = [...this.dataSource.data];
+      this.dataSource = new MatTableDataSource(currentData);
+      this.reCal(); // Re-apply paginator, sort, and filter
+    }
+    
+    if (this.columnFilter) {
+        this.setColumnFilter(true);
+    }
+  }, 0);
+}
   ngOnChanges(changes: SimpleChanges) {
     this.setPropertyValue(changes);
   }
@@ -1029,4 +1070,6 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
     });
     return arr;
   }
+
+  
 }

@@ -86,7 +86,7 @@
                     </mat-form-field>
                 </form>
                 <div class="showHide-menu-columns-list">
-                    <app-column-pinning [columns]="showHideColumnsArray"></app-column-pinning>
+                    <app-column-pinning [columns]="showHideColumnsArray" (columnsChanged)="updateColumns($event)"></app-column-pinning>
                 </div>
             </div>
         }
@@ -97,6 +97,7 @@
     }
     <section id="tableContainer" class="mat-table-ext-container" (scroll)="onScroll($event)"
         [style.height]="tableHeight ? tableHeight :'max-content'">
+        
         <table mat-table [id]="'matTableExt'+tableID" [dataSource]="dataSource" matSort cdkDropList
             cdkDropListOrientation="horizontal" multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
             (click)="saveCellEditing()" [style.width]="scrollbarH?'max-content':'100%'" 
@@ -119,9 +120,8 @@
                 </ng-container>
             </ng-container>
             <!--dynamic columns are being generated here-->
-            @for (column of columnsArray; track column.field; let i = $index) {
-                <div matColumnDef="{{column['field']}}" [sticky]="column.pinned == 'left' ? true:false"
-                    [stickyEnd]="column.pinned == 'right' ? true:false">
+            @for (column of columnsArray; track column.field + '_' + column.pinned; let i = $index) {
+                <div matColumnDef="{{column['field']}}" [sticky]="column.pinned === 'left'" [stickyEnd]="column.pinned === 'right'">
                 <th mat-header-cell *matHeaderCellDef [style.width]="column.width" [style.maxWidth]="column.maxWidth"
                     [style.minWidth]="column.minWidth" cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="!dndColumns"
                     [columnsResizable]="columnResizable" [index]="i" class="mat-mdc-header-cell"
@@ -335,6 +335,7 @@
                 <tr mat-footer-row *matFooterRowDef="getDisplayedColumns(); sticky: stickyFooter"></tr>
             }
         </table>
+        
     </section>
     @if (showPaginator) {
         <mat-paginator [pageSizeOptions]="pageSizeOptions"
