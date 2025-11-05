@@ -149,7 +149,7 @@ export class AppComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     
   this.columns=[
-    { header: 'Position', field: 'position', pinned: 'left', width: '300px', type: 'string' },
+    { header: 'Position', field: 'position', pinned: 'left', width: '100px', type: 'string' },
     { header: 'Name', field: 'name', width: '300px',  type: 'string' },
     { header: 'Weight', field: 'weight', width: '300px', type: 'string' },
     { header: 'Symbol', field: 'symbol', width: '300px', type: 'string' },
