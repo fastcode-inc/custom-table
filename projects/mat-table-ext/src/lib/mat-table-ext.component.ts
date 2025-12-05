@@ -10,6 +10,7 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import {
   AfterViewInit,
   ChangeDetectorRef,
+  ElementRef,
   EventEmitter,
   Output,
 } from '@angular/core';
@@ -41,6 +42,7 @@ import {
   FilterSearchValue,
   MTExRow,
   ColumnVisibility,
+  MTExColumnGroup,
 } from '../lib/models/tableExtModels';
 import { MatTableExtService } from '../lib/mat-table-ext.service';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -59,6 +61,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { ColumnPinningComponent } from './components/column-pinning/column-pinning.component';
 import { FilterColumnsComponentComponent } from './components/filter-columns-component/filter-columns-component.component';
@@ -86,11 +90,12 @@ import { ResizeColumnDirective } from './directives/resize-column.directive';
     MatTooltipModule,
     MatToolbarModule,
     MatProgressBarModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
     DragDropModule,
     ColumnPinningComponent,
     FilterColumnsComponentComponent,
-    ResizeColumnDirective,
-    EditingComponent
+    ResizeColumnDirective
   ],
   animations: [
     trigger('detailExpand', [
@@ -108,6 +113,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   @ViewChild('columnMenuTrigger') columnMenuTrigger!: MatMenuTrigger;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild('matTable', { read: ElementRef }) matTableRef!: ElementRef;
 
   // Table inputs
   @Input() dataSource!: MatTableDataSource<any>;
@@ -142,6 +148,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   @Input() showPaginator: boolean = true;
   @Input() showFirstLastButtons: boolean = false;
   @Input() exportButtonEnable: boolean = false;
+  @Input() printButtonEnable: boolean = false;
   @Input() pageSizeOptions: number[] = [10, 50, 100];
   @Input() toolbarTemplateRef!: TemplateRef<any> | undefined;
   @Input() headerTemplateRef!: TemplateRef<any> | null;
@@ -152,6 +159,9 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   @Input() cellEditingTemplateRef!: TemplateRef<any> | undefined;
   @Input() cellTemplateRefMap: CellTemplateRefMap = {};
   @Input() tableClassName: string = '';
+  @Input() columnGroups: MTExColumnGroup[] = [];
+  @Input() frozenRowIndices: number[] = [];
+  @Input() enableRowFreezing: boolean = false;
 
   // Table outputs
   @Output() inlineChange: EventEmitter<any> = new EventEmitter<RowChange>();
@@ -164,13 +174,11 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   @Output() expansionChange: EventEmitter<ExpansionChange> =
     new EventEmitter<any>();
   tableID = new Date().getTime();
-  // forceTableRerender = false;
   columnPinningOptions: MTExColumnPinOption[] = [];
   exportMenuCtrl: boolean = false;
   columnPinMenuCtrl: boolean = false;
   hideShowMenuCtrl: boolean = false;
-  columnFilterBySelection: any = false;
-  rowDataTemp: any = {};
+  rowDataTemp: Record<string, MTExRow> = {};
   inlineEditingTemplateRefData: any = {};
   displayedColumns: string[] = [];
   showHideColumnsArray: MTExColumn[] = [];
@@ -180,8 +188,8 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   columnsToDisplayWithExpand: string[] = [];
   selection = new SelectionModel<any>(false, []);
   hiddenCtrl = new SelectionModel<any>(true, []);
-  tableData: any = [];
-  filterValues: any = {};
+  tableData: MTExRow[] = [];
+  filterValues: Record<string, string | number | boolean> = {};
   globalFilter = '';
   showHideFilter = '';
   individualFilter = '';
@@ -189,10 +197,9 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   hideRows = false;
   expandedElement: any | null;
   currentRowIndex: number = -1;
-  currentRow: any = {};
-  cellEditing: any = {};
+  currentRow: MTExRow = {};
+  cellEditing: Record<string, boolean> = {};
   hideShowMenuGroup: FormGroup = this.formBuilder.group({});
-  cellTemplate!: TemplateRef<any>;
   menuX: number = 0;
   menuY: number = 0;
   dynamicDisplayedColumns: any[] = [
@@ -208,6 +215,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
     'inlineRowEditing',
     'popupRowEditing',
     'enableDelete',
+    'enableRowFreezing',
     'rowSelection',
     'multiRowSelection',
     'stickyHeader',
@@ -328,6 +336,8 @@ updateColumns(updatedColumns: MTExColumn[]) {
       this.showHideColumn('popup', value.currentValue),
     enableDelete: (value: any) =>
       this.showHideColumn('delete', value.currentValue),
+    enableRowFreezing: (value: any) =>
+      this.showHideColumn('freeze', value.currentValue),
     rowSelection: (value: any) => this.setRowSelection(value.currentValue),
     multiRowSelection: (value: any) => {
       this.selection = new SelectionModel<any>(value.currentValue, []);
@@ -419,6 +429,48 @@ updateColumns(updatedColumns: MTExColumn[]) {
     return list;
   }
   /**
+   * @description This method returns the grouped column header definitions.
+   * @returns list of grouped column definitions for header row.
+   */
+  getGroupedColumns(): string[] {
+    if (this.columnGroups.length === 0) return [];
+    
+    const grouped: string[] = [];
+    const groupedFields = new Set<string>();
+    
+    // Add action columns first if visible
+    if (this.dynamicDisplayedColumns.find(c => c.name === 'select' && c.show)) {
+      grouped.push('select');
+    }
+    if (this.dynamicDisplayedColumns.find(c => c.name === 'edit' && c.show)) {
+      grouped.push('edit');
+    }
+    if (this.dynamicDisplayedColumns.find(c => c.name === 'popup' && c.show)) {
+      grouped.push('popup');
+    }
+    if (this.dynamicDisplayedColumns.find(c => c.name === 'delete' && c.show)) {
+      grouped.push('delete');
+    }
+    
+    // Add group headers
+    this.columnGroups.forEach(group => {
+      grouped.push('group-' + group.name);
+      group.columns.forEach(col => groupedFields.add(col));
+    });
+    
+    // Add ungrouped columns
+    this.columnsArray.forEach(col => {
+      if (!groupedFields.has(col.field)) {
+        const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
+        if (displayCol && displayCol.show) {
+          grouped.push(col.field);
+        }
+      }
+    });
+    
+    return grouped;
+  }
+  /**
    * @param menuType type of menu to open from toolbar.
    * @param event mouse event to open menu on that location.
    */
@@ -457,6 +509,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
     if (columns.length) {
       this.columnsArray = [...columns];
       this.setColumnsList(columns);
+      this.setToolbarMenuControls(columns);
     }
   }
   /**
@@ -465,7 +518,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
    */
   setColumnsList(columns: MTExColumn[]) {
     this.columnsList = [];
-    this.displayedColumns = ['select', 'edit', 'popup', 'delete'];
+    this.displayedColumns = ['select', 'edit', 'popup', 'delete', 'freeze'];
     let columnsArray: DisplayColumn[] = [];
     columns.forEach((col) => {
       if (typeof col?.header == 'string') {
@@ -479,6 +532,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
       { filter: false, name: 'edit', show: false },
       { filter: false, name: 'popup', show: false },
       { filter: false, name: 'delete', show: false },
+      { filter: false, name: 'freeze', show: false },
     ];
     this.dynamicDisplayedColumns = columnsArray.concat(
       this.dynamicDisplayedColumns
@@ -494,6 +548,23 @@ updateColumns(updatedColumns: MTExColumn[]) {
     if (this.columnFilter) {
       this.setColumnFilter(true);
     }
+  }
+
+  /**
+   * @description Toggle freeze state for a specific row
+   * @param index The row index to freeze/unfreeze
+   */
+  toggleRowFreeze(index: number): void {
+    const frozenIndex = this.frozenRowIndices.indexOf(index);
+    if (frozenIndex > -1) {
+      // Unfreeze the row
+      this.frozenRowIndices.splice(frozenIndex, 1);
+    } else {
+      // Freeze the row
+      this.frozenRowIndices.push(index);
+    }
+    // Trigger change detection
+    this.frozenRowIndices = [...this.frozenRowIndices];
   }
   /**
    * @description This method will position the selection column to first and also update its visibility.
@@ -948,6 +1019,69 @@ updateColumns(updatedColumns: MTExColumn[]) {
     }
   }
 /**
+ * @description Check if a row index is in the frozen rows list.
+ * @param index The row index to check
+ * @returns True if the row is frozen
+ */
+  isRowFrozen(index: number): boolean {
+    return this.frozenRowIndices.includes(index);
+  }
+
+  /**
+     * @description Get the top position for a frozen row by calculating
+     * actual heights of headers and preceding frozen rows from the DOM.
+     * @param index The row index (render index)
+     * @returns The top position in pixels, or null if not frozen
+     */
+  getFrozenRowTop(index: number): string | null {
+    if (!this.isRowFrozen(index)) {
+      return null;
+    }
+
+    // Access the native table element
+    const tableElement = this.matTableRef?.nativeElement as HTMLElement;
+    if (!tableElement) {
+      return null;
+    }
+
+    // 1. Calculate the offset from Sticky Headers
+    let currentTop = 0;
+
+    if (this.stickyHeader) {
+      // In v20 (MDC), the class is .mat-mdc-header-row
+      const headerRows = tableElement.querySelectorAll('.mat-mdc-header-row');
+      headerRows.forEach((row) => {
+        currentTop += ((row as HTMLElement).offsetHeight);
+      });
+      currentTop =currentTop-1; // Small buffer to prevent overla
+    }
+
+    // 2. Calculate offset from previous frozen rows
+    // Sort indices to ensure we process them top-to-bottom
+    const sortedFrozenIndices = [...this.frozenRowIndices].sort((a, b) => a - b);
+
+    // Find where the current row sits in the frozen stack
+    const currentPositionInStack = sortedFrozenIndices.indexOf(index);
+
+    // Get all rendered data rows to query their specific heights
+    const allRows = tableElement.querySelectorAll('.mat-mdc-row');
+
+    // Iterate ONLY through the frozen rows that are visually ABOVE the current one
+    for (let i = 0; i < currentPositionInStack; i++) {
+      const prevFrozenIndex = sortedFrozenIndices[i];
+      const prevRowElement = allRows[prevFrozenIndex] as HTMLElement;
+
+      // Add the actual height of the previous row to the accumulator
+      if (prevRowElement) {
+        currentTop += prevRowElement.offsetHeight;
+      }
+    }
+    if(!this.stickyHeader){
+      currentTop -= 1; // Small buffer to prevent overlap
+    }
+    return `${currentTop}px`;
+  }
+/**
  * @description This method is called in constructor method to add SVGs into icon registration.
  */
   addIconsToRegistry() {
@@ -976,6 +1110,152 @@ updateColumns(updatedColumns: MTExColumn[]) {
     XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
     XLSX.writeFile(wb, `tablesheets.${type}`);
   }
+/**
+ * @description This method is used to print the table with proper styling.
+ */
+  printTable() {
+    const printContent = document.getElementById('matTableExt' + this.tableID);
+    if (!printContent) return;
+
+    const windowPrint = window.open('', '', 'width=900,height=650');
+    if (!windowPrint) return;
+
+    windowPrint.document.write('<html><head><title>Print Table</title>');
+    windowPrint.document.write('<style>');
+    windowPrint.document.write(`
+      table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
+      th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+      th { background-color: #f2f2f2; font-weight: bold; }
+      tr:nth-child(even) { background-color: #f9f9f9; }
+      @media print {
+        .mat-mdc-table { page-break-inside: auto; }
+        tr { page-break-inside: avoid; page-break-after: auto; }
+        thead { display: table-header-group; }
+      }
+    `);
+    windowPrint.document.write('</style></head><body>');
+    
+    // Clone the table and remove all action columns
+    const tableClone = printContent.cloneNode(true) as HTMLElement;
+    
+    // Define action column class selectors
+    const actionColumnSelectors = [
+      'th.action-column-cells',
+      'td.inline-edit-column-cell',
+      // Remove columns by checking for action column names
+      '[matColumnDef="select"]',
+      '[matColumnDef="edit"]',
+      '[matColumnDef="popup"]',
+      '[matColumnDef="delete"]',
+      '[matColumnDef="freeze"]',
+    ];
+    
+    // Remove all matching elements
+    actionColumnSelectors.forEach(selector => {
+      const elements = tableClone.querySelectorAll(selector);
+      elements.forEach(el => el.remove());
+    });
+    
+    // Also remove cells by index for action columns
+    const actionColumnIndices: number[] = [];
+    const headerRow = tableClone.querySelector('tr.mat-mdc-header-row');
+    if (headerRow) {
+      const headers = Array.from(headerRow.querySelectorAll('th'));
+      headers.forEach((th, index) => {
+        if (th.classList.contains('action-column-cells')) {
+          actionColumnIndices.push(index);
+        }
+      });
+    }
+    
+    // Remove cells at action column indices from all rows
+    const rows = tableClone.querySelectorAll('tr');
+    rows.forEach(row => {
+      const cells = Array.from(row.querySelectorAll('th, td'));
+      // Remove in reverse order to maintain correct indices
+      for (let i = actionColumnIndices.length - 1; i >= 0; i--) {
+        const index = actionColumnIndices[i];
+        if (cells[index]) {
+          cells[index].remove();
+        }
+      }
+    });
+    
+    windowPrint.document.write(tableClone.outerHTML);
+    windowPrint.document.write('</body></html>');
+    windowPrint.document.close();
+    
+    setTimeout(() => {
+      windowPrint.print();
+      windowPrint.close();
+    }, 250);
+  }
+
+  async exportToPDF() {
+    try {
+      // Correct jsPDF import
+      const JsPDF = (await import('jspdf')).default;
+
+      // Correct AutoTable import
+      const autoTableModule = await import('jspdf-autotable');
+      const autoTable = autoTableModule.autoTable || autoTableModule.default;
+
+      const doc = new JsPDF();
+
+      const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze'];
+
+      const visibleColumns = this.columnsArray.filter(col => {
+        const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
+        return displayCol && displayCol.show && !actionColumns.includes(col.field);
+      });
+
+      const headers = visibleColumns.map(col => col.header || col.field);
+
+      const rows = this.dataSource.data.map(row =>
+        visibleColumns.map(col => {
+          const value = row[col.field];
+          if (value === null || value === undefined) return '';
+          if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+          if (value instanceof Date)
+            return new Intl.DateTimeFormat('en-US').format(value);
+          return String(value);
+        })
+      );
+
+      let startY = 10;
+      if (this.toolbarTitle) {
+        doc.text(this.toolbarTitle, 14, 15);
+        startY = 20;
+      }
+
+      // 🔥 USE AS FUNCTION (NOT doc.autoTable)
+      autoTable(doc, {
+        head: [headers],
+        body: rows,
+        startY: startY,
+        theme: 'grid',
+        styles: {
+          fontSize: 9,
+          cellPadding: 3
+        },
+        headStyles: {
+          fillColor: [66, 139, 202],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245]
+        }
+      });
+
+      doc.save(`${this.toolbarTitle || 'table-export'}.pdf`);
+
+    } catch (error) {
+      console.error('Error exporting to PDF:', error);
+    }
+  }
+
+
   /**
    * @description This method is used to split name of filter row header to get index.
    * @param value value to be splited for index.

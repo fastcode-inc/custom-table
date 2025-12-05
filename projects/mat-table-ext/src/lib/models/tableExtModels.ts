@@ -18,6 +18,15 @@ export interface MTExColumn {
   type: MTExColumnType;
   cellTemplate?: TemplateRef<any> | null;
   headerTemplate?: TemplateRef<any> | null;
+  groupName?: string;
+}
+
+/** Column group definition for grouped headers */
+export interface MTExColumnGroup {
+  name: string;
+  label: string;
+  columns: string[];
+  colspan?: number;
 }
 
 export interface DisplayColumn {
@@ -45,10 +54,11 @@ export interface CellTemplateRefMap {
 /** Possible column type values. */
 export declare type MTExColumnType =
   | 'selection'
-  | string
-  | boolean
-  | number
-  | 'date';
+  | 'string'
+  | 'boolean'
+  | 'number'
+  | 'date'
+  | 'datepicker';
 export interface TooltipProp {
   value: string;
   tooltipPosition?: TooltipPosition;

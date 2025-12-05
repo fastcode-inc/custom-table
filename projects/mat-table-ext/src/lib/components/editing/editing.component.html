@@ -31,6 +31,15 @@
                             <input matInput type="text" [(ngModel)]="dialogData['row'][key]" [ngModelOptions]="{standalone: true}">
                         </mat-form-field>
                     }
+                    <!-- Datepicker Type -->
+                    @if (types[key] == 'datepicker') {
+                        <mat-form-field appearance="outline" class="inline-editing-field">
+                            <mat-label>{{key | titlecase}}</mat-label>
+                            <input matInput [matDatepicker]="popupPicker" [(ngModel)]="dialogData['row'][key]" [ngModelOptions]="{standalone: true}">
+                            <mat-datepicker-toggle matIconSuffix [for]="popupPicker"></mat-datepicker-toggle>
+                            <mat-datepicker #popupPicker></mat-datepicker>
+                        </mat-form-field>
+                    }
                     <!-- Selection Type -->
                     @if (types[key] == 'selection') {
                         <mat-form-field appearance="outline" class="inline-editing-field">

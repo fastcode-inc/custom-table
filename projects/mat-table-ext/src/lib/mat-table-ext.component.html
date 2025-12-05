@@ -38,11 +38,15 @@
             @if (exportButtonEnable) {
                 <button class="export-button" mat-stroked-button color="primary"
                     (click)="openMenu('export',$event)" matTooltip="Table Data Export">
-                  <div class="export-button-content">
                     <mat-icon>import_export</mat-icon>
                     <span>Export</span>
-                    <mat-icon>expand_more</mat-icon>
-                  </div>
+                    <mat-icon iconPositionEnd>expand_more</mat-icon>
+                </button>
+              }
+            @if (printButtonEnable) {
+                <button class="print-button" mat-icon-button color="primary"
+                    (click)="printTable()" matTooltip="Print Table">
+                    <mat-icon>print</mat-icon>
                 </button>
               }
             <div style="visibility: hidden; position:fixed" [matMenuTriggerFor]="menu" [style.left.px]="menuX"
@@ -53,6 +57,7 @@
         @if (exportMenuCtrl) {
             <mat-option (click)="exportTable('xlsx')">Export to Excel</mat-option>
             <mat-option (click)="exportTable('csv')">Export to CSV</mat-option>
+            <mat-option (click)="exportToPDF()">Export to PDF</mat-option>
         }
     </mat-menu>
     <div style="visibility: hidden; position:fixed" #columnMenuTrigger="matMenuTrigger" [matMenuTriggerFor]="columnMenu"
@@ -101,7 +106,7 @@
     <section id="tableContainer" class="mat-table-ext-container" (scroll)="onScroll($event)"
         [style.height]="tableHeight ? tableHeight :'max-content'">
         
-        <table mat-table [id]="'matTableExt'+tableID" [dataSource]="dataSource" matSort cdkDropList
+        <table mat-table #matTable [id]="'matTableExt'+tableID" [dataSource]="dataSource" matSort cdkDropList
             cdkDropListOrientation="horizontal" multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
             (click)="saveCellEditing()" [style.width]="scrollbarH?'max-content':'100%'" 
             [class]="'mat-mdc-table' + (tableClassName ? ' ' + tableClassName : '')">
@@ -199,6 +204,14 @@
                                             [ngModelOptions]="{standalone: true}">
                                     </mat-form-field>
                                 }
+                                @if (column.type == 'datepicker') {
+                                    <mat-form-field appearance="outline" class="inline-editing-field">
+                                        <input matInput [matDatepicker]="inlinePicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                                            [ngModelOptions]="{standalone: true}">
+                                        <mat-datepicker-toggle matIconSuffix [for]="inlinePicker"></mat-datepicker-toggle>
+                                        <mat-datepicker #inlinePicker></mat-datepicker>
+                                    </mat-form-field>
+                                }
                                 @if (column.type == 'selection') {
                                     <mat-form-field appearance="outline" class="inline-editing-field">
                                         <mat-select [value]="rowDataTemp['e'+i][column.field]"
@@ -230,6 +243,14 @@
                                     <mat-form-field appearance="outline" class="inline-editing-field">
                                         <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
                                             [ngModelOptions]="{standalone: true}">
+                                    </mat-form-field>
+                                }
+                                @if (column.type == 'datepicker') {
+                                    <mat-form-field appearance="outline" class="inline-editing-field">
+                                        <input matInput [matDatepicker]="cellPicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                                            [ngModelOptions]="{standalone: true}">
+                                        <mat-datepicker-toggle matIconSuffix [for]="cellPicker"></mat-datepicker-toggle>
+                                        <mat-datepicker #cellPicker></mat-datepicker>
                                     </mat-form-field>
                                 }
                                 @if (column.type == 'selection') {
@@ -296,6 +317,23 @@
                 </td>
                 <td mat-footer-cell *matFooterCellDef></td>
             </ng-container>
+
+            <ng-container matColumnDef="freeze" stickyEnd="false">
+                <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
+                    class="action-column-cells"> Freeze
+                </th>
+                <td mat-cell *matCellDef="let row;let i=dataIndex">
+                    <button mat-icon-button (click)="toggleRowFreeze(i)" 
+                        [matTooltip]="isRowFrozen(i) ? 'Unfreeze Row' : 'Freeze Row'"
+                        matTooltipPosition="above">
+                        <mat-icon [color]="isRowFrozen(i) ? 'primary' : ''" aria-hidden="false">
+                            {{ isRowFrozen(i) ? 'lock' : 'lock_open' }}
+                        </mat-icon>
+                    </button>
+                </td>
+                <td mat-footer-cell *matFooterCellDef></td>
+            </ng-container>
+
             <!-- Expanded Content Column - The detail row is made up of this one column that spans across all columns -->
             @if (expandRows) {
                 <ng-container matColumnDef="expandedDetail">
@@ -312,6 +350,17 @@
                     </td>
                 </ng-container>
             }
+            <!-- Column group headers -->
+            @if (columnGroups.length > 0) {
+                @for (group of columnGroups; track group.name) {
+                    <ng-container [matColumnDef]="'group-' + group.name">
+                        <th mat-header-cell *matHeaderCellDef [attr.colspan]="group.colspan || group.columns.length" 
+                            class="group-header-cell">
+                            {{group.label}}
+                        </th>
+                    </ng-container>
+                }
+            }
             @for (ids of headersFiltersIds; track ids; let i = $index) {
                 <ng-container [matColumnDef]="ids" [sticky]="columnsArray[$index].pinned === 'left'" [stickyEnd]="columnsArray[$index].pinned === 'right'">
                     <th mat-header-cell *matHeaderCellDef  [style.minWidth]="columnsArray[$index].width" [style.maxWidth]="columnsArray[$index].maxWidth?columnsArray[$index].maxWidth:columnsArray[$index].width"
@@ -323,9 +372,13 @@
                     </th>
                 </ng-container>
             }
+            @if (columnGroups.length > 0) {
+                <tr mat-header-row *matHeaderRowDef="getGroupedColumns(); sticky: stickyHeader" class="mat-mdc-header-row group-header-row"></tr>
+            }
             <tr mat-header-row *matHeaderRowDef=" getDisplayedColumns(); sticky: stickyHeader" class="mat-mdc-header-row"></tr>
             <tr mat-row *matRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex;" class="mat-mdc-row data-row"
-                [ngClass]="{'data-row':expandRows,'stripedRows':(stripedRows &&  i % 2 == 1),'hoverClass':rowHover, 'hidden':hiddenCtrl.isSelected(row) && hideRows,'example-expanded-row':expandedElement === row}"
+                [ngClass]="{'data-row':expandRows,'stripedRows':(stripedRows &&  i % 2 == 1),'hoverClass':rowHover, 'hidden':hiddenCtrl.isSelected(row) && hideRows,'example-expanded-row':expandedElement === row,'frozen-row':isRowFrozen(i)}"
+                [style.top]="getFrozenRowTop(i)"
                 (click)="expandRow(row, row !== expandedElement,i)">
             </tr>
             <tr style="height: 0px;" mat-header-row class="no-default-height" *matHeaderRowDef="headersFiltersIds">

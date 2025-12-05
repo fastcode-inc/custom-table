@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, TemplateRef, ViewChild } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { CustomTableService } from './service/custom-table.service';
-import { MTExColumn } from '../../../mat-table-ext/src/lib/models/tableExtModels';
+import { MTExColumn, MTExColumnGroup } from '../../../mat-table-ext/src/lib/models/tableExtModels';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -28,6 +28,7 @@ export var EXAMPLE_DATA: any[] = [
     city: 'Berlin',
     address: 'Bernauer Str.111,13355',
     date: '1423456765768',
+    birthDate: new Date('1990-05-15'),
     website: 'www.matero.com',
     company: 'matero',
     email: 'Boron@gmail.com',
@@ -45,6 +46,7 @@ export var EXAMPLE_DATA: any[] = [
     city: 'Shanghai',
     address: '88 Songshan Road',
     date: '1423456765768',
+    birthDate: new Date('1985-08-22'),
     website: 'www.matero.com',
     company: 'matero',
     email: 'Helium@gmail.com',
@@ -62,11 +64,102 @@ export var EXAMPLE_DATA: any[] = [
     city: 'Sydney',
     address: 'Circular Quay, Sydney NSW 2000',
     date: '1423456765768',
+    birthDate: new Date('1992-12-10'),
     website: 'www.matero.com',
     company: 'matero',
     email: 'Nitrogen@gmail.com',
     status: true,
     cost: 2,
+  },
+  {
+    position: 4,
+    name: 'Oxygen',
+    weight: 15.9994,
+    symbol: 'O',
+    gender: 'female',
+    mobile: '18899887766',
+    tele: '123456789',
+    city: 'London',
+    address: 'Baker Street 221B',
+    date: '1423456765768',
+    birthDate: new Date('1988-03-25'),
+    website: 'www.example.com',
+    company: 'example',
+    email: 'Oxygen@gmail.com',
+    status: false,
+    cost: 3,
+  },
+  {
+    position: 4,
+    name: 'Oxygen',
+    weight: 15.9994,
+    symbol: 'O',
+    gender: 'female',
+    mobile: '18899887766',
+    tele: '123456789',
+    city: 'London',
+    address: 'Baker Street 221B',
+    date: '1423456765768',
+    birthDate: new Date('1988-03-25'),
+    website: 'www.example.com',
+    company: 'example',
+    email: 'Oxygen@gmail.com',
+    status: false,
+    cost: 3,
+  },
+  {
+    position: 4,
+    name: 'Oxygen',
+    weight: 15.9994,
+    symbol: 'O',
+    gender: 'female',
+    mobile: '18899887766',
+    tele: '123456789',
+    city: 'London',
+    address: 'Baker Street 221B',
+    date: '1423456765768',
+    birthDate: new Date('1988-03-25'),
+    website: 'www.example.com',
+    company: 'example',
+    email: 'Oxygen@gmail.com',
+    status: false,
+    cost: 3,
+  },
+  {
+    position: 4,
+    name: 'Oxygen',
+    weight: 15.9994,
+    symbol: 'O',
+    gender: 'female',
+    mobile: '18899887766',
+    tele: '123456789',
+    city: 'London',
+    address: 'Baker Street 221B',
+    date: '1423456765768',
+    birthDate: new Date('1988-03-25'),
+    website: 'www.example.com',
+    company: 'example',
+    email: 'Oxygen@gmail.com',
+    status: false,
+    cost: 3,
+  },
+  {
+    position: 4,
+    name: 'Oxygen',
+    weight: 15.9994,
+    symbol: 'O',
+    gender: 'female',
+    mobile: '18899887766',
+    tele: '123456789',
+    city: 'London',
+    address: 'Baker Street 221B',
+    date: '1423456765768',
+    birthDate: new Date('1988-03-25'),
+    website: 'www.example.com',
+    company: 'example',
+    email: 'Oxygen@gmail.com',
+    status: false,
+    cost: 3,
   },
 ];
 @Component({
@@ -113,13 +206,48 @@ export class AppComponent implements AfterViewInit {
   showFirstLastButtons: any = false;
   columnPinnable: any = true;
   columnHidable: any = false;
-  exportButtonEnable: any = false;
+  exportButtonEnable: any = true;
+  printButtonEnable: any = false;
+  enableColumnGrouping: any = false;
+  enableRowFreezing: any = false;
   @ViewChild('cellTemplate1') cellTemplate1!: TemplateRef<any>;
   @ViewChild('cellTemplate2') cellTemplate2!: TemplateRef<any>;
   @ViewChild('headerTemplate2') headerTemplate2!: TemplateRef<any>;
 
   
   public columns: MTExColumn[] = []
+  
+  // Column grouping configuration
+  public columnGroups: MTExColumnGroup[] = [
+    {
+      name: 'basic',
+      label: 'Basic Information',
+      columns: ['position', 'name', 'symbol'],
+      colspan: 3
+    },
+    {
+      name: 'measurements',
+      label: 'Measurements',
+      columns: ['weight', 'cost'],
+      colspan: 2
+    },
+    {
+      name: 'personal',
+      label: 'Personal Details',
+      columns: ['gender', 'birthDate', 'status'],
+      colspan: 3
+    },
+    {
+      name: 'contact',
+      label: 'Contact Information',
+      columns: ['email', 'mobile', 'city'],
+      colspan: 3
+    }
+  ];
+  
+  // Frozen rows - freeze first 2 rows
+  public frozenRowIndices: number[] = [0, 1];
+  
   //   { header: 'Position', field: 'position', width: '200px',type:'string', headerTemplate:this.headerTemplate2 },
   //   { header: 'Name', field: 'name', width: '200px', pinned: 'left', type: 'string' },
   //   { header: 'Weight', field: 'weight', width: '200px', pinned: 'left', type: 'string' },
@@ -128,7 +256,7 @@ export class AppComponent implements AfterViewInit {
   // ];
   multiSelectRow: any = true;
   topSearchFilter: any = false;
-  tableHeight: string = '';
+  tableHeight: string = '300px';
   tableWidth: string = '';
   tableClassName: string = '';
   isExpandEnable: any = false;
@@ -149,15 +277,17 @@ export class AppComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     
   this.columns=[
-    { header: 'Position', field: 'position', pinned: 'left', width: '100px', type: 'string' },
-    { header: 'Name', field: 'name', width: '300px',  type: 'string' },
-    { header: 'Weight', field: 'weight', width: '300px', type: 'string' },
-    { header: 'Symbol', field: 'symbol', width: '300px', type: 'string' },
-    { header: 'Symbol1', field: 'symbol1', width: '300px', type: 'string' },
-    { header: 'Symbol2', field: 'symbol2', width: '300px', type: 'string' },
-    { header: 'Symbol4', field: 'symbol4', width: '300px', type: 'string' },
-    { header: 'Gender', field: 'gender', width: '300px', type: 'selection', options: ['male', 'female'] },
-    { header: 'Gender1', field: 'gender1', width: '300px', type: 'selection', options: ['male', 'female'] },
+    { header: 'Position', field: 'position', width: '100px', type: 'number', groupName: 'basic' },
+    { header: 'Name', field: 'name', width: '150px', type: 'string', groupName: 'basic' },
+    { header: 'Symbol', field: 'symbol', width: '100px', type: 'string', groupName: 'basic' },
+    { header: 'Weight', field: 'weight', width: '120px', type: 'number', groupName: 'measurements' },
+    { header: 'Cost', field: 'cost', width: '100px', type: 'number', groupName: 'measurements' },
+    { header: 'Gender', field: 'gender', width: '120px', type: 'selection', options: ['male', 'female'], groupName: 'personal' },
+    { header: 'Birth Date', field: 'birthDate', width: '180px', type: 'datepicker', groupName: 'personal' },
+    { header: 'Status', field: 'status', width: '100px', type: 'boolean', groupName: 'personal' },
+    { header: 'Email', field: 'email', width: '200px', type: 'string', groupName: 'contact' },
+    { header: 'Mobile', field: 'mobile', width: '150px', type: 'string', groupName: 'contact' },
+    { header: 'City', field: 'city', width: '150px', type: 'string', groupName: 'contact' },
   ];
   }
 

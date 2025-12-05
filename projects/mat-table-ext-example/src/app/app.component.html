@@ -75,6 +75,14 @@
       </section>
       <section class="example-section" style="padding-left: 15px">
         <mat-slide-toggle
+          [(ngModel)]="printButtonEnable"
+          [disabled]="!toolbarToggle"
+        >
+          Print Button
+        </mat-slide-toggle>
+      </section>
+      <section class="example-section" style="padding-left: 15px">
+        <mat-slide-toggle
           [(ngModel)]="columnPinnable"
           [disabled]="!toolbarToggle"
         >
@@ -128,6 +136,16 @@
       <section class="example-section">
         <mat-slide-toggle [(ngModel)]="simpleFilter" [disabled]="false">
           Columns Filter
+        </mat-slide-toggle>
+      </section>
+      <section class="example-section">
+        <mat-slide-toggle [(ngModel)]="enableColumnGrouping" [disabled]="false">
+          Column Grouping
+        </mat-slide-toggle>
+      </section>
+      <section class="example-section">
+        <mat-slide-toggle [(ngModel)]="enableRowFreezing" [disabled]="false">
+          Row Freezing (First 2 Rows)
         </mat-slide-toggle>
       </section>
       <section class="example-section">
@@ -248,12 +266,14 @@
   [inCellEditing]="inCellEditing"
   [popupRowEditing]="popupRowEditing"
   [enableDelete]="deleteRow"
+  [enableRowFreezing]="enableRowFreezing"
   [rowSelection]="rowSelection"
   [multiRowSelection]="multiRowSelection"
   [stickyHeader]="stickyHeader"
   [stickyFooter]="stickyFooter"
   [columnFilter]="simpleFilter"
   [showToolbar]="toolbarToggle"
+  [toolbarTitle]="'Element Data Table'"
   [toolbarHeight]="toolbarHeight"
   [globalSearch]="topSearchFilter"
   [expandRows]="isExpandEnable"
@@ -265,6 +285,9 @@
   [columnPinnable]="columnPinnable"
   [columnHidable]="columnHidable"
   [exportButtonEnable]="exportButtonEnable"
+  [printButtonEnable]="printButtonEnable"
+  [columnGroups]="enableColumnGrouping ? columnGroups : []"
+  [frozenRowIndices]="enableRowFreezing ? frozenRowIndices : []"
   [stripedRows]="stripedRows"
   [loadingIndicator]="isLoading"
   [sorting]="sorting"

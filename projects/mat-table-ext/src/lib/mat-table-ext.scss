@@ -132,8 +132,6 @@ table th:hover .resize-handle {
 .inline-editing-field{
   padding: 8px 0;
 }
-.inline-editing-field .mat-mdc-text-field-wrapper{
-}
 .inline-editing-field div.mat-mdc-form-field-subscript-wrapper{
     display: none;
   }
@@ -175,9 +173,16 @@ table th:hover .resize-handle {
 
 .hide-button,
 .pin-button,
-.export-button {
+.export-button,
+.print-button {
   height: 3em;
   border: 2px solid currentColor !important;
+}
+
+.print-button .mat-button-wrapper {
+  display: flex !important;
+  align-items: center;
+  gap: 5px;
 }
 
 .showHide-menu-columns-list {
@@ -215,6 +220,38 @@ table th:hover .resize-handle {
   --mat-table-container-elevation: 0;
   --mat-table-row-hover-state-layer-color: var(--mat-sys-color-surface-variant);
   --mat-table-row-hover-state-layer-opacity: 0.08;
+}
+
+// Column grouping styles
+.group-header-row {
+  .group-header-cell {
+    text-align: center;
+    font-weight: bold;
+    font-size: 14px;
+    background-color: var(--mat-sys-color-primary-container, #e3f2fd);
+    color: var(--mat-sys-color-on-primary-container, #1565c0);
+    border-bottom: 2px solid var(--mat-sys-color-primary, #1976d2);
+  }
+}
+
+// Row freezing styles
+.frozen-row {
+  position: sticky !important;
+  z-index: 10;
+  background-color: var(--mat-sys-color-surface, #ffffff) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(to right, 
+      var(--mat-sys-color-primary, #1976d2) 0%, 
+      transparent 100%);
+  }
 }
 
 .mat-mdc-header-cell {

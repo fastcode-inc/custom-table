@@ -13,7 +13,6 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
 import { MatTableExtModule } from '../../../../dist/mat-table-ext';
-import { AppComponent } from './app.component';
 
 @NgModule({
   declarations: [],
@@ -32,10 +31,8 @@ import { AppComponent } from './app.component';
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSlideToggleModule,
-    AppComponent
+    MatSlideToggleModule
   ],
   providers: [],
-  bootstrap: [AppComponent],
 })
 export class AppModule {}
