@@ -16,6 +16,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTableExtModule } from '../../../mat-table-ext/src/lib/mat-table-ext.module';
 import { TitleCasePipe } from '@angular/common';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 export var EXAMPLE_DATA: any[] = [
   {
     position: 1,
@@ -189,7 +190,8 @@ export var EXAMPLE_DATA: any[] = [
     MatSelectModule,
     MatCheckboxModule,
     MatTableExtModule,
-    TitleCasePipe
+    TitleCasePipe,
+    MatDatepickerModule
   ]
 })
 export class AppComponent implements AfterViewInit {
@@ -203,6 +205,7 @@ export class AppComponent implements AfterViewInit {
   inlineRowEditing: any = false;
   popupRowEditing: any = false;
   inCellEditing: any = false;
+  cellPopupEditing: any = false;
   deleteRow: any = false;
   stripedRows: any = false;
   rowSelection: any = false;
@@ -280,6 +283,7 @@ export class AppComponent implements AfterViewInit {
   popupTemplateRefCtrl: any = false;
   inlineTemplateRefCtrl: any = false;
   cellEditingTemplateRefCtrl: any = false;
+  cellPopupTemplateRefCtrl: any = false;
   constructor(public service: CustomTableService) {
     // this.loadPage(10);
   }

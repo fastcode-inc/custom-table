@@ -24,6 +24,11 @@
         </mat-slide-toggle>
       </section>
       <section class="example-section">
+        <mat-slide-toggle [(ngModel)]="cellPopupEditing" [disabled]="false">
+          Cell Popup Editing
+        </mat-slide-toggle>
+      </section>
+      <section class="example-section">
         <mat-slide-toggle [(ngModel)]="deleteRow" [disabled]="false">
           Delete Row
         </mat-slide-toggle>
@@ -208,6 +213,11 @@
           Cell Editing TemplateRef
         </mat-slide-toggle>
       </section>
+      <section class="example-section">
+        <mat-slide-toggle [(ngModel)]="cellPopupTemplateRefCtrl">
+          Cell Popup TemplateRef
+        </mat-slide-toggle>
+      </section>
     </div>
     <div style="display: flex; flex-direction: column">
       <section class="example-section">
@@ -274,6 +284,7 @@
   [inlineRowEditing]="inlineRowEditing"
   [inCellEditing]="inCellEditing"
   [popupRowEditing]="popupRowEditing"
+  [cellPopupEditing]="cellPopupEditing"
   [enableDelete]="deleteRow"
   [enableRowFreezing]="enableRowFreezing"
   [rowSelection]="rowSelection"
@@ -319,6 +330,9 @@
   [inlineEditingTemplateRef]="inlineTemplateRefCtrl ? inlineEditing : undefined"
   [cellEditingTemplateRef]="
     cellEditingTemplateRefCtrl ? cellEditing : undefined
+  "
+  [cellPopupEditingTemplateRef]="
+    cellPopupTemplateRefCtrl ? cellPopupEditing : undefined
   "
 ></mat-table-ext>
 <ng-template #headerTemplate let-data="data">
@@ -633,6 +647,100 @@
       [(ngModel)]="row[column.field]"
     ></mat-checkbox>
   }
+</ng-template>
+<ng-template
+  #cellPopupEditingTemplate
+  let-row="data.row"
+  let-column="data.column"
+  let-close="data.closeDialog"
+>
+  <div style="min-width: 350px; padding: 20px">
+    <div style="display: flex; align-items: center; margin-bottom: 20px">
+      <mat-icon style="color: #1976d2; margin-right: 10px">edit_note</mat-icon>
+      <h2 style="margin: 0; color: #1976d2">Edit {{ column.header }}</h2>
+      <span style="flex: 1"></span>
+      <button mat-icon-button (click)="close()">
+        <mat-icon style="cursor: pointer">close</mat-icon>
+      </button>
+    </div>
+    <mat-dialog-content>
+      @if (column.type == 'number') {
+        <mat-form-field appearance="outline" style="width: 100%">
+          <mat-label>{{ column.header }}</mat-label>
+          <input
+            matInput
+            type="number"
+            [(ngModel)]="row[column.field]"
+            [ngModelOptions]="{ standalone: true }"
+          />
+        </mat-form-field>
+      }
+      @if (column.type == 'string') {
+        <mat-form-field appearance="outline" style="width: 100%">
+          <mat-label>{{ column.header }}</mat-label>
+          <input
+            matInput
+            type="text"
+            [(ngModel)]="row[column.field]"
+            [ngModelOptions]="{ standalone: true }"
+          />
+        </mat-form-field>
+      }
+      @if (column.type == 'textarea') {
+        <mat-form-field appearance="outline" style="width: 100%">
+          <mat-label>{{ column.header }}</mat-label>
+          <textarea
+            matInput
+            rows="4"
+            [(ngModel)]="row[column.field]"
+            [ngModelOptions]="{ standalone: true }"
+          ></textarea>
+        </mat-form-field>
+      }
+      @if (column.type == 'datepicker') {
+        <mat-form-field appearance="outline" style="width: 100%">
+          <mat-label>{{ column.header }}</mat-label>
+          <input
+            matInput
+            [matDatepicker]="picker"
+            [(ngModel)]="row[column.field]"
+            [ngModelOptions]="{ standalone: true }"
+          />
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+      }
+      @if (column.type == 'selection') {
+        <mat-form-field appearance="outline" style="width: 100%">
+          <mat-label>{{ column.header }}</mat-label>
+          <mat-select
+            [(ngModel)]="row[column.field]"
+            [ngModelOptions]="{ standalone: true }"
+          >
+            @for (option of column.options; track option) {
+              <mat-option [value]="option">{{ option }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      @if (column.type == 'boolean') {
+        <mat-checkbox
+          color="primary"
+          [(ngModel)]="row[column.field]"
+          [ngModelOptions]="{ standalone: true }"
+        >
+          <mat-label>{{ column.header }}</mat-label>
+        </mat-checkbox>
+      }
+    </mat-dialog-content>
+    <mat-dialog-actions align="end" style="margin-top: 20px">
+      <button mat-raised-button (click)="close()">Cancel</button>
+      <button mat-raised-button color="primary" [mat-dialog-close]="{field: column.field, value: row[column.field]}">
+        <mat-icon>save</mat-icon>
+        Save
+      </button>
+    </mat-dialog-actions>
+  </div>
 </ng-template>
 <ng-template #ex>
   Lorem ipsum dolor sit amet consectetur adipisicing elit. Ducimus accusantium

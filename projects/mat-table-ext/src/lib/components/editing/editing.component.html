@@ -1,15 +1,83 @@
 @if (!templateRef) {
     <div style="height: 100%;" class="main-dialog-container">
         <div mat-dialog-title class="dialog-title-container">
-            <h2 style="margin: 0;">Edit Row</h2>
+            <h4 style="margin: 0;">{{ isCellEdit ? 'Edit Cell' : 'Edit Row' }}</h4>
             <span class="example-spacer"></span>
             <button style="margin-right: -10px;" mat-icon-button aria-label="Example icon button with a vertical three dot icon">
                 <mat-icon mat-dialog-close style="cursor: pointer;" fxFlex="5">close</mat-icon>
             </button>
         </div>
         <mat-dialog-content style="margin-right: 20px;">
-            <div style="display: flex; flex-direction: column;">
-                @for (key of keys; track key) {
+            <!-- Cell-level editing -->
+            @if (isCellEdit) {
+                <div style="display: flex; flex-direction: column;">
+                    <!-- Number Type -->
+                    @if (types[cellField] == 'number') {
+                        <mat-form-field appearance="outline" class="inline-editing-field">
+                            <mat-label>{{cellColumn.header || cellField | titlecase}}</mat-label>
+                            <input matInput type="number" [(ngModel)]="cellValue" [ngModelOptions]="{standalone: true}">
+                        </mat-form-field>
+                    }
+            
+                    <!-- String Type -->
+                    @if (types[cellField] == 'string') {
+                        <mat-form-field appearance="outline" class="inline-editing-field">
+                            <mat-label>{{cellColumn.header || cellField | titlecase}}</mat-label>
+                            <input matInput type="text" [(ngModel)]="cellValue" [ngModelOptions]="{standalone: true}">
+                        </mat-form-field>
+                    }
+                    
+                    <!-- Textarea Type -->
+                    @if (types[cellField] == 'textarea') {
+                        <mat-form-field appearance="outline" class="inline-editing-field">
+                            <mat-label>{{cellColumn.header || cellField | titlecase}}</mat-label>
+                            <textarea matInput rows="6" [(ngModel)]="cellValue" [ngModelOptions]="{standalone: true}"></textarea>
+                        </mat-form-field>
+                    }
+                    
+                    @if (types[cellField] == 'date') {
+                        <mat-form-field appearance="outline" class="inline-editing-field">
+                            <mat-label>{{cellColumn.header || cellField | titlecase}}</mat-label>
+                            <input matInput type="text" [(ngModel)]="cellValue" [ngModelOptions]="{standalone: true}">
+                        </mat-form-field>
+                    }
+                    
+                    <!-- Datepicker Type -->
+                    @if (types[cellField] == 'datepicker') {
+                        <mat-form-field appearance="outline" class="inline-editing-field">
+                            <mat-label>{{cellColumn.header || cellField | titlecase}}</mat-label>
+                            <input matInput [matDatepicker]="cellPopupPicker" [(ngModel)]="cellValue" [ngModelOptions]="{standalone: true}">
+                            <mat-datepicker-toggle matIconSuffix [for]="cellPopupPicker"></mat-datepicker-toggle>
+                            <mat-datepicker #cellPopupPicker></mat-datepicker>
+                        </mat-form-field>
+                    }
+                    
+                    <!-- Selection Type -->
+                    @if (types[cellField] == 'selection') {
+                        <mat-form-field appearance="outline" class="inline-editing-field">
+                            <mat-label>{{cellColumn.header || cellField | titlecase}}</mat-label>
+                            <mat-select [(ngModel)]="cellValue">
+                                @for (option of cellColumn.options; track option) {
+                                    <mat-option [value]="option">{{option}}</mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    }
+                    
+                    <!-- Boolean Type -->
+                    @if (types[cellField] == 'boolean') {
+                        <p>
+                            <mat-checkbox color="primary" [(ngModel)]="cellValue">
+                                <mat-label>{{cellColumn.header || cellField | titlecase}}</mat-label>
+                            </mat-checkbox>
+                        </p>
+                    }
+                </div>
+            }
+            
+            <!-- Row-level editing -->
+            @if (!isCellEdit) {
+                <div style="display: flex; flex-direction: column;">\n                @for (key of keys; track key) {
                     <!-- Number Type -->
                     @if (types[key] == 'number') {
                         <mat-form-field appearance="outline" class="inline-editing-field">
@@ -68,6 +136,7 @@
                     }
                 }
             </div>
+            }
         </mat-dialog-content>
         <div class="spacer"></div>
         <mat-dialog-actions style="margin-top: 20px;" align="end">

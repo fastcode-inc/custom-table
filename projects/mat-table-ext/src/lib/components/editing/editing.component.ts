@@ -43,6 +43,10 @@ export class EditingComponent implements OnInit {
   public templateTypes: any = {};
   public columns: MTExColumn[] = [];
   public templateRow: any = {};
+  public isCellEdit: boolean = false;
+  public cellColumn!: MTExColumn;
+  public cellValue: any;
+  public cellField: string = '';
   
   constructor(
     public dialogRef: MatDialogRef<EditingComponent>,
@@ -51,7 +55,24 @@ export class EditingComponent implements OnInit {
   ) { }
   
   ngOnInit(): void {
-    this.setData(this.dialogData);
+    // Check if this is cell-level editing
+    if (this.dialogData.isCellEdit) {
+      this.isCellEdit = true;
+      this.cellColumn = this.dialogData.column;
+      this.cellField = this.cellColumn.field;
+      this.cellValue = this.dialogData.row[this.cellField];
+      
+      // Handle selection type
+      if (this.cellColumn.type === 'selection') {
+        this.types[this.cellField] = 'selection';
+      } else {
+        this.types[this.cellField] = this.cellColumn.type;
+      }
+      
+      this.templateRef = this.dialogData.templateRef;
+    } else {
+      this.setData(this.dialogData);
+    }
   }
 /**
  * @description This method is used to set data for editing.
@@ -104,21 +125,28 @@ export class EditingComponent implements OnInit {
       this.templateRef = value.templateRef;
     }
   }
-/**
- * @description This method is triggered when dialog is closed and also emits the dialog closed event data.
- */
-  closeDialog() {
-    let rowData = { ...this.dialogData.row };
-    this.keys.forEach((key: any) => {
-      if (this.types[key] === 'selection') {
-        let temp = rowData[key].value;
-        rowData[key] = temp;
-      }
-    });
-    this.dialogRef.close(rowData);
-  }
-
   /**
+   * @description This method is triggered when dialog is closed and also emits the dialog closed event data.
+   */
+  closeDialog() {
+    if (this.isCellEdit) {
+      // Return single cell data
+      this.dialogRef.close({
+        field: this.cellField,
+        value: this.cellValue
+      });
+    } else {
+      // Return full row data
+      let rowData = { ...this.dialogData.row };
+      this.keys.forEach((key: any) => {
+        if (this.types[key] === 'selection') {
+          let temp = rowData[key].value;
+          rowData[key] = temp;
+        }
+      });
+      this.dialogRef.close(rowData);
+    }
+  }  /**
    * @description This method is called when the dialog is closed custom template action.
    * @param row row to be edited.
    * @param keys keys of columns

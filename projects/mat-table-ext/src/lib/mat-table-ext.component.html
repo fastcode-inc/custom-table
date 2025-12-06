@@ -148,6 +148,8 @@
                 <td mat-cell *matCellDef="let row ;let i=dataIndex" class="mat-mdc-cell">
                     @if (!row.editable && !cellEditing[i +'_'+column.field]) {
                         <div (dblclick)="cellEditing[i +'_'+column.field] = inCellEditing;setCellData(row,i)"
+                            (click)="cellPopupEditing ? openCellPopupDialog(row, column, i) : null"
+                            [style.cursor]="cellPopupEditing ? 'pointer' : 'default'"
                             matTooltip="{{column.cellTooltip?.value}}"
                             [matTooltipPosition]="column?.cellTooltip?.tooltipPosition!">
                             @if (!cellTemplateRef && !column?.cellTemplate && !cellTemplateRefMap[column.field]) {

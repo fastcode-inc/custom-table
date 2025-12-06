@@ -123,6 +123,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   @Input() rowHover: boolean = false;
   @Input() inlineRowEditing: boolean = false;
   @Input() inCellEditing: boolean = false;
+  @Input() cellPopupEditing: boolean = false;
   @Input() popupRowEditing: boolean = false;
   @Input() enableDelete: boolean = false;
   @Input() rowSelection: boolean = false;
@@ -157,6 +158,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   @Input() popupEditingTemplateRef!: TemplateRef<any> | undefined;
   @Input() inlineEditingTemplateRef!: TemplateRef<any> | undefined;
   @Input() cellEditingTemplateRef!: TemplateRef<any> | undefined;
+  @Input() cellPopupEditingTemplateRef!: TemplateRef<any> | undefined;
   @Input() cellTemplateRefMap: CellTemplateRefMap = {};
   @Input() tableClassName: string = '';
   @Input() columnGroups: MTExColumnGroup[] = [];
@@ -430,15 +432,16 @@ updateColumns(updatedColumns: MTExColumn[]) {
    */
   getDisplayedColumns(): string[] {
     if (this.columnGroups.length === 0) {
-      // No groups, use default order
-      let list = this.dynamicDisplayedColumns
-        .filter((cd) => cd.show)
-        .map((cd) => cd.name);
-      return list;
+      // No groups, place action columns at the end
+      const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze'];
+      const visibleColumns = this.dynamicDisplayedColumns.filter((cd) => cd.show);
+      const dataColumns = visibleColumns.filter((cd) => !actionColumns.includes(cd.name)).map((cd) => cd.name);
+      const actionCols = visibleColumns.filter((cd) => actionColumns.includes(cd.name)).map((cd) => cd.name);
+      return [...dataColumns, ...actionCols];
     }
     
     // When groups exist, reorder: action columns, grouped columns, then ungrouped columns
-    const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze'];
+    const actionColumns = ['select', 'edit', 'cellpopup', 'popup', 'delete', 'freeze'];
     const groupedFields = new Set<string>();
     
     // Collect all fields that belong to groups
@@ -449,14 +452,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
     const result: string[] = [];
     const visibleColumns = this.dynamicDisplayedColumns.filter((cd) => cd.show);
     
-    // Add action columns first
-    visibleColumns.forEach(col => {
-      if (actionColumns.includes(col.name)) {
-        result.push(col.name);
-      }
-    });
-    
-    // Add grouped columns in the order they appear in groups
+    // Add grouped columns first in the order they appear in groups
     this.columnGroups.forEach(group => {
       group.columns.forEach(colField => {
         const col = visibleColumns.find(c => c.name === colField);
@@ -466,9 +462,16 @@ updateColumns(updatedColumns: MTExColumn[]) {
       });
     });
     
-    // Add ungrouped columns at the end
+    // Add ungrouped data columns
     visibleColumns.forEach(col => {
       if (!actionColumns.includes(col.name) && !groupedFields.has(col.name) && !result.includes(col.name)) {
+        result.push(col.name);
+      }
+    });
+    
+    // Add action columns at the end
+    visibleColumns.forEach(col => {
+      if (actionColumns.includes(col.name)) {
         result.push(col.name);
       }
     });
@@ -491,23 +494,6 @@ updateColumns(updatedColumns: MTExColumn[]) {
       group.columns.forEach(colField => groupedFields.add(colField));
     });
     
-    // Add action columns first if visible (they span only themselves)
-    if (this.dynamicDisplayedColumns.find(c => c.name === 'select' && c.show)) {
-      grouped.push('select');
-    }
-    if (this.dynamicDisplayedColumns.find(c => c.name === 'edit' && c.show)) {
-      grouped.push('edit');
-    }
-    if (this.dynamicDisplayedColumns.find(c => c.name === 'popup' && c.show)) {
-      grouped.push('popup');
-    }
-    if (this.dynamicDisplayedColumns.find(c => c.name === 'delete' && c.show)) {
-      grouped.push('delete');
-    }
-    if (this.dynamicDisplayedColumns.find(c => c.name === 'freeze' && c.show)) {
-      grouped.push('freeze');
-    }
-    
     // Add group headers for groups with visible columns
     this.columnGroups.forEach(group => {
       const visibleColumnsInGroup = group.columns.filter(colField => {
@@ -529,6 +515,23 @@ updateColumns(updatedColumns: MTExColumn[]) {
         }
       }
     });
+    
+    // Add action columns at the end if visible (they span only themselves)
+    if (this.dynamicDisplayedColumns.find(c => c.name === 'select' && c.show)) {
+      grouped.push('select');
+    }
+    if (this.dynamicDisplayedColumns.find(c => c.name === 'edit' && c.show)) {
+      grouped.push('edit');
+    }
+    if (this.dynamicDisplayedColumns.find(c => c.name === 'popup' && c.show)) {
+      grouped.push('popup');
+    }
+    if (this.dynamicDisplayedColumns.find(c => c.name === 'delete' && c.show)) {
+      grouped.push('delete');
+    }
+    if (this.dynamicDisplayedColumns.find(c => c.name === 'freeze' && c.show)) {
+      grouped.push('freeze');
+    }
     
     return grouped;
   }
@@ -896,6 +899,42 @@ updateColumns(updatedColumns: MTExColumn[]) {
             index: index,
           };
           this.popupChange.emit(dataChange);
+        }
+      });
+  }
+  /**
+   * @description This method is used to open cell popup editing dialog for a single cell.
+   * @param row row which contains the cell to edit.
+   * @param column column definition of the cell to edit.
+   * @param rowIndex index of the row.
+   */
+  openCellPopupDialog(row: any, column: MTExColumn, rowIndex: number) {
+    const dialogConfig = new MatDialogConfig();
+    dialogConfig.disableClose = true;
+    dialogConfig.width = '400px';
+    dialogConfig.height = 'auto';
+    dialogConfig.maxWidth = '100%';
+    
+    dialogConfig.data = {
+      row: { ...row },
+      column: column,
+      rowIndex: rowIndex,
+      isCellEdit: true,
+      templateRef: this.cellPopupEditingTemplateRef,
+    };
+    
+    this.dialog
+      .open(EditingComponent, dialogConfig)
+      .afterClosed()
+      .subscribe((data) => {
+        if (data && data.field && rowIndex > -1) {
+          this.tableData[rowIndex][data.field] = data.value;
+          this.dataSource = new MatTableDataSource(this.tableData);
+          let dataChange: RowChange = {
+            row: { ...this.tableData[rowIndex] },
+            index: rowIndex,
+          };
+          this.cellChange.emit(dataChange);
         }
       });
   }

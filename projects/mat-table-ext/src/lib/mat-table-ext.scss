@@ -47,6 +47,20 @@ tr.example-detail-row {
   max-height: max-content !important;
 }
 
+.cell-popup-indicator {
+  font-size: 18px;
+  color: var(--mat-sys-color-primary, #1976d2);
+  cursor: pointer;
+  user-select: none;
+  display: inline-block;
+  transition: transform 0.2s;
+  
+  &:hover {
+    transform: scale(1.3);
+    color: var(--mat-sys-color-primary-container, #1565c0);
+  }
+}
+
 .resize-handle {
   display: inline-block;
   border-right: 2px solid var(--mat-table-outline-color, rgb(140, 140, 140));
