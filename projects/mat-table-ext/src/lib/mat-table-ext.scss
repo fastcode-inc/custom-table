@@ -10,12 +10,19 @@ table {
 }
 
 tr.example-detail-row {
-  display: table-row !important;
+  height: 0 !important;
+  overflow: hidden;
 }
 
 .example-element-detail {
   overflow: hidden;
   display: flex;
+  transition: height 300ms cubic-bezier(0.4, 0.0, 0.2, 1);
+  padding: 0;
+  
+  &[style*="height: auto"], &[style*="height: 1"] {
+    padding: 10px 0;
+  }
 }
 
 .hidden {
@@ -224,13 +231,58 @@ table th:hover .resize-handle {
 
 // Column grouping styles
 .group-header-row {
+  background-color: var(--mat-sys-color-surface-container-low, #f5f5f5);
+  
   .group-header-cell {
-    text-align: center;
-    font-weight: bold;
-    font-size: 14px;
-    background-color: var(--mat-sys-color-primary-container, #e3f2fd);
+    text-align: center !important;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 12px 16px;
+    background: linear-gradient(180deg, 
+      var(--mat-sys-color-primary-container, #e3f2fd) 0%, 
+      var(--mat-sys-color-surface-container, #f0f0f0) 100%);
     color: var(--mat-sys-color-on-primary-container, #1565c0);
     border-bottom: 2px solid var(--mat-sys-color-primary, #1976d2);
+    border-right: 1px solid var(--mat-sys-color-primary, #1976d2);
+    position: relative;
+    
+    &:last-child {
+      border-right: 1px solid var(--mat-sys-color-primary, #1976d2);
+    }
+    
+    &.ungrouped-header-cell {
+      // Empty ungrouped cells - maintain styling but no content
+      min-height: 48px;
+    }
+    
+    .group-header-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-align: center;
+      
+      .group-label {
+        font-weight: 600;
+        text-align: center;
+      }
+    }
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, 
+        transparent 0%, 
+        var(--mat-sys-color-primary, #1976d2) 50%, 
+        transparent 100%);
+      opacity: 0.3;
+    }
   }
 }
 

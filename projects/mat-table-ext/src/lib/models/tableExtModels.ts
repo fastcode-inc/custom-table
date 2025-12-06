@@ -58,7 +58,8 @@ export declare type MTExColumnType =
   | 'boolean'
   | 'number'
   | 'date'
-  | 'datepicker';
+  | 'datepicker'
+  | 'textarea';
 export interface TooltipProp {
   value: string;
   tooltipPosition?: TooltipPosition;

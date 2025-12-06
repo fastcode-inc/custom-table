@@ -162,6 +162,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
   @Input() columnGroups: MTExColumnGroup[] = [];
   @Input() frozenRowIndices: number[] = [];
   @Input() enableRowFreezing: boolean = false;
+  @Input() pdfOrientation: 'portrait' | 'landscape' = 'portrait';
 
   // Table outputs
   @Output() inlineChange: EventEmitter<any> = new EventEmitter<RowChange>();
@@ -224,6 +225,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
     'globalSearch',
     'expandRows',
     'sorting',
+    'columnGroups',
   ];
   
 
@@ -372,6 +374,10 @@ updateColumns(updatedColumns: MTExColumn[]) {
       }, 200);
     },
     sorting: (value: any) => (this.dataSource.sort = this.sort),
+    columnGroups: (value: any) => {
+      this.columnGroups = value.currentValue || [];
+      this.cdr.detectChanges();
+    },
   };
   /**
    * @description used set data source for table.
@@ -423,10 +429,51 @@ updateColumns(updatedColumns: MTExColumn[]) {
    * @returns list of visible column names.
    */
   getDisplayedColumns(): string[] {
-    let list = this.dynamicDisplayedColumns
-      .filter((cd) => cd.show)
-      .map((cd) => cd.name);
-    return list;
+    if (this.columnGroups.length === 0) {
+      // No groups, use default order
+      let list = this.dynamicDisplayedColumns
+        .filter((cd) => cd.show)
+        .map((cd) => cd.name);
+      return list;
+    }
+    
+    // When groups exist, reorder: action columns, grouped columns, then ungrouped columns
+    const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze'];
+    const groupedFields = new Set<string>();
+    
+    // Collect all fields that belong to groups
+    this.columnGroups.forEach(group => {
+      group.columns.forEach(colField => groupedFields.add(colField));
+    });
+    
+    const result: string[] = [];
+    const visibleColumns = this.dynamicDisplayedColumns.filter((cd) => cd.show);
+    
+    // Add action columns first
+    visibleColumns.forEach(col => {
+      if (actionColumns.includes(col.name)) {
+        result.push(col.name);
+      }
+    });
+    
+    // Add grouped columns in the order they appear in groups
+    this.columnGroups.forEach(group => {
+      group.columns.forEach(colField => {
+        const col = visibleColumns.find(c => c.name === colField);
+        if (col && !result.includes(col.name)) {
+          result.push(col.name);
+        }
+      });
+    });
+    
+    // Add ungrouped columns at the end
+    visibleColumns.forEach(col => {
+      if (!actionColumns.includes(col.name) && !groupedFields.has(col.name) && !result.includes(col.name)) {
+        result.push(col.name);
+      }
+    });
+    
+    return result;
   }
   /**
    * @description This method returns the grouped column header definitions.
@@ -437,8 +484,14 @@ updateColumns(updatedColumns: MTExColumn[]) {
     
     const grouped: string[] = [];
     const groupedFields = new Set<string>();
+    const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze'];
     
-    // Add action columns first if visible
+    // Collect all fields that belong to groups
+    this.columnGroups.forEach(group => {
+      group.columns.forEach(colField => groupedFields.add(colField));
+    });
+    
+    // Add action columns first if visible (they span only themselves)
     if (this.dynamicDisplayedColumns.find(c => c.name === 'select' && c.show)) {
       grouped.push('select');
     }
@@ -451,19 +504,28 @@ updateColumns(updatedColumns: MTExColumn[]) {
     if (this.dynamicDisplayedColumns.find(c => c.name === 'delete' && c.show)) {
       grouped.push('delete');
     }
+    if (this.dynamicDisplayedColumns.find(c => c.name === 'freeze' && c.show)) {
+      grouped.push('freeze');
+    }
     
-    // Add group headers
+    // Add group headers for groups with visible columns
     this.columnGroups.forEach(group => {
-      grouped.push('group-' + group.name);
-      group.columns.forEach(col => groupedFields.add(col));
+      const visibleColumnsInGroup = group.columns.filter(colField => {
+        const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === colField);
+        return displayCol && displayCol.show;
+      });
+      
+      if (visibleColumnsInGroup.length > 0) {
+        grouped.push('group-' + group.name);
+      }
     });
     
-    // Add ungrouped columns
+    // Add empty header placeholders for ungrouped columns at the end
     this.columnsArray.forEach(col => {
-      if (!groupedFields.has(col.field)) {
+      if (!groupedFields.has(col.field) && !actionColumns.includes(col.field)) {
         const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
         if (displayCol && displayCol.show) {
-          grouped.push(col.field);
+          grouped.push('ungrouped-' + col.field);
         }
       }
     });
@@ -1103,9 +1165,122 @@ updateColumns(updatedColumns: MTExColumn[]) {
  * @param type type of file to be exported.
  */
   exportTable(type: string) {
-    var element = document.getElementById('matTableExt' + this.tableID);
-    var ws: XLSX.WorkSheet = XLSX.utils.table_to_sheet(element);
-    ws = this.writeSheetData(ws);
+    const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze'];
+    
+    // Get visible columns in the correct order (grouped first, ungrouped at end)
+    let visibleColumns: MTExColumn[] = [];
+    
+    if (this.columnGroups.length > 0) {
+      const groupedFields = new Set<string>();
+      
+      // Collect all fields that belong to groups
+      this.columnGroups.forEach(group => {
+        group.columns.forEach(colField => groupedFields.add(colField));
+      });
+      
+      // Add grouped columns first (in group order)
+      this.columnGroups.forEach(group => {
+        group.columns.forEach(colField => {
+          const col = this.columnsArray.find(c => c.field === colField);
+          const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === colField);
+          if (col && displayCol && displayCol.show && !visibleColumns.includes(col)) {
+            visibleColumns.push(col);
+          }
+        });
+      });
+      
+      // Add ungrouped columns at the end
+      this.columnsArray.forEach(col => {
+        const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
+        if (!groupedFields.has(col.field) && displayCol && displayCol.show && 
+            !actionColumns.includes(col.field) && !visibleColumns.includes(col)) {
+          visibleColumns.push(col);
+        }
+      });
+    } else {
+      // No groups, use default order
+      visibleColumns = this.columnsArray.filter(col => {
+        const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
+        return displayCol && displayCol.show && !actionColumns.includes(col.field);
+      });
+    }
+
+    const data: any[] = [];
+    
+    // Add group headers if they exist
+    if (this.columnGroups.length > 0) {
+      const groupRow: any[] = [];
+      const columnIndexMap: { [key: string]: number } = {};
+      
+      visibleColumns.forEach((col, idx) => {
+        columnIndexMap[col.field] = idx;
+      });
+      
+      // Initialize group row with empty strings
+      for (let i = 0; i < visibleColumns.length; i++) {
+        groupRow.push('');
+      }
+      
+      // Fill in group labels
+      this.columnGroups.forEach(group => {
+        const groupCols = group.columns.filter(colField => 
+          visibleColumns.find(vc => vc.field === colField)
+        );
+        
+        if (groupCols.length > 0) {
+          const firstColIndex = columnIndexMap[groupCols[0]];
+          groupRow[firstColIndex] = group.label;
+        }
+      });
+      
+      data.push(groupRow);
+    }
+    
+    // Add column headers
+    data.push(visibleColumns.map(col => col.header || col.field));
+    
+    // Add data rows
+    this.dataSource.data.forEach(row => {
+      const rowData = visibleColumns.map(col => {
+        const value = row[col.field];
+        if (value === null || value === undefined) return '';
+        if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+        if (value instanceof Date) return new Intl.DateTimeFormat('en-US').format(value);
+        return value;
+      });
+      data.push(rowData);
+    });
+    
+    const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data);
+    
+    // Add merge cells for group headers if they exist
+    if (this.columnGroups.length > 0) {
+      if (!ws['!merges']) {
+        ws['!merges'] = [];
+      }
+      const columnIndexMap: { [key: string]: number } = {};
+      
+      visibleColumns.forEach((col, idx) => {
+        columnIndexMap[col.field] = idx;
+      });
+      
+      this.columnGroups.forEach(group => {
+        const groupCols = group.columns.filter(colField => 
+          visibleColumns.find(vc => vc.field === colField)
+        );
+        
+        if (groupCols.length > 1 && ws['!merges']) {
+          const firstColIndex = columnIndexMap[groupCols[0]];
+          const lastColIndex = columnIndexMap[groupCols[groupCols.length - 1]];
+          
+          ws['!merges'].push({
+            s: { r: 0, c: firstColIndex },
+            e: { r: 0, c: lastColIndex }
+          });
+        }
+      });
+    }
+    
     const wb: XLSX.WorkBook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
     XLSX.writeFile(wb, `tablesheets.${type}`);
@@ -1127,6 +1302,9 @@ updateColumns(updatedColumns: MTExColumn[]) {
       th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
       th { background-color: #f2f2f2; font-weight: bold; }
       tr:nth-child(even) { background-color: #f9f9f9; }
+      .mat-sort-header-container { display: inline; }
+      .mat-sort-header-arrow, .mat-sort-header-indicator { display: none !important; }
+      button, .mat-icon { display: none !important; }
       @media print {
         .mat-mdc-table { page-break-inside: auto; }
         tr { page-break-inside: avoid; page-break-after: auto; }
@@ -1200,14 +1378,107 @@ updateColumns(updatedColumns: MTExColumn[]) {
       const autoTableModule = await import('jspdf-autotable');
       const autoTable = autoTableModule.autoTable || autoTableModule.default;
 
-      const doc = new JsPDF();
+      // Create PDF with user-specified orientation
+      const doc = new JsPDF({
+        orientation: this.pdfOrientation,
+        unit: 'mm',
+        format: 'a4'
+      });
 
       const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze'];
 
-      const visibleColumns = this.columnsArray.filter(col => {
-        const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
-        return displayCol && displayCol.show && !actionColumns.includes(col.field);
-      });
+      // Get visible columns in the correct order (grouped first, ungrouped at end)
+      let visibleColumns: MTExColumn[] = [];
+      
+      if (this.columnGroups.length > 0) {
+        const groupedFields = new Set<string>();
+        
+        // Collect all fields that belong to groups
+        this.columnGroups.forEach(group => {
+          group.columns.forEach(colField => groupedFields.add(colField));
+        });
+        
+        // Add grouped columns first (in group order)
+        this.columnGroups.forEach(group => {
+          group.columns.forEach(colField => {
+            const col = this.columnsArray.find(c => c.field === colField);
+            const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === colField);
+            if (col && displayCol && displayCol.show && !visibleColumns.includes(col)) {
+              visibleColumns.push(col);
+            }
+          });
+        });
+        
+        // Add ungrouped columns at the end
+        this.columnsArray.forEach(col => {
+          const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
+          if (!groupedFields.has(col.field) && displayCol && displayCol.show && 
+              !actionColumns.includes(col.field) && !visibleColumns.includes(col)) {
+            visibleColumns.push(col);
+          }
+        });
+      } else {
+        // No groups, use default order
+        visibleColumns = this.columnsArray.filter(col => {
+          const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
+          return displayCol && displayCol.show && !actionColumns.includes(col.field);
+        });
+      }
+
+      // Prepare group headers if column groups exist
+      let groupHeaders: any[] = [];
+      let columnIndexMap: { [key: string]: number } = {};
+      let groupColSpans: { [key: number]: number } = {};
+      
+      if (this.columnGroups.length > 0) {
+        // Build column index map
+        visibleColumns.forEach((col, idx) => {
+          columnIndexMap[col.field] = idx;
+        });
+        
+        // Create group header row
+        const groupRow: any[] = [];
+        let currentIndex = 0;
+        
+        this.columnGroups.forEach(group => {
+          const groupCols = group.columns.filter(colField => 
+            visibleColumns.find(vc => vc.field === colField)
+          );
+          
+          if (groupCols.length > 0) {
+            const firstColIndex = columnIndexMap[groupCols[0]];
+            
+            // Add the group header cell with content and colspan
+            groupRow.push({
+              content: group.label,
+              colSpan: groupCols.length,
+              styles: { halign: 'center' }
+            });
+            
+            groupColSpans[firstColIndex] = groupCols.length;
+            currentIndex = firstColIndex + groupCols.length;
+          }
+        });
+        
+        // Add empty cells for ungrouped columns
+        const groupedFields = new Set<string>();
+        this.columnGroups.forEach(group => {
+          group.columns.forEach(colField => groupedFields.add(colField));
+        });
+        
+        const ungroupedCount = visibleColumns.filter(col => 
+          !groupedFields.has(col.field)
+        ).length;
+        
+        for (let i = 0; i < ungroupedCount; i++) {
+          groupRow.push({
+            content: '',
+            styles: { halign: 'center' }
+          });
+        }
+        
+        groupHeaders = [groupRow];
+      }
 
       const headers = visibleColumns.map(col => col.header || col.field);
 
@@ -1229,8 +1500,8 @@ updateColumns(updatedColumns: MTExColumn[]) {
       }
 
       // 🔥 USE AS FUNCTION (NOT doc.autoTable)
-      autoTable(doc, {
-        head: [headers],
+      const tableConfig: any = {
+        head: groupHeaders.length > 0 ? [...groupHeaders, headers] : [headers],
         body: rows,
         startY: startY,
         theme: 'grid',
@@ -1246,7 +1517,26 @@ updateColumns(updatedColumns: MTExColumn[]) {
         alternateRowStyles: {
           fillColor: [245, 245, 245]
         }
-      });
+      };
+      
+      // Add custom styling for group header row if it exists
+      if (groupHeaders.length > 0) {
+        tableConfig.didParseCell = (data: any) => {
+          // Style first header row (group headers) differently
+          if (data.section === 'head' && data.row.index === 0) {
+            data.cell.styles.fillColor = [227, 242, 253]; // Lighter blue
+            data.cell.styles.textColor = [21, 101, 192]; // Darker blue text
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.halign = 'center'; // Center align text
+            
+            // Add consistent border color to all group header cells
+            data.cell.styles.lineWidth = 0.5;
+            data.cell.styles.lineColor = [25, 118, 210]; // Primary blue (#1976d2)
+          }
+        };
+      }
+      
+      autoTable(doc, tableConfig);
 
       doc.save(`${this.toolbarTitle || 'table-export'}.pdf`);
 

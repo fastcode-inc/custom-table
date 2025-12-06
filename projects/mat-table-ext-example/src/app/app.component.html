@@ -73,6 +73,15 @@
           Export Button
         </mat-slide-toggle>
       </section>
+      <section class="example-section" style="padding-left: 30px">
+        <mat-form-field appearance="outline" style="width: 150px;">
+          <mat-label>PDF Orientation</mat-label>
+          <mat-select [(ngModel)]="pdfOrientation" [disabled]="!exportButtonEnable">
+            <mat-option value="portrait">Portrait</mat-option>
+            <mat-option value="landscape">Landscape</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </section>
       <section class="example-section" style="padding-left: 15px">
         <mat-slide-toggle
           [(ngModel)]="printButtonEnable"
@@ -286,6 +295,7 @@
   [columnHidable]="columnHidable"
   [exportButtonEnable]="exportButtonEnable"
   [printButtonEnable]="printButtonEnable"
+  [pdfOrientation]="pdfOrientation"
   [columnGroups]="enableColumnGrouping ? columnGroups : []"
   [frozenRowIndices]="enableRowFreezing ? frozenRowIndices : []"
   [stripedRows]="stripedRows"

@@ -198,6 +198,12 @@
                                             [ngModelOptions]="{standalone: true}">
                                     </mat-form-field>
                                 }
+                                @if (column.type == 'textarea') {
+                                    <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
+                                        <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                                            [ngModelOptions]="{standalone: true}"></textarea>
+                                    </mat-form-field>
+                                }
                                 @if (column.type == 'date') {
                                     <mat-form-field appearance="outline" class="inline-editing-field">
                                         <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
@@ -237,6 +243,12 @@
                                     <mat-form-field appearance="outline" class="inline-editing-field">
                                         <input matInput type="text" [(ngModel)]="rowDataTemp['e'+i][column.field]"
                                             [ngModelOptions]="{standalone: true}">
+                                    </mat-form-field>
+                                }
+                                @if (column.type == 'textarea') {
+                                    <mat-form-field appearance="outline" class="inline-editing-field">
+                                        <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                                            [ngModelOptions]="{standalone: true}"></textarea>
                                     </mat-form-field>
                                 }
                                 @if (column.type == 'date') {
@@ -356,7 +368,16 @@
                     <ng-container [matColumnDef]="'group-' + group.name">
                         <th mat-header-cell *matHeaderCellDef [attr.colspan]="group.colspan || group.columns.length" 
                             class="group-header-cell">
-                            {{group.label}}
+                            <div class="group-header-content">
+                                <span class="group-label">{{group.label}}</span>
+                            </div>
+                        </th>
+                    </ng-container>
+                }
+                <!-- Empty header cells for ungrouped columns -->
+                @for (column of columnsArray; track column.field) {
+                    <ng-container [matColumnDef]="'ungrouped-' + column.field">
+                        <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell">
                         </th>
                     </ng-container>
                 }
@@ -384,8 +405,8 @@
             <tr style="height: 0px;" mat-header-row class="no-default-height" *matHeaderRowDef="headersFiltersIds">
             </tr>
             @if (expandRows) {
-                <tr style="height: 0px;" mat-row *matRowDef="let row; columns: ['expandedDetail']"
-                    [ngClass]="{'example-detail-row': (expandRows && row === expandedElement),'expand-row':row !== expandedElement}">
+                <tr mat-row *matRowDef="let row; columns: ['expandedDetail']"
+                    class="example-detail-row">
                 </tr>
             }
             @if (showFooterRow) {

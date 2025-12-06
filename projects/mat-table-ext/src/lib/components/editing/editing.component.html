@@ -25,6 +25,13 @@
                             <input matInput type="text" [(ngModel)]="dialogData['row'][key]" [ngModelOptions]="{standalone: true}">
                         </mat-form-field>
                     }
+                    <!-- Textarea Type -->
+                    @if (types[key] == 'textarea') {
+                        <mat-form-field appearance="outline" class="inline-editing-field">
+                            <mat-label>{{key | titlecase}}</mat-label>
+                            <textarea matInput rows="4" [(ngModel)]="dialogData['row'][key]" [ngModelOptions]="{standalone: true}"></textarea>
+                        </mat-form-field>
+                    }
                     @if (types[key] == 'date') {
                         <mat-form-field appearance="outline" class="inline-editing-field">
                             <mat-label>{{key | titlecase}}</mat-label>

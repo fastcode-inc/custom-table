@@ -34,6 +34,7 @@ export var EXAMPLE_DATA: any[] = [
     email: 'Boron@gmail.com',
     status: false,
     cost: 4,
+    description: 'Chemical element with atomic number 5. Used in various industrial applications and as a semiconductor dopant.',
   },
   {
     position: 2,
@@ -52,6 +53,7 @@ export var EXAMPLE_DATA: any[] = [
     email: 'Helium@gmail.com',
     status: true,
     cost: 5,
+    description: 'Noble gas with atomic number 2. Second lightest element, commonly used in balloons and cryogenics.',
   },
   {
     position: 3,
@@ -70,6 +72,7 @@ export var EXAMPLE_DATA: any[] = [
     email: 'Nitrogen@gmail.com',
     status: true,
     cost: 2,
+    description: 'Colorless, odorless gas that makes up about 78% of Earth\'s atmosphere. Essential for plant growth.',
   },
   {
     position: 4,
@@ -88,6 +91,7 @@ export var EXAMPLE_DATA: any[] = [
     email: 'Oxygen@gmail.com',
     status: false,
     cost: 3,
+    description: 'Essential element for respiration and combustion. Most abundant element in Earth\'s crust by mass.',
   },
   {
     position: 4,
@@ -106,6 +110,7 @@ export var EXAMPLE_DATA: any[] = [
     email: 'Oxygen@gmail.com',
     status: false,
     cost: 3,
+    description: 'Essential element for respiration and combustion. Most abundant element in Earth\'s crust by mass.',
   },
   {
     position: 4,
@@ -124,6 +129,7 @@ export var EXAMPLE_DATA: any[] = [
     email: 'Oxygen@gmail.com',
     status: false,
     cost: 3,
+    description: 'Essential element for respiration and combustion. Most abundant element in Earth\'s crust by mass.',
   },
   {
     position: 4,
@@ -142,6 +148,7 @@ export var EXAMPLE_DATA: any[] = [
     email: 'Oxygen@gmail.com',
     status: false,
     cost: 3,
+    description: 'Essential element for respiration and combustion. Most abundant element in Earth\'s crust by mass.',
   },
   {
     position: 4,
@@ -160,6 +167,7 @@ export var EXAMPLE_DATA: any[] = [
     email: 'Oxygen@gmail.com',
     status: false,
     cost: 3,
+    description: 'Essential element for respiration and combustion. Most abundant element in Earth\'s crust by mass.',
   },
 ];
 @Component({
@@ -208,8 +216,9 @@ export class AppComponent implements AfterViewInit {
   columnHidable: any = false;
   exportButtonEnable: any = true;
   printButtonEnable: any = false;
-  enableColumnGrouping: any = false;
+  enableColumnGrouping: any = true;
   enableRowFreezing: any = false;
+  pdfOrientation: 'portrait' | 'landscape' = 'landscape';
   @ViewChild('cellTemplate1') cellTemplate1!: TemplateRef<any>;
   @ViewChild('cellTemplate2') cellTemplate2!: TemplateRef<any>;
   @ViewChild('headerTemplate2') headerTemplate2!: TemplateRef<any>;
@@ -285,6 +294,7 @@ export class AppComponent implements AfterViewInit {
     { header: 'Gender', field: 'gender', width: '120px', type: 'selection', options: ['male', 'female'], groupName: 'personal' },
     { header: 'Birth Date', field: 'birthDate', width: '180px', type: 'datepicker', groupName: 'personal' },
     { header: 'Status', field: 'status', width: '100px', type: 'boolean', groupName: 'personal' },
+    { header: 'Description', field: 'description', width: '250px', type: 'textarea', groupName: 'personal' },
     { header: 'Email', field: 'email', width: '200px', type: 'string', groupName: 'contact' },
     { header: 'Mobile', field: 'mobile', width: '150px', type: 'string', groupName: 'contact' },
     { header: 'City', field: 'city', width: '150px', type: 'string', groupName: 'contact' },
