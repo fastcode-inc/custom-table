@@ -29,7 +29,7 @@ export var EXAMPLE_DATA: any[] = [
     city: 'Berlin',
     address: 'Bernauer Str.111,13355',
     date: '1423456765768',
-    birthDate: new Date('1990-05-15'),
+    birthDate: new Date('1990-05-15').getDate(),
     website: 'www.matero.com',
     company: 'matero',
     email: 'Boron@gmail.com',
@@ -47,7 +47,7 @@ export var EXAMPLE_DATA: any[] = [
     city: 'Shanghai',
     address: '88 Songshan Road',
     date: '1423456765768',
-    birthDate: new Date('1985-08-22'),
+    birthDate: new Date('1985-08-22').getDate(),
     website: 'www.matero.com',
     company: 'matero',
     email: 'Helium@gmail.com',
@@ -65,7 +65,7 @@ export var EXAMPLE_DATA: any[] = [
     city: 'Sydney',
     address: 'Circular Quay, Sydney NSW 2000',
     date: '1423456765768',
-    birthDate: new Date('1992-12-10'),
+    birthDate: new Date('1992-12-10').getDate(),
     website: 'www.matero.com',
     company: 'matero',
     email: 'Nitrogen@gmail.com',
@@ -84,7 +84,7 @@ export var EXAMPLE_DATA: any[] = [
     city: 'London',
     address: 'Baker Street 221B',
     date: '1423456765768',
-    birthDate: new Date('1988-03-25'),
+    birthDate: new Date('1988-03-25').getDate(),
     website: 'www.example.com',
     company: 'example',
     email: 'Oxygen@gmail.com',
@@ -103,7 +103,7 @@ export var EXAMPLE_DATA: any[] = [
     city: 'London',
     address: 'Baker Street 221B',
     date: '1423456765768',
-    birthDate: new Date('1988-03-25'),
+    birthDate: new Date('1988-03-25').getDate(),
     website: 'www.example.com',
     company: 'example',
     email: 'Oxygen@gmail.com',
@@ -122,7 +122,7 @@ export var EXAMPLE_DATA: any[] = [
     city: 'London',
     address: 'Baker Street 221B',
     date: '1423456765768',
-    birthDate: new Date('1988-03-25'),
+    birthDate: new Date('1988-03-25').getDate(),
     website: 'www.example.com',
     company: 'example',
     email: 'Oxygen@gmail.com',
@@ -141,7 +141,7 @@ export var EXAMPLE_DATA: any[] = [
     city: 'London',
     address: 'Baker Street 221B',
     date: '1423456765768',
-    birthDate: new Date('1988-03-25'),
+    birthDate: new Date('1988-03-25').getDate(),
     website: 'www.example.com',
     company: 'example',
     email: 'Oxygen@gmail.com',
@@ -160,7 +160,7 @@ export var EXAMPLE_DATA: any[] = [
     city: 'London',
     address: 'Baker Street 221B',
     date: '1423456765768',
-    birthDate: new Date('1988-03-25'),
+    birthDate: new Date('1988-03-25').getDate(),
     website: 'www.example.com',
     company: 'example',
     email: 'Oxygen@gmail.com',
@@ -217,7 +217,7 @@ export class AppComponent implements AfterViewInit {
   columnHidable: any = false;
   exportButtonEnable: any = true;
   printButtonEnable: any = false;
-  enableColumnGrouping: any = true;
+  enableColumnGrouping: any = false;
   enableRowHiding: any = false;
   enableRowPinning: any = true;
   pdfOrientation: 'portrait' | 'landscape' = 'landscape';
@@ -282,7 +282,7 @@ export class AppComponent implements AfterViewInit {
   // ];
   multiSelectRow: any = true;
   topSearchFilter: any = false;
-  tableHeight: string = '300px';
+  tableHeight: string = '400px';
   tableWidth: string = '';
   tableClassName: string = '';
   isExpandEnable: any = false;
@@ -310,7 +310,7 @@ export class AppComponent implements AfterViewInit {
     { header: 'Weight', field: 'weight', width: '120px', type: 'number', groupName: 'measurements' },
     { header: 'Cost', field: 'cost', width: '100px', type: 'number', groupName: 'measurements' },
     { header: 'Gender', field: 'gender', width: '120px', type: 'selection', options: ['male', 'female'], groupName: 'personal' },
-    { header: 'Birth Date', field: 'birthDate', width: '180px', type: 'datepicker', groupName: 'personal' },
+    { header: 'Birth Date', field: 'birthDate', width: '180px', type: 'date', groupName: 'personal' },
     { header: 'Status', field: 'status', width: '100px', type: 'boolean', groupName: 'personal' },
     { header: 'Description', field: 'description', width: '250px', type: 'textarea', groupName: 'personal' },
     { header: 'Email', field: 'email', width: '200px', type: 'string', groupName: 'contact' },

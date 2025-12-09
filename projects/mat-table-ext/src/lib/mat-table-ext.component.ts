@@ -19,6 +19,7 @@ import {
   Input,
   OnChanges,
   OnInit,
+  OnDestroy,
   SimpleChanges,
   TemplateRef,
   ViewChild,
@@ -109,7 +110,7 @@ import { ResizeColumnDirective } from './directives/resize-column.directive';
     ]),
   ],
 })
-export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit {
+export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
   @ViewChild(MatMenuTrigger) menuTrigger!: MatMenuTrigger;
   @ViewChild('columnMenuTrigger') columnMenuTrigger!: MatMenuTrigger;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -284,6 +285,8 @@ updateColumns(updatedColumns: MTExColumn[]) {
   if (this.dataSource) {
     const currentData = [...this.dataSource.data];
     this.dataSource = new MatTableDataSource(currentData);
+    this.pinnedTopDataSource = new MatTableDataSource(this.pinnedTopRows);
+    this.pinnedBtmDataSource = new MatTableDataSource(this.pinnedBottomRows);
     this.reCal(); // Re-apply paginator, sort, and filter
   }
   
@@ -294,6 +297,10 @@ updateColumns(updatedColumns: MTExColumn[]) {
   // Force change detection
   this.cdr.markForCheck();
   this.cdr.detectChanges();
+  // Re-sync column sizes in case column ordering/visibility changed
+  if (this.enableRowPinning) {
+    setTimeout(() => this.syncColumnSizesFromTop(), 80);
+  }
 }
   ngOnChanges(changes: SimpleChanges) {
     this.setPropertyValue(changes);
@@ -303,6 +310,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
     if (this.dataSource) {
       this.dataSource.filterPredicate = this.createFilter();
     }
+    
     
     // Initialize FormGroup if not already initialized
     if (!this.hideShowMenuGroup || Object.keys(this.hideShowMenuGroup.controls).length === 0) {
@@ -319,10 +327,17 @@ updateColumns(updatedColumns: MTExColumn[]) {
     if (this.dataSource) {
       this.dataSource.paginator = this.paginator;
       this.dataSource.sort = this.sort;
+      this.pinnedTopDataSource.sort = this.sort;
+      this.pinnedBtmDataSource.sort = this.sort;
     }
     
     // Calculate and set pinned row offsets
     this.updatePinnedRowOffsets();
+    // Sync column sizes from top table to middle/bottom when pinning enabled
+    if (this.enableRowPinning) {
+      setTimeout(() => this.syncColumnSizesFromTop(), 150);
+      window.addEventListener('resize', this.onWindowResizeBound);
+    }
   }
 
   /**
@@ -361,6 +376,10 @@ updateColumns(updatedColumns: MTExColumn[]) {
       
       // Calculate and set individual row offsets for stacked pinned rows
       this.updateStackedPinnedRowOffsets(table, topOffset, bottomOffset);
+      // After offsets are updated, ensure column sizes are re-synced
+      if (this.enableRowPinning) {
+        setTimeout(() => this.syncColumnSizesFromTop(), 10);
+      }
       
       console.log('Pinned row offsets:', { topOffset, bottomOffset });
     }, 100);
@@ -402,7 +421,106 @@ updateColumns(updatedColumns: MTExColumn[]) {
           currentBottomOffset += htmlRow.offsetHeight;
         }
       }
+      // After stacking offsets are applied, re-sync column sizes to handle any layout changes
+      if (this.enableRowPinning) {
+        setTimeout(() => this.syncColumnSizesFromTop(), 60);
+      }
     }, 50);
+  }
+
+  private onWindowResizeBound = () => {
+    this.updatePinnedRowOffsets();
+    this.syncColumnSizesFromTop();
+  };
+
+  /**
+   * Copy header cell widths/heights from the top table and apply them to middle and bottom tables.
+   * This ensures columns line up when the middle/bottom tables don't render headers.
+   */
+  private syncColumnSizesFromTop(): void {
+    if (!this.enableRowPinning) return;
+
+    try {
+      const topId = `matTableExtTop${this.tableID}`;
+      const bottomId = `matTableExtBtm${this.tableID}`;
+      const topTable = document.getElementById(topId) as HTMLElement | null;
+      const middleTable = document.getElementById(`matTableExt${this.tableID}`) as HTMLElement | null;
+      const bottomTable = document.getElementById(bottomId) as HTMLElement | null;
+
+      if (!topTable) return;
+
+      const headerRow = topTable.querySelector(
+        'tr.mat-mdc-header-row:not(.group-header-row), tr.mat-header-row:not(.group-header-row), thead tr:not(.group-header-row)'
+      ) as HTMLElement | null;
+
+      if (!headerRow) return;
+
+      const headerCells = Array.from(headerRow.querySelectorAll('th, .mat-header-cell')) as HTMLElement[];
+      if (!headerCells.length) return;
+
+      const topTableWidth = topTable.getBoundingClientRect().width;
+      [middleTable, bottomTable].forEach(tbl => {
+        if (!tbl) return;
+        tbl.style.width = topTable.style.width && topTable.style.width !== '' ? topTable.style.width : `${topTableWidth}px`;
+      });
+
+      // Use the header row height as the canonical row height to apply
+      const headerRowHeight = Math.round(headerRow.getBoundingClientRect().height);
+
+      headerCells.forEach((hc, index) => {
+        const rect = hc.getBoundingClientRect();
+        const w = Math.round(rect.width);
+
+        [middleTable, bottomTable].forEach(tbl => {
+          if (!tbl) return;
+
+          // If a placeholder header exists in the target table, set its cell sizes
+          const placeholderHeader = tbl.querySelector('tr.mat-mdc-header-row, tr.mat-header-row') as HTMLElement | null;
+          if (placeholderHeader) {
+            const phCells = placeholderHeader.querySelectorAll('th, .mat-header-cell');
+            if (phCells && phCells[index]) {
+              const el = phCells[index] as HTMLElement;
+              el.style.minWidth = `${w}px`;
+              el.style.maxWidth = `${w}px`;
+              el.style.boxSizing = 'border-box';
+              el.style.height = `${headerRowHeight}px`;
+              el.style.minHeight = `${headerRowHeight}px`;
+              el.style.maxHeight = `${headerRowHeight}px`;
+            }
+          }
+
+          // Apply widths/heights directly to data cells (in case header placeholder is not present)
+          const dataRow = tbl.querySelector('tr.mat-mdc-row, tr.mat-row') as HTMLElement | null;
+          if (dataRow) {
+            const dataCells = dataRow.querySelectorAll('td, .mat-cell');
+            if (dataCells && dataCells[index]) {
+              const cel = dataCells[index] as HTMLElement;
+              cel.style.minWidth = `${w}px`;
+              cel.style.maxWidth = `${w}px`;
+              cel.style.boxSizing = 'border-box';
+              cel.style.height = `${headerRowHeight}px`;
+              cel.style.minHeight = `${headerRowHeight}px`;
+              cel.style.maxHeight = `${headerRowHeight}px`;
+            }
+
+            // Set every data row's height to match the header row height for visual alignment
+            const rows = tbl.querySelectorAll('tr.mat-mdc-row, tr.mat-row');
+            rows.forEach((r: Element) => {
+              const reh = r as HTMLElement;
+              reh.style.height = `${headerRowHeight}px`;
+              reh.style.minHeight = `${headerRowHeight}px`;
+              reh.style.maxHeight = `${headerRowHeight}px`;
+            });
+          }
+        });
+      });
+    } catch (err) {
+      console.warn('syncColumnSizesFromTop failed', err);
+    }
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('resize', this.onWindowResizeBound);
   }
   /**
    * @description checks and updates the the column's hide and show properties.
@@ -424,6 +542,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
     keys.forEach((property) => {
       if (this.inputPropertyKeys.includes(property)) {
         this.setPropertiesMap[property](changes[property]);
+        setTimeout(() => this.syncColumnSizesFromTop(), 80);
       } else if (property == 'showToolbar') {
         if (changes['columns']) {
           this.setToolbarMenuControls(changes['columns'].currentValue);
@@ -492,10 +611,18 @@ updateColumns(updatedColumns: MTExColumn[]) {
         this.loadingIndicator = false;
       }, 200);
     },
-    sorting: (value: any) => (this.dataSource.sort = this.sort),
+    sorting: (value: any) => {
+      this.dataSource.sort = this.sort;
+      this.pinnedTopDataSource.sort = this.sort;
+      this.pinnedBtmDataSource.sort = this.sort;
+    },
     columnGroups: (value: any) => {
       this.columnGroups = value.currentValue || [];
       this.cdr.detectChanges();
+      // When group headers change, re-sync column sizes for pinned tables
+      if (this.enableRowPinning) {
+        setTimeout(() => this.syncColumnSizesFromTop(), 80);
+      }
     },
   };
   /**
@@ -644,8 +771,44 @@ updateColumns(updatedColumns: MTExColumn[]) {
         }
       }
     });
+
+    // Add placeholders for visible action columns so group header row has cells to align with action columns
+    const actionPlaceholders = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
+    actionPlaceholders.forEach(act => {
+      const display = this.dynamicDisplayedColumns.find(dc => dc.name === act);
+      if (display && display.show) {
+        grouped.push('ungrouped-' + act);
+      }
+    });
     
     return grouped;
+  }
+
+  /**
+   * @description Returns filter column IDs including placeholders for action columns
+   * @returns Array of filter column IDs with action column placeholders
+   */
+  getFilterColumns(): string[] {
+    const filters: string[] = [];
+    const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
+    
+    // Get visible columns in display order
+    const displayedCols = this.getDisplayedColumns();
+    
+    displayedCols.forEach(colName => {
+      if (actionColumns.includes(colName)) {
+        // Add filter placeholder for action column
+        filters.push('filter-' + colName);
+      } else {
+        // Find the actual filter ID from headersFiltersIds
+        const filterCol = this.headersFiltersIds.find(id => id.startsWith(colName + '_'));
+        if (filterCol) {
+          filters.push(filterCol);
+        }
+      }
+    });
+    
+    return filters;
   }
   /**
    * @param menuType type of menu to open from toolbar.
@@ -725,6 +888,10 @@ updateColumns(updatedColumns: MTExColumn[]) {
     });
     
     this.dynamicDisplayedColumns = columnsArray.concat(newActionColumns);
+    // After updating columns, ensure sizes match the top header (if pinning enabled)
+    if (this.enableRowPinning) {
+      setTimeout(() => this.syncColumnSizesFromTop(), 80);
+    }
   }
   /**
    * @description Take boolean value and name column and update its visibility status in table.
@@ -738,6 +905,10 @@ updateColumns(updatedColumns: MTExColumn[]) {
     }
     if (this.columnFilter) {
       this.setColumnFilter(true);
+    }
+    // When column visibility changes, re-sync sizes for the pinned tables
+    if (this.enableRowPinning) {
+      setTimeout(() => this.syncColumnSizesFromTop(), 60);
     }
   }
 
@@ -807,6 +978,9 @@ updateColumns(updatedColumns: MTExColumn[]) {
     this.rowPinMenuRow = null;
   }
 
+  pinnedTopDataSource:any;
+  pinnedBtmDataSource:any;
+
   /**
    * @description Pin row to top or bottom
    * @param row The row to pin
@@ -826,10 +1000,12 @@ updateColumns(updatedColumns: MTExColumn[]) {
       if (!this.pinnedTopRows.includes(row)) {
         this.pinnedTopRows.push(row);
       }
+      this.pinnedTopDataSource = new MatTableDataSource(this.pinnedTopRows);
     } else {
       if (!this.pinnedBottomRows.includes(row)) {
         this.pinnedBottomRows.push(row);
       }
+      this.pinnedBtmDataSource = new MatTableDataSource(this.pinnedBottomRows);
     }
     
     console.log('After pinning:', { 
@@ -852,11 +1028,13 @@ updateColumns(updatedColumns: MTExColumn[]) {
     const topIndex = this.pinnedTopRows.indexOf(row);
     if (topIndex > -1) {
       this.pinnedTopRows.splice(topIndex, 1);
+      this.pinnedTopDataSource = new MatTableDataSource(this.pinnedTopRows);
     }
     
     const bottomIndex = this.pinnedBottomRows.indexOf(row);
     if (bottomIndex > -1) {
       this.pinnedBottomRows.splice(bottomIndex, 1);
+      this.pinnedBtmDataSource = new MatTableDataSource(this.pinnedBottomRows);
     }
     
     // Clear pinning metadata
@@ -1470,9 +1648,13 @@ updateColumns(updatedColumns: MTExColumn[]) {
     }
     if (this.sorting) {
       this.dataSource.sort = this.sort;
+      this.pinnedTopDataSource.sort = this.sort;
+      this.pinnedBtmDataSource.sort = this.sort;
     }
     if (this.columnFilter) {
       this.dataSource.filterPredicate = this.createFilter();
+      this.pinnedTopDataSource.filterPredicate = this.createFilter();
+      this.pinnedBtmDataSource.filterPredicate = this.createFilter();
     }
     this.cdr.detectChanges();
   }

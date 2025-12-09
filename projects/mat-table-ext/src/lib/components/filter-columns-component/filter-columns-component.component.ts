@@ -5,6 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDatepickerModule } from '@angular/material/datepicker';
 
 @Component({
   selector: 'app-filter-columns-component',
@@ -17,7 +18,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatCheckboxModule
+    MatCheckboxModule,
+    MatDatepickerModule
   ]
 })
 export class FilterColumnsComponentComponent implements OnInit {
@@ -26,6 +28,7 @@ export class FilterColumnsComponentComponent implements OnInit {
   stringCtrl: FormControl = new FormControl();
   numberCtrl: FormControl = new FormControl();
   dateCtrl: FormControl = new FormControl();
+  textareaCtrl: FormControl = new FormControl();
   booleanCtrl: FormControl = new FormControl();
   selectionCtrl: FormControl = new FormControl();
   constructor() {}
@@ -34,6 +37,9 @@ export class FilterColumnsComponentComponent implements OnInit {
       this.checkValue(value);
     });
     this.dateCtrl.valueChanges.subscribe((value) => {
+      this.checkValue(value);
+    });
+    this.textareaCtrl.valueChanges.subscribe((value) => {
       this.checkValue(value);
     });
     this.numberCtrl.valueChanges.subscribe((value) => {

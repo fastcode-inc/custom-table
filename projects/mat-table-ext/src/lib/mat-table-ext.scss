@@ -269,9 +269,9 @@ table th:hover .resize-handle {
     // border-right: 1px solid ;
     position: relative;
     
-    &:last-child {
-      border-right: 1px solid ;
-    }
+    // &:last-child {
+    //   border-right: 1px solid ;
+    // }
     
     &.ungrouped-header-cell {
       // Empty ungrouped cells - maintain styling but no content
