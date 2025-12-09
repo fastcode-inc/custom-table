@@ -35,8 +35,7 @@ export var EXAMPLE_DATA: any[] = [
     email: 'Boron@gmail.com',
     status: false,
     cost: 4,
-    description: 'Chemical element with atomic number 5. Used in various industrial applications and as a semiconductor dopant.',
-  },
+ },
   {
     position: 2,
     name: 'Helium',
@@ -54,8 +53,7 @@ export var EXAMPLE_DATA: any[] = [
     email: 'Helium@gmail.com',
     status: true,
     cost: 5,
-    description: 'Noble gas with atomic number 2. Second lightest element, commonly used in balloons and cryogenics.',
-  },
+ },
   {
     position: 3,
     name: 'Nitrogen',
@@ -73,7 +71,7 @@ export var EXAMPLE_DATA: any[] = [
     email: 'Nitrogen@gmail.com',
     status: true,
     cost: 2,
-    description: 'Colorless, odorless gas that makes up about 78% of Earth\'s atmosphere. Essential for plant growth.',
+
   },
   {
     position: 4,
@@ -92,7 +90,7 @@ export var EXAMPLE_DATA: any[] = [
     email: 'Oxygen@gmail.com',
     status: false,
     cost: 3,
-    description: 'Essential element for respiration and combustion. Most abundant element in Earth\'s crust by mass.',
+
   },
   {
     position: 4,
@@ -111,7 +109,7 @@ export var EXAMPLE_DATA: any[] = [
     email: 'Oxygen@gmail.com',
     status: false,
     cost: 3,
-    description: 'Essential element for respiration and combustion. Most abundant element in Earth\'s crust by mass.',
+
   },
   {
     position: 4,
@@ -130,7 +128,7 @@ export var EXAMPLE_DATA: any[] = [
     email: 'Oxygen@gmail.com',
     status: false,
     cost: 3,
-    description: 'Essential element for respiration and combustion. Most abundant element in Earth\'s crust by mass.',
+
   },
   {
     position: 4,
@@ -149,7 +147,7 @@ export var EXAMPLE_DATA: any[] = [
     email: 'Oxygen@gmail.com',
     status: false,
     cost: 3,
-    description: 'Essential element for respiration and combustion. Most abundant element in Earth\'s crust by mass.',
+
   },
   {
     position: 4,
@@ -168,7 +166,7 @@ export var EXAMPLE_DATA: any[] = [
     email: 'Oxygen@gmail.com',
     status: false,
     cost: 3,
-    description: 'Essential element for respiration and combustion. Most abundant element in Earth\'s crust by mass.',
+
   },
 ];
 @Component({
@@ -220,7 +218,8 @@ export class AppComponent implements AfterViewInit {
   exportButtonEnable: any = true;
   printButtonEnable: any = false;
   enableColumnGrouping: any = true;
-  enableRowFreezing: any = false;
+  enableRowHiding: any = false;
+  enableRowPinning: any = true;
   pdfOrientation: 'portrait' | 'landscape' = 'landscape';
   @ViewChild('cellTemplate1') cellTemplate1!: TemplateRef<any>;
   @ViewChild('cellTemplate2') cellTemplate2!: TemplateRef<any>;
@@ -257,8 +256,23 @@ export class AppComponent implements AfterViewInit {
     }
   ];
   
-  // Frozen rows - freeze first 2 rows
-  public frozenRowIndices: number[] = [0, 1];
+  // Hidden rows - hide last 2 rows (indices 2 and 3)
+  public hiddenRowIndices: number[] = [2, 3];
+  
+  // Row hiding filter function - hide rows where weight > 15
+  public rowHidingFilterFn = (row: any, index: number) => {
+    return this.useHidingFilter && row.weight && row.weight > 15;
+  };
+  
+  public useHidingFilter: boolean = false;
+  
+  // Row pinning filter function - pin first row at top, last row at bottom
+  public rowPinningFn = (row: any, index: number): 'top' | 'bottom' | null => {
+    if (!this.enableRowPinning) return null;
+    if (index === 0) return 'top';
+    if (index === this.dataSource.data.length - 1) return 'bottom';
+    return null;
+  };
   
   //   { header: 'Position', field: 'position', width: '200px',type:'string', headerTemplate:this.headerTemplate2 },
   //   { header: 'Name', field: 'name', width: '200px', pinned: 'left', type: 'string' },
@@ -305,8 +319,9 @@ export class AppComponent implements AfterViewInit {
   ];
   }
 
-  ngOnInit(): void {}
-
+  ngOnInit(): void {
+  }
+  
   showhidecolumn(op: string) {
     switch (op) {
       case 'inlineRowEditing': {

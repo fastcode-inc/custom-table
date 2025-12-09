@@ -94,3 +94,9 @@ export interface MTExColumnPinOption {
 }
 
 export declare type MTExColumnPinValue = 'left' | 'right' | null;
+
+/** Row pinning configuration */
+export interface RowPinning {
+  index: number;
+  position: 'top' | 'bottom';
+}

@@ -158,8 +158,18 @@
         </mat-slide-toggle>
       </section>
       <section class="example-section">
-        <mat-slide-toggle [(ngModel)]="enableRowFreezing" [disabled]="false">
-          Row Freezing (First 2 Rows)
+        <mat-slide-toggle [(ngModel)]="enableRowHiding" [disabled]="false">
+          Row Hiding (Last 2 Rows)
+        </mat-slide-toggle>
+      </section>
+      <section class="example-section" style="padding-left: 15px">
+        <mat-slide-toggle [(ngModel)]="useHidingFilter" [disabled]="!enableRowHiding">
+          Use Filter Function (weight > 15)
+        </mat-slide-toggle>
+      </section>
+      <section class="example-section">
+        <mat-slide-toggle [(ngModel)]="enableRowPinning" [disabled]="false">
+          Row Pinning (First & Last)
         </mat-slide-toggle>
       </section>
       <section class="example-section">
@@ -286,7 +296,7 @@
   [popupRowEditing]="popupRowEditing"
   [cellPopupEditing]="cellPopupEditing"
   [enableDelete]="deleteRow"
-  [enableRowFreezing]="enableRowFreezing"
+  [enableRowHiding]="enableRowHiding"
   [rowSelection]="rowSelection"
   [multiRowSelection]="multiRowSelection"
   [stickyHeader]="stickyHeader"
@@ -308,7 +318,9 @@
   [printButtonEnable]="printButtonEnable"
   [pdfOrientation]="pdfOrientation"
   [columnGroups]="enableColumnGrouping ? columnGroups : []"
-  [frozenRowIndices]="enableRowFreezing ? frozenRowIndices : []"
+  [hiddenRowIndices]="enableRowHiding && !useHidingFilter ? hiddenRowIndices : []"
+  [rowHidingFilterFn]="enableRowHiding && useHidingFilter ? rowHidingFilterFn : undefined"
+  [enableRowPinning]="enableRowPinning"
   [stripedRows]="stripedRows"
   [loadingIndicator]="isLoading"
   [sorting]="sorting"

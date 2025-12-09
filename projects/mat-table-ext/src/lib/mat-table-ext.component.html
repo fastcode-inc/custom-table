@@ -1,3 +1,6 @@
+{{enableRowPinning}}
+{{pinnedBottomRows.length}}
+{{pinnedTopRows.length}}
 <div [style.width]="tableWidth">
     @if (globalSearch) {
         <mat-form-field class="global-search-field" appearance="fill">
@@ -21,6 +24,13 @@
                 </button>
                 <button class="hide-button" mat-stroked-button color="primary" (click)="showHiddenRows()">
                     Show All Rows
+                </button>
+            }
+            @if (enableRowHiding && hiddenRowIndices.length > 0) {
+                <button class="hide-button custom-primary-color" mat-stroked-button color="accent" (click)="unhideAllRows()"
+                    matTooltip="Unhide all hidden rows" matTooltipPosition="above">
+                    <mat-icon>visibility</mat-icon>
+                    <span>Unhide All ({{hiddenRowIndices.length}})</span>
                 </button>
             }
             @if (columnHidable) {
@@ -100,16 +110,39 @@
         }
     </mat-menu>
 
+    <!-- Row Pin Menu -->
+    <mat-menu #pinMenu="matMenu" (closed)="closeRowPinMenu()">
+        @if (rowPinMenuRow) {
+            @if (!isRowPinned(rowPinMenuRow)) {
+                <button mat-menu-item (click)="pinRow(rowPinMenuRow, 'top')">
+                    <mat-icon>vertical_align_top</mat-icon>
+                    <span>Pin to Top</span>
+                </button>
+                <button mat-menu-item (click)="pinRow(rowPinMenuRow, 'bottom')">
+                    <mat-icon>vertical_align_bottom</mat-icon>
+                    <span>Pin to Bottom</span>
+                </button>
+            }
+            @if (isRowPinned(rowPinMenuRow)) {
+                <button mat-menu-item (click)="unpinRow(rowPinMenuRow)">
+                    <mat-icon>close</mat-icon>
+                    <span>Unpin Row</span>
+                </button>
+            }
+        }
+    </mat-menu>
+
     @if (loadingIndicator) {
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
     }
     <section id="tableContainer" class="mat-table-ext-container" (scroll)="onScroll($event)"
         [style.height]="tableHeight ? tableHeight :'max-content'">
         
-        <table mat-table #matTable [id]="'matTableExt'+tableID" [dataSource]="dataSource" matSort cdkDropList
+        <table mat-table #matTable #MyTable [id]="'matTableExt'+tableID" [dataSource]="dataSource" matSort cdkDropList
             cdkDropListOrientation="horizontal" multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
             (click)="saveCellEditing()" [style.width]="scrollbarH?'max-content':'100%'" 
             [class]="'mat-mdc-table' + (tableClassName ? ' ' + tableClassName : '')">
+
             <!-- Row selection column -->
             <ng-container matColumnDef="select">
                 <th mat-header-cell *matHeaderCellDef cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="!dndColumns">
@@ -332,16 +365,34 @@
                 <td mat-footer-cell *matFooterCellDef></td>
             </ng-container>
 
-            <ng-container matColumnDef="freeze" stickyEnd="false">
+            <ng-container matColumnDef="hide" stickyEnd="false">
                 <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
-                    class="action-column-cells"> Freeze
+                    class="action-column-cells"> Hide
                 </th>
                 <td mat-cell *matCellDef="let row;let i=dataIndex">
-                    <button mat-icon-button (click)="toggleRowFreeze(i)" 
-                        [matTooltip]="isRowFrozen(i) ? 'Unfreeze Row' : 'Freeze Row'"
+                    <button mat-icon-button (click)="toggleRowHide(i)" 
+                        [matTooltip]="isRowHidden(i) ? 'Unhide Row' : 'Hide Row'"
                         matTooltipPosition="above">
-                        <mat-icon [color]="isRowFrozen(i) ? 'primary' : ''" aria-hidden="false">
-                            {{ isRowFrozen(i) ? 'lock' : 'lock_open' }}
+                        <mat-icon [color]="isRowHidden(i) ? 'primary' : ''" aria-hidden="false">
+                            {{ isRowHidden(i) ? 'visibility_off' : 'visibility' }}
+                        </mat-icon>
+                    </button>
+                </td>
+                <td mat-footer-cell *matFooterCellDef></td>
+            </ng-container>
+
+            <ng-container matColumnDef="pin" stickyEnd="false">
+                <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
+                    class="action-column-cells"> Pin
+                </th>
+                <td mat-cell *matCellDef="let row;let i=dataIndex">
+                    <button mat-icon-button 
+                        [matMenuTriggerFor]="pinMenu"
+                        (click)="openRowPinMenu($event, row)"
+                        [matTooltip]="getRowPinPosition(row) ? 'Pinned ' + getRowPinPosition(row) : 'Pin Row'"
+                        matTooltipPosition="above">
+                        <mat-icon [color]="isRowPinned(row) ? 'primary' : ''" aria-hidden="false">
+                            {{ isRowPinned(row) ? 'push_pin' : 'push_pin' }}
                         </mat-icon>
                     </button>
                 </td>
@@ -399,16 +450,58 @@
                 <tr mat-header-row *matHeaderRowDef="getGroupedColumns(); sticky: stickyHeader" class="mat-mdc-header-row group-header-row"></tr>
             }
             <tr mat-header-row *matHeaderRowDef=" getDisplayedColumns(); sticky: stickyHeader" class="mat-mdc-header-row"></tr>
-            <tr mat-row *matRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex;" class="mat-mdc-row data-row"
-                [ngClass]="{'data-row':expandRows,'stripedRows':(stripedRows &&  i % 2 == 1),'hoverClass':rowHover, 'hidden':hiddenCtrl.isSelected(row) && hideRows,'example-expanded-row':expandedElement === row,'frozen-row':isRowFrozen(i)}"
-                [style.top]="getFrozenRowTop(i)"
-                (click)="expandRow(row, row !== expandedElement,i)">
-            </tr>
             <tr style="height: 0px;" mat-header-row class="no-default-height" *matHeaderRowDef="headersFiltersIds">
             </tr>
+            
+            <!-- All Data Rows (with dynamic pinning classes) -->
+            <!-- <tr mat-row *matRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex;" 
+                class="mat-mdc-row data-row"
+                [ngClass]="{
+                  'data-row':expandRows,
+                  'stripedRows':(stripedRows &&  i % 2 == 1),
+                  'hoverClass':rowHover, 
+                  'hidden':(hiddenCtrl.isSelected(row) && hideRows) || isRowHidden(i),
+                  'example-expanded-row':expandedElement === row,
+                  'pinned-row': isRowPinned(row),
+                  'pinned-top-row': isRowPinnedTop(row),
+                  'pinned-bottom-row': isRowPinnedBottom(row)
+                }"
+                (click)="expandRow(row, row !== expandedElement,i)">
+            </tr> -->
+            <tr mat-row *matRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex; " 
+                class="mat-mdc-row data-row"
+                [ngClass]="{
+                  'data-row':expandRows,
+                  'stripedRows':(stripedRows &&  i % 2 == 1),
+                  'hoverClass':rowHover, 
+                  'hidden':(hiddenCtrl.isSelected(row) && hideRows) || isRowHidden(i),
+                  'example-expanded-row':expandedElement === row,
+                  'pinned-row': isRowPinned(row),
+                  'mat-row-sticky-top': isRowPinnedTop(row),
+                  'mat-row-sticky-bottom': isRowPinnedBottom(row)
+                }"
+                (click)="expandRow(row, row !== expandedElement,i)">
+            </tr>
+            <!-- <tr mat-header-row *matHeaderRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex; when: isRowPinnedTop(row)" 
+                class="mat-mdc-row data-row"
+                class="mat-mdc-header-row"
+                [ngClass]="{
+                  'data-row':expandRows,
+                  'stripedRows':(stripedRows &&  i % 2 == 1),
+                  'hoverClass':rowHover, 
+                  'hidden':(hiddenCtrl.isSelected(row) && hideRows) || isRowHidden(i),
+                  'example-expanded-row':expandedElement === row,
+                  'pinned-row': isRowPinned(row),
+                  'pinned-top-row': isRowPinnedTop(row),
+                  'pinned-bottom-row': isRowPinnedBottom(row)
+                }"
+                (click)="expandRow(row, row !== expandedElement,i)">
+            </tr> -->
+       
             @if (expandRows) {
-                <tr mat-row *matRowDef="let row; columns: ['expandedDetail']"
-                    class="example-detail-row">
+                <tr mat-row *matRowDef="let row; columns: ['expandedDetail']; let i=dataIndex"
+                    class="example-detail-row"
+                    [ngClass]="{'hidden': isRowHidden(i)}">
                 </tr>
             }
             @if (showFooterRow) {
