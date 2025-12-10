@@ -327,8 +327,10 @@ updateColumns(updatedColumns: MTExColumn[]) {
     if (this.dataSource) {
       this.dataSource.paginator = this.paginator;
       this.dataSource.sort = this.sort;
-      this.pinnedTopDataSource.sort = this.sort;
-      this.pinnedBtmDataSource.sort = this.sort;
+      if (this.enableRowPinning) {
+        this.pinnedTopDataSource.sort = this.sort;
+        this.pinnedBtmDataSource.sort = this.sort;
+      }
     }
     
     // Calculate and set pinned row offsets
@@ -613,8 +615,10 @@ updateColumns(updatedColumns: MTExColumn[]) {
     },
     sorting: (value: any) => {
       this.dataSource.sort = this.sort;
-      this.pinnedTopDataSource.sort = this.sort;
-      this.pinnedBtmDataSource.sort = this.sort;
+      if (this.enableRowPinning) {
+        this.pinnedTopDataSource.sort = this.sort;
+        this.pinnedBtmDataSource.sort = this.sort;
+      }
     },
     columnGroups: (value: any) => {
       this.columnGroups = value.currentValue || [];
@@ -669,6 +673,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
       this.dataSource.filter = '';
     }
     this.toggleFilters = value;
+    setTimeout(() => this.syncColumnSizesFromTop(), 150);
   }
   /**
    * @description This method returns the list of visible column names.
@@ -902,13 +907,12 @@ updateColumns(updatedColumns: MTExColumn[]) {
     const column = this.dynamicDisplayedColumns.filter((a) => a.name == name)[0];
     if (column) {
       column.show = value;
+      if (this.enableRowPinning) {
+        this.syncColumnSizesFromTop();
+      }
     }
     if (this.columnFilter) {
       this.setColumnFilter(true);
-    }
-    // When column visibility changes, re-sync sizes for the pinned tables
-    if (this.enableRowPinning) {
-      setTimeout(() => this.syncColumnSizesFromTop(), 60);
     }
   }
 
@@ -978,8 +982,8 @@ updateColumns(updatedColumns: MTExColumn[]) {
     this.rowPinMenuRow = null;
   }
 
-  pinnedTopDataSource:any;
-  pinnedBtmDataSource:any;
+  pinnedTopDataSource!: MatTableDataSource<any>;
+  pinnedBtmDataSource!: MatTableDataSource<any>;
 
   /**
    * @description Pin row to top or bottom
@@ -1185,6 +1189,9 @@ updateColumns(updatedColumns: MTExColumn[]) {
         event.previousIndex + adjustedValue,
         event.currentIndex + adjustedValue
       );
+      if (this.enableRowPinning) {
+        setTimeout(() => this.syncColumnSizesFromTop(), 80);
+      }
     }
   }
   /**
@@ -1254,6 +1261,9 @@ updateColumns(updatedColumns: MTExColumn[]) {
     this.individualFilter = column.field;
     this.filterValues[column.field] = searchValue[column.field];
     this.dataSource.filter = JSON.stringify(this.filterValues);
+    if (this.enableRowPinning) {
+      setTimeout(() => this.syncColumnSizesFromTop(), 80);
+    }
   }
   /**
    * @description This method will take row and its index enable inline editing tools on that row.
@@ -1267,6 +1277,9 @@ updateColumns(updatedColumns: MTExColumn[]) {
     setTimeout(() => {
       this.tableData[index]['editable'] = !this.tableData[index]['editable'];
     }, 0);
+    if (this.enableRowPinning) {
+      setTimeout(() => this.syncColumnSizesFromTop(), 80);
+    }
   }
   /**
    * @description This method will create and return data to inline editing template.
@@ -1433,6 +1446,9 @@ updateColumns(updatedColumns: MTExColumn[]) {
             index: index,
           };
           this.popupChange.emit(dataChange);
+          if (this.enableRowPinning) {
+            setTimeout(() => this.syncColumnSizesFromTop(), 80);
+          }
         }
       });
   }
@@ -1469,6 +1485,9 @@ updateColumns(updatedColumns: MTExColumn[]) {
             index: rowIndex,
           };
           this.cellChange.emit(dataChange);
+          if (this.enableRowPinning) {
+            setTimeout(() => this.syncColumnSizesFromTop(), 80);
+          }
         }
       });
   }
@@ -1648,8 +1667,10 @@ updateColumns(updatedColumns: MTExColumn[]) {
     }
     if (this.sorting) {
       this.dataSource.sort = this.sort;
-      this.pinnedTopDataSource.sort = this.sort;
-      this.pinnedBtmDataSource.sort = this.sort;
+      if (this.enableRowPinning) {
+        this.pinnedTopDataSource.sort = this.sort;
+        this.pinnedBtmDataSource.sort = this.sort;
+      }
     }
     if (this.columnFilter) {
       this.dataSource.filterPredicate = this.createFilter();

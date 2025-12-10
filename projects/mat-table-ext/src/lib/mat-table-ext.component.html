@@ -819,23 +819,10 @@
                         </ng-container>
                     }
                 } -->
-                <!-- @for (ids of headersFiltersIds; track ids; let i = $index) {
-                    <ng-container [matColumnDef]="ids" [sticky]="columnsArray[$index].pinned === 'left'" [stickyEnd]="columnsArray[$index].pinned === 'right'">
-                        <th mat-header-cell *matHeaderCellDef  [style.minWidth]="columnsArray[$index].width" [style.maxWidth]="columnsArray[$index].maxWidth?columnsArray[$index].maxWidth:columnsArray[$index].width"
-                        [style.minWidth]="columnsArray[$index].minWidth" >
-                            <div style="display: block; width: 100%;" class="filters-container" [class.animate]="toggleFilters">
-                                <app-filter-columns-component style="display: block; width: 100%;" [obj]="columnsArray[returnIndex(ids)]"
-                                    (filterOutput)="applyColumnFilter($event,columnsArray[returnIndex(ids)])"></app-filter-columns-component>
-                            </div>
-                        </th>
-                    </ng-container>
-                } -->
                 <!-- @if (columnGroups.length > 0) {
                     <tr mat-header-row *matHeaderRowDef="getGroupedColumns(); sticky: stickyHeader" class="mat-mdc-header-row group-header-row"></tr>
                 } -->
                 <tr style="display:none" mat-header-row *matHeaderRowDef=" getDisplayedColumns(); sticky: stickyHeader" class="mat-mdc-header-row"></tr>
-                <tr style="height: 0px;" mat-header-row class="no-default-height" *matHeaderRowDef="getFilterColumns()">
-                </tr>
                 
                 <!-- All Data Rows (with dynamic pinning classes) -->
                 <!-- <tr mat-row *matRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex;" 
@@ -892,377 +879,388 @@
                     <tr mat-footer-row *matFooterRowDef="getDisplayedColumns(); sticky: stickyFooter"></tr>
                 }
             </table>
-            <table style="position: sticky;bottom: 0;z-index: 111;"  mat-table #matTable #MyTable [id]="'matTableExtBtm'+tableID" [dataSource]="pinnedBtmDataSource" matSort cdkDropList
-                cdkDropListOrientation="horizontal" multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
-                (click)="saveCellEditing()" [style.width]="scrollbarH?'max-content':'100%'" 
-                [class]="'mat-mdc-table' + (tableClassName ? ' ' + tableClassName : '')">
-    
-                <!-- Row selection column -->
-                <ng-container matColumnDef="select">
-                    <th mat-header-cell *matHeaderCellDef cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="!dndColumns">
-                        <mat-checkbox (change)="$event ? toggleAllRows() : null"
-                            [checked]="selection.hasValue() && isAllSelected()"
-                            [indeterminate]="selection.hasValue() && !isAllSelected()" [aria-label]="checkboxLabel()">
-                        </mat-checkbox>
-                    </th>
-                    <td mat-cell *matCellDef="let row;let i = dataIndex">
-                        <mat-checkbox (click)="$event.stopPropagation()" (change)="$event ? setSelectedRows(row,i) : null"
-                            [checked]="selection.isSelected(row)" [aria-label]="checkboxLabel(row)">
-                        </mat-checkbox>
-                    </td>
-                    <ng-container *ngIf="showFooterRow">
+            @if (pinnedBtmDataSource && pinnedBtmDataSource.data.length > 0) {
+                <table style="position: sticky;bottom: 0;z-index: 111;"  mat-table #matTable #MyTable [id]="'matTableExtBtm'+tableID" [dataSource]="pinnedBtmDataSource" matSort cdkDropList
+                    cdkDropListOrientation="horizontal" multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
+                    (click)="saveCellEditing()" [style.width]="scrollbarH?'max-content':'100%'" 
+                    [class]="'mat-mdc-table' + (tableClassName ? ' ' + tableClassName : '')">
+        
+                    <!-- Row selection column -->
+                    <ng-container matColumnDef="select">
+                        <th mat-header-cell *matHeaderCellDef cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="!dndColumns">
+                            <mat-checkbox (change)="$event ? toggleAllRows() : null"
+                                [checked]="selection.hasValue() && isAllSelected()"
+                                [indeterminate]="selection.hasValue() && !isAllSelected()" [aria-label]="checkboxLabel()">
+                            </mat-checkbox>
+                        </th>
+                        <td mat-cell *matCellDef="let row;let i = dataIndex">
+                            <mat-checkbox (click)="$event.stopPropagation()" (change)="$event ? setSelectedRows(row,i) : null"
+                                [checked]="selection.isSelected(row)" [aria-label]="checkboxLabel(row)">
+                            </mat-checkbox>
+                        </td>
+                        <ng-container *ngIf="showFooterRow">
+                            <td mat-footer-cell *matFooterCellDef></td>
+                        </ng-container>
+                    </ng-container>
+                    <!--dynamic columns are being generated here-->
+                    @for (column of columnsArray; track column.field + '_' + column.pinned; let i = $index) {
+                        <div matColumnDef="{{column['field']}}" [sticky]="column.pinned === 'left'" [stickyEnd]="column.pinned === 'right'">
+                        <th mat-header-cell *matHeaderCellDef [style.minWidth]="column.width" [style.maxWidth]="column.maxWidth?column.maxWidth:column.width"
+                            [style.minWidth]="column.minWidth" cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="!dndColumns"
+                            [columnsResizable]="columnResizable" [index]="i" class="mat-mdc-header-cell"
+                            [mat-sort-header]="column.field" [disabled]="!sorting || column.disabled === true">
+        
+                            @if (column.headerTemplate || headerTemplateRef) {
+                                <ng-template [ngTemplateOutlet]="column.headerTemplate || headerTemplateRef"
+                                    [ngTemplateOutletContext]="{data:column}"></ng-template>
+                            }
+                            @if (!headerTemplateRef && !column.headerTemplate) {
+                                <span matTooltip="{{column.headerTooltip?.value}}"
+                                    [matTooltipPosition]="column?.headerTooltip?.tooltipPosition!"
+                                    [class.disabled]="!sorting || column.disabled === true">{{column.header}}</span>
+                            }
+                        </th>
+                        <td mat-cell *matCellDef="let row ;let i=dataIndex" class="mat-mdc-cell">
+                            @if (!row.editable && !cellEditing[i +'_'+column.field]) {
+                                <div (dblclick)="cellEditing[i +'_'+column.field] = inCellEditing;setCellData(row,i)"
+                                    (click)="cellPopupEditing ? openCellPopupDialog(row, column, i) : null"
+                                    [style.cursor]="cellPopupEditing ? 'pointer' : 'default'"
+                                    matTooltip="{{column.cellTooltip?.value}}"
+                                    [matTooltipPosition]="column?.cellTooltip?.tooltipPosition!">
+                                    @if (!cellTemplateRef && !column?.cellTemplate && !cellTemplateRefMap[column.field]) {
+                                        <span>{{row[column.field]}}</span>
+                                    }
+                                    @if (cellTemplateRefMap[column.field]) {
+                                        <ng-container [ngTemplateOutlet]="cellTemplateRefMap[column.field]"
+                                            [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                        </ng-container>
+                                    }
+                                    @if (cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
+                                        <ng-container [ngTemplateOutlet]="column.cellTemplate"
+                                            [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                        </ng-container>
+                                    }
+                                    @if (!cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
+                                        <ng-container [ngTemplateOutlet]="column.cellTemplate"
+                                            [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                        </ng-container>
+                                    }
+                                    @if (cellTemplateRef && !column.cellTemplate && !cellTemplateRefMap[column.field]) {
+                                        <ng-container [ngTemplateOutlet]="cellTemplateRef"
+                                            [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                        </ng-container>
+                                    }
+                                </div>
+                            }
+                            @if (row.editable || cellEditing[i +'_'+column.field]) {
+                                <div (click)="$event.stopPropagation()">
+                                    @if (inlineEditingTemplateRef && !cellEditing[i +'_'+column.field]) {
+                                        <ng-container [ngTemplateOutlet]="inlineEditingTemplateRef"
+                                            [ngTemplateOutletContext]="{data:getInlineEditingData(row,i,column)}"></ng-container>
+                                    }
+                                    @if (cellEditingTemplateRef && !(row.editable)) {
+                                        <ng-container [ngTemplateOutlet]="cellEditingTemplateRef"
+                                            [ngTemplateOutletContext]="{data:getInlineEditingData(row,i,column)}"></ng-container>
+                                    }
+                                    @if (!inlineEditingTemplateRef && (row.editable) && rowDataTemp['e'+i]) {
+                                        @if (column.type == 'number') {
+                                            <mat-form-field appearance="outline" class="inline-editing-field">
+                                                <input matInput type="number" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                                                    [ngModelOptions]="{standalone: true}">
+                                            </mat-form-field>
+                                        }
+                                        @if (column.type == 'string') {
+                                            <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
+                                                <input matInput type="text" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                                                    [ngModelOptions]="{standalone: true}">
+                                            </mat-form-field>
+                                        }
+                                        @if (column.type == 'textarea') {
+                                            <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
+                                                <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                                                    [ngModelOptions]="{standalone: true}"></textarea>
+                                            </mat-form-field>
+                                        }
+                                        @if (column.type == 'date') {
+                                            <mat-form-field appearance="outline" class="inline-editing-field">
+                                                <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                                                    [ngModelOptions]="{standalone: true}">
+                                            </mat-form-field>
+                                        }
+                                        @if (column.type == 'datepicker') {
+                                            <mat-form-field appearance="outline" class="inline-editing-field">
+                                                <input matInput [matDatepicker]="inlinePicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                                                    [ngModelOptions]="{standalone: true}">
+                                                <mat-datepicker-toggle matIconSuffix [for]="inlinePicker"></mat-datepicker-toggle>
+                                                <mat-datepicker #inlinePicker></mat-datepicker>
+                                            </mat-form-field>
+                                        }
+                                        @if (column.type == 'selection') {
+                                            <mat-form-field appearance="outline" class="inline-editing-field">
+                                                <mat-select [value]="rowDataTemp['e'+i][column.field]"
+                                                    [(ngModel)]="rowDataTemp['e'+i][column.field]">
+                                                    @for (option of column.options; track option) {
+                                                        <mat-option [value]="option">{{option}}</mat-option>
+                                                    }
+                                                </mat-select>
+                                            </mat-form-field>
+                                        }
+                                        @if (column.type == 'boolean') {
+                                            <mat-checkbox (click)="$event.stopPropagation()" color="primary" [(ngModel)]="row[column.field]"></mat-checkbox>
+                                        }
+                                    }
+                                    @if (!cellEditingTemplateRef && cellEditing[i +'_'+column.field]) {
+                                        @if (column.type == 'number') {
+                                            <mat-form-field appearance="outline" class="inline-editing-field">
+                                                <input matInput type="number" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                                                    [ngModelOptions]="{standalone: true}">
+                                            </mat-form-field>
+                                        }
+                                        @if (column.type == 'string') {
+                                            <mat-form-field appearance="outline" class="inline-editing-field">
+                                                <input matInput type="text" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                                                    [ngModelOptions]="{standalone: true}">
+                                            </mat-form-field>
+                                        }
+                                        @if (column.type == 'textarea') {
+                                            <mat-form-field appearance="outline" class="inline-editing-field">
+                                                <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                                                    [ngModelOptions]="{standalone: true}"></textarea>
+                                            </mat-form-field>
+                                        }
+                                        @if (column.type == 'date') {
+                                            <mat-form-field appearance="outline" class="inline-editing-field">
+                                                <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                                                    [ngModelOptions]="{standalone: true}">
+                                            </mat-form-field>
+                                        }
+                                        @if (column.type == 'datepicker') {
+                                            <mat-form-field appearance="outline" class="inline-editing-field">
+                                                <input matInput [matDatepicker]="cellPicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                                                    [ngModelOptions]="{standalone: true}">
+                                                <mat-datepicker-toggle matIconSuffix [for]="cellPicker"></mat-datepicker-toggle>
+                                                <mat-datepicker #cellPicker></mat-datepicker>
+                                            </mat-form-field>
+                                        }
+                                        @if (column.type == 'selection') {
+                                            <mat-form-field appearance="outline" class="inline-editing-field">
+                                                <mat-select [value]="rowDataTemp['e'+i][column.field]"
+                                                    [(ngModel)]="rowDataTemp['e'+i][column.field]">
+                                                    @for (option of column.options; track option) {
+                                                        <mat-option [value]="option">{{option}}</mat-option>
+                                                    }
+                                                </mat-select>
+                                            </mat-form-field>
+                                        }
+                                        @if (column.type == 'boolean') {
+                                            <mat-checkbox (click)="$event.stopPropagation()" color="primary" [(ngModel)]="row[column.field]"></mat-checkbox>
+                                        }
+                                    }
+                                </div>
+                            }
+                        </td>
+                        @if (showFooterRow) {
+                            <td mat-footer-cell *matFooterCellDef> {{column.footerText}} </td>
+                        }
+                        </div>
+                    }
+                    <ng-container matColumnDef="edit" stickyEnd="false">
+                        <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
+                            class="action-column-cells"> Edit </th>
+                        <td mat-cell *matCellDef="let row; let i = dataIndex" class="inline-edit-column-cell">
+                            @if (!row.editable && !row.editmodal) {
+                                <mat-icon class="edit-column-icons" aria-hidden="false"
+                                    (click)="enableInlineEditing(row,i)" fontIcon="edit_note">
+                                </mat-icon>
+                            }
+                            @if (row.editable && !row.editmodal) {
+                                <div class="inline-editing-controls">
+                                    <mat-icon class="edit-column-icons" aria-hidden="false" (click)="saveInlineEditing(row,i)"
+                                        fontIcon="done"></mat-icon>
+                                    <mat-icon class="edit-column-icons" aria-hidden="false" (click)="cancelInlineEditing(row,i)"
+                                        fontIcon="close"></mat-icon>
+                                </div>
+                            }
+                        </td>
+                        <td mat-footer-cell *matFooterCellDef> edit </td>
+                    </ng-container>
+                    <ng-container matColumnDef="popup" stickyEnd="false">
+                        <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
+                            class="action-column-cells"> Popup
+                        </th>
+                        <td mat-cell *matCellDef="let row; let i = index">
+                            <mat-icon aria-hidden="false" (click)="openEditingDialog(row)" fontIcon="edit">
+                            </mat-icon>
+                        </td>
                         <td mat-footer-cell *matFooterCellDef></td>
                     </ng-container>
-                </ng-container>
-                <!--dynamic columns are being generated here-->
-                @for (column of columnsArray; track column.field + '_' + column.pinned; let i = $index) {
-                    <div matColumnDef="{{column['field']}}" [sticky]="column.pinned === 'left'" [stickyEnd]="column.pinned === 'right'">
-                    <th mat-header-cell *matHeaderCellDef [style.minWidth]="column.width" [style.maxWidth]="column.maxWidth?column.maxWidth:column.width"
-                        [style.minWidth]="column.minWidth" cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="!dndColumns"
-                        [columnsResizable]="columnResizable" [index]="i" class="mat-mdc-header-cell"
-                        [mat-sort-header]="column.field" [disabled]="!sorting || column.disabled === true">
-    
-                        @if (column.headerTemplate || headerTemplateRef) {
-                            <ng-template [ngTemplateOutlet]="column.headerTemplate || headerTemplateRef"
-                                [ngTemplateOutletContext]="{data:column}"></ng-template>
-                        }
-                        @if (!headerTemplateRef && !column.headerTemplate) {
-                            <span matTooltip="{{column.headerTooltip?.value}}"
-                                [matTooltipPosition]="column?.headerTooltip?.tooltipPosition!"
-                                [class.disabled]="!sorting || column.disabled === true">{{column.header}}</span>
-                        }
-                    </th>
-                    <td mat-cell *matCellDef="let row ;let i=dataIndex" class="mat-mdc-cell">
-                        @if (!row.editable && !cellEditing[i +'_'+column.field]) {
-                            <div (dblclick)="cellEditing[i +'_'+column.field] = inCellEditing;setCellData(row,i)"
-                                (click)="cellPopupEditing ? openCellPopupDialog(row, column, i) : null"
-                                [style.cursor]="cellPopupEditing ? 'pointer' : 'default'"
-                                matTooltip="{{column.cellTooltip?.value}}"
-                                [matTooltipPosition]="column?.cellTooltip?.tooltipPosition!">
-                                @if (!cellTemplateRef && !column?.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                    <span>{{row[column.field]}}</span>
-                                }
-                                @if (cellTemplateRefMap[column.field]) {
-                                    <ng-container [ngTemplateOutlet]="cellTemplateRefMap[column.field]"
-                                        [ngTemplateOutletContext]="{row:row,column:column,index:i}">
-                                    </ng-container>
-                                }
-                                @if (cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                    <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                        [ngTemplateOutletContext]="{row:row,column:column,index:i}">
-                                    </ng-container>
-                                }
-                                @if (!cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                    <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                        [ngTemplateOutletContext]="{row:row,column:column,index:i}">
-                                    </ng-container>
-                                }
-                                @if (cellTemplateRef && !column.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                    <ng-container [ngTemplateOutlet]="cellTemplateRef"
-                                        [ngTemplateOutletContext]="{row:row,column:column,index:i}">
-                                    </ng-container>
-                                }
-                            </div>
-                        }
-                        @if (row.editable || cellEditing[i +'_'+column.field]) {
-                            <div (click)="$event.stopPropagation()">
-                                @if (inlineEditingTemplateRef && !cellEditing[i +'_'+column.field]) {
-                                    <ng-container [ngTemplateOutlet]="inlineEditingTemplateRef"
-                                        [ngTemplateOutletContext]="{data:getInlineEditingData(row,i,column)}"></ng-container>
-                                }
-                                @if (cellEditingTemplateRef && !(row.editable)) {
-                                    <ng-container [ngTemplateOutlet]="cellEditingTemplateRef"
-                                        [ngTemplateOutletContext]="{data:getInlineEditingData(row,i,column)}"></ng-container>
-                                }
-                                @if (!inlineEditingTemplateRef && (row.editable) && rowDataTemp['e'+i]) {
-                                    @if (column.type == 'number') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="number" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'string') {
-                                        <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
-                                            <input matInput type="text" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'textarea') {
-                                        <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
-                                            <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}"></textarea>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'date') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'datepicker') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput [matDatepicker]="inlinePicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                            <mat-datepicker-toggle matIconSuffix [for]="inlinePicker"></mat-datepicker-toggle>
-                                            <mat-datepicker #inlinePicker></mat-datepicker>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'selection') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <mat-select [value]="rowDataTemp['e'+i][column.field]"
-                                                [(ngModel)]="rowDataTemp['e'+i][column.field]">
-                                                @for (option of column.options; track option) {
-                                                    <mat-option [value]="option">{{option}}</mat-option>
-                                                }
-                                            </mat-select>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'boolean') {
-                                        <mat-checkbox (click)="$event.stopPropagation()" color="primary" [(ngModel)]="row[column.field]"></mat-checkbox>
-                                    }
-                                }
-                                @if (!cellEditingTemplateRef && cellEditing[i +'_'+column.field]) {
-                                    @if (column.type == 'number') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="number" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'string') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="text" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'textarea') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}"></textarea>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'date') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'datepicker') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput [matDatepicker]="cellPicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                            <mat-datepicker-toggle matIconSuffix [for]="cellPicker"></mat-datepicker-toggle>
-                                            <mat-datepicker #cellPicker></mat-datepicker>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'selection') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <mat-select [value]="rowDataTemp['e'+i][column.field]"
-                                                [(ngModel)]="rowDataTemp['e'+i][column.field]">
-                                                @for (option of column.options; track option) {
-                                                    <mat-option [value]="option">{{option}}</mat-option>
-                                                }
-                                            </mat-select>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'boolean') {
-                                        <mat-checkbox (click)="$event.stopPropagation()" color="primary" [(ngModel)]="row[column.field]"></mat-checkbox>
-                                    }
-                                }
-                            </div>
-                        }
-                    </td>
-                    @if (showFooterRow) {
-                        <td mat-footer-cell *matFooterCellDef> {{column.footerText}} </td>
-                    }
-                    </div>
-                }
-                <ng-container matColumnDef="edit" stickyEnd="false">
-                    <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
-                        class="action-column-cells"> Edit </th>
-                    <td mat-cell *matCellDef="let row; let i = dataIndex" class="inline-edit-column-cell">
-                        @if (!row.editable && !row.editmodal) {
-                            <mat-icon class="edit-column-icons" aria-hidden="false"
-                                (click)="enableInlineEditing(row,i)" fontIcon="edit_note">
-                            </mat-icon>
-                        }
-                        @if (row.editable && !row.editmodal) {
-                            <div class="inline-editing-controls">
-                                <mat-icon class="edit-column-icons" aria-hidden="false" (click)="saveInlineEditing(row,i)"
-                                    fontIcon="done"></mat-icon>
-                                <mat-icon class="edit-column-icons" aria-hidden="false" (click)="cancelInlineEditing(row,i)"
-                                    fontIcon="close"></mat-icon>
-                            </div>
-                        }
-                    </td>
-                    <td mat-footer-cell *matFooterCellDef> edit </td>
-                </ng-container>
-                <ng-container matColumnDef="popup" stickyEnd="false">
-                    <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
-                        class="action-column-cells"> Popup
-                    </th>
-                    <td mat-cell *matCellDef="let row; let i = index">
-                        <mat-icon aria-hidden="false" (click)="openEditingDialog(row)" fontIcon="edit">
-                        </mat-icon>
-                    </td>
-                    <td mat-footer-cell *matFooterCellDef></td>
-                </ng-container>
-    
-                <ng-container matColumnDef="delete">
-                    <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
-                        class="action-column-cells"> Delete
-                    </th>
-                    <td mat-cell *matCellDef="let row;let i=dataIndex">
-                        <mat-icon (click)="deleteRow(row,i)" aria-hidden="false" aria-label="Example home icon"
-                            fontIcon="delete">
-                        </mat-icon>
-                    </td>
-                    <td mat-footer-cell *matFooterCellDef></td>
-                </ng-container>
-    
-                <ng-container matColumnDef="hide" stickyEnd="false">
-                    <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
-                        class="action-column-cells"> Hide
-                    </th>
-                    <td mat-cell *matCellDef="let row;let i=dataIndex">
-                        <button mat-icon-button (click)="toggleRowHide(i)" 
-                            [matTooltip]="isRowHidden(i) ? 'Unhide Row' : 'Hide Row'"
-                            matTooltipPosition="above">
-                            <mat-icon [color]="isRowHidden(i) ? 'primary' : ''" aria-hidden="false">
-                                {{ isRowHidden(i) ? 'visibility_off' : 'visibility' }}
-                            </mat-icon>
-                        </button>
-                    </td>
-                    <td mat-footer-cell *matFooterCellDef></td>
-                </ng-container>
-    
-                <ng-container matColumnDef="pin" stickyEnd="false">
-                    <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
-                        class="action-column-cells"> Pin
-                    </th>
-                    <td mat-cell *matCellDef="let row;let i=dataIndex">
-                        <button mat-icon-button 
-                            [matMenuTriggerFor]="pinMenu"
-                            (click)="openRowPinMenu($event, row)"
-                            [matTooltip]="getRowPinPosition(row) ? 'Pinned ' + getRowPinPosition(row) : 'Pin Row'"
-                            matTooltipPosition="above">
-                            <mat-icon [color]="isRowPinned(row) ? 'primary' : ''" aria-hidden="false">
-                                {{ isRowPinned(row) ? 'push_pin' : 'push_pin' }}
-                            </mat-icon>
-                        </button>
-                    </td>
-                    <td mat-footer-cell *matFooterCellDef></td>
-                </ng-container>
-    
-                <!-- Expanded Content Column - The detail row is made up of this one column that spans across all columns -->
-                @if (expandRows) {
-                    <ng-container matColumnDef="expandedDetail">
-                        <td mat-cell *matCellDef="let element;let i=dataIndex "
-                            [attr.colspan]="columnsToDisplayWithExpand.length">
-                            <div class="example-element-detail"
-                                [@detailExpand]="element == expandedElement ? 'expanded' : 'collapsed'">
-                                @if (expansionTemplateRef) {
-                                    <ng-container [ngTemplateOutlet]="expansionTemplateRef"
-                                        [ngTemplateOutletContext]="{$explicit:element,row:element,index:i}">
-                                    </ng-container>
-                                }
-                            </div>
-                        </td>
-                    </ng-container>
-                }
-                <!-- Column group headers -->
-                @if (columnGroups.length > 0) {
-                    @for (group of columnGroups; track group.name) {
-                        <ng-container [matColumnDef]="'group-' + group.name">
-                            <th mat-header-cell *matHeaderCellDef [attr.colspan]="group.colspan || group.columns.length" 
-                                class="group-header-cell">
-                                <div class="group-header-content">
-                                    <span class="group-label">{{group.label}}</span>
-                                </div>
-                            </th>
-                        </ng-container>
-                    }
-                    <!-- Empty header cells for ungrouped columns -->
-                    @for (column of columnsArray; track column.field) {
-                        <ng-container [matColumnDef]="'ungrouped-' + column.field">
-                            <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell">
-                            </th>
-                        </ng-container>
-                    }
-                }
-                <!-- @for (ids of headersFiltersIds; track ids; let i = $index) {
-                    <ng-container [matColumnDef]="ids" [sticky]="columnsArray[$index].pinned === 'left'" [stickyEnd]="columnsArray[$index].pinned === 'right'">
-                        <th mat-header-cell *matHeaderCellDef  [style.minWidth]="columnsArray[$index].width" [style.maxWidth]="columnsArray[$index].maxWidth?columnsArray[$index].maxWidth:columnsArray[$index].width"
-                        [style.minWidth]="columnsArray[$index].minWidth" >
-                            <div style="display: block; width: 100%;" class="filters-container" [class.animate]="toggleFilters">
-                                <app-filter-columns-component style="display: block; width: 100%;" [obj]="columnsArray[returnIndex(ids)]"
-                                    (filterOutput)="applyColumnFilter($event,columnsArray[returnIndex(ids)])"></app-filter-columns-component>
-                            </div>
+        
+                    <ng-container matColumnDef="delete">
+                        <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
+                            class="action-column-cells"> Delete
                         </th>
+                        <td mat-cell *matCellDef="let row;let i=dataIndex">
+                            <mat-icon (click)="deleteRow(row,i)" aria-hidden="false" aria-label="Example home icon"
+                                fontIcon="delete">
+                            </mat-icon>
+                        </td>
+                        <td mat-footer-cell *matFooterCellDef></td>
                     </ng-container>
-                }
-                @if (columnGroups.length > 0) {
-                    <tr mat-header-row *matHeaderRowDef="getGroupedColumns(); sticky: stickyHeader" class="mat-mdc-header-row group-header-row"></tr>
-                } -->
-                <!-- <tr mat-header-row *matHeaderRowDef=" getDisplayedColumns(); sticky: stickyHeader" class="mat-mdc-header-row"></tr> -->
-                <tr style="display:none" mat-header-row *matHeaderRowDef=" getDisplayedColumns(); sticky: stickyHeader" class="mat-mdc-header-row"></tr>
-                <tr style="height: 0px;" mat-header-row class="no-default-height" *matHeaderRowDef="getFilterColumns()">
-                </tr>
-                
-                <!-- All Data Rows (with dynamic pinning classes) -->
-                <!-- <tr mat-row *matRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex;" 
-                    class="mat-mdc-row data-row"
-                    [ngClass]="{
-                      'data-row':expandRows,
-                      'stripedRows':(stripedRows &&  i % 2 == 1),
-                      'hoverClass':rowHover, 
-                      'hidden':(hiddenCtrl.isSelected(row) && hideRows) || isRowHidden(i),
-                      'example-expanded-row':expandedElement === row,
-                      'pinned-row': isRowPinned(row),
-                      'pinned-top-row': isRowPinnedTop(row),
-                      'pinned-bottom-row': isRowPinnedBottom(row)
-                    }"
-                    (click)="expandRow(row, row !== expandedElement,i)">
-                </tr> -->
-                <tr mat-row *matRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex; " 
-                    class="mat-mdc-row data-row"
-                    [ngClass]="{
-                      'data-row':expandRows,
-                      'stripedRows':(stripedRows &&  i % 2 == 1),
-                      'hoverClass':rowHover, 
-                      'hidden':(hiddenCtrl.isSelected(row) && hideRows) || isRowHidden(i),
-                      'example-expanded-row':expandedElement === row,
-                      'pinned-row': isRowPinned(row),
-                      'mat-row-sticky-top': isRowPinnedTop(row),
-                      'mat-row-sticky-bottom': isRowPinnedBottom(row)
-                    }"
-                    (click)="expandRow(row, row !== expandedElement,i)">
-                </tr>
-                <!-- <tr mat-header-row *matHeaderRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex; when: isRowPinnedTop(row)" 
-                    class="mat-mdc-row data-row"
-                    class="mat-mdc-header-row"
-                    [ngClass]="{
-                      'data-row':expandRows,
-                      'stripedRows':(stripedRows &&  i % 2 == 1),
-                      'hoverClass':rowHover, 
-                      'hidden':(hiddenCtrl.isSelected(row) && hideRows) || isRowHidden(i),
-                      'example-expanded-row':expandedElement === row,
-                      'pinned-row': isRowPinned(row),
-                      'pinned-top-row': isRowPinnedTop(row),
-                      'pinned-bottom-row': isRowPinnedBottom(row)
-                    }"
-                    (click)="expandRow(row, row !== expandedElement,i)">
-                </tr> -->
-           
-                @if (expandRows) {
-                    <tr mat-row *matRowDef="let row; columns: ['expandedDetail']; let i=dataIndex"
-                        class="example-detail-row"
-                        [ngClass]="{'hidden': isRowHidden(i)}">
+        
+                    <ng-container matColumnDef="hide" stickyEnd="false">
+                        <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
+                            class="action-column-cells"> Hide
+                        </th>
+                        <td mat-cell *matCellDef="let row;let i=dataIndex">
+                            <button mat-icon-button (click)="toggleRowHide(i)" 
+                                [matTooltip]="isRowHidden(i) ? 'Unhide Row' : 'Hide Row'"
+                                matTooltipPosition="above">
+                                <mat-icon [color]="isRowHidden(i) ? 'primary' : ''" aria-hidden="false">
+                                    {{ isRowHidden(i) ? 'visibility_off' : 'visibility' }}
+                                </mat-icon>
+                            </button>
+                        </td>
+                        <td mat-footer-cell *matFooterCellDef></td>
+                    </ng-container>
+        
+                    <ng-container matColumnDef="pin" stickyEnd="false">
+                        <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
+                            class="action-column-cells"> Pin
+                        </th>
+                        <td mat-cell *matCellDef="let row;let i=dataIndex">
+                            <button mat-icon-button 
+                                [matMenuTriggerFor]="pinMenu"
+                                (click)="openRowPinMenu($event, row)"
+                                [matTooltip]="getRowPinPosition(row) ? 'Pinned ' + getRowPinPosition(row) : 'Pin Row'"
+                                matTooltipPosition="above">
+                                <mat-icon [color]="isRowPinned(row) ? 'primary' : ''" aria-hidden="false">
+                                    {{ isRowPinned(row) ? 'push_pin' : 'push_pin' }}
+                                </mat-icon>
+                            </button>
+                        </td>
+                        <td mat-footer-cell *matFooterCellDef></td>
+                    </ng-container>
+        
+                    <!-- Expanded Content Column - The detail row is made up of this one column that spans across all columns -->
+                    @if (expandRows) {
+                        <ng-container matColumnDef="expandedDetail">
+                            <td mat-cell *matCellDef="let element;let i=dataIndex "
+                                [attr.colspan]="columnsToDisplayWithExpand.length">
+                                <div class="example-element-detail"
+                                    [@detailExpand]="element == expandedElement ? 'expanded' : 'collapsed'">
+                                    @if (expansionTemplateRef) {
+                                        <ng-container [ngTemplateOutlet]="expansionTemplateRef"
+                                            [ngTemplateOutletContext]="{$explicit:element,row:element,index:i}">
+                                        </ng-container>
+                                    }
+                                </div>
+                            </td>
+                        </ng-container>
+                    }
+                    <!-- Column group headers -->
+                    @if (columnGroups.length > 0) {
+                        @for (group of columnGroups; track group.name) {
+                            <ng-container [matColumnDef]="'group-' + group.name">
+                                <th mat-header-cell *matHeaderCellDef [attr.colspan]="group.colspan || group.columns.length" 
+                                    class="group-header-cell">
+                                    <div class="group-header-content">
+                                        <span class="group-label">{{group.label}}</span>
+                                    </div>
+                                </th>
+                            </ng-container>
+                        }
+                        <!-- Empty header cells for ungrouped columns -->
+                        @for (column of columnsArray; track column.field) {
+                            <ng-container [matColumnDef]="'ungrouped-' + column.field">
+                                <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell">
+                                </th>
+                            </ng-container>
+                        }
+                    }
+                    <!-- Empty filter cells for action columns -->
+                    <ng-container [matColumnDef]="'filter-select'">
+                        <th mat-header-cell *matHeaderCellDef class="filter-placeholder-cell"></th>
+                    </ng-container>
+                    <ng-container [matColumnDef]="'filter-edit'">
+                        <th mat-header-cell *matHeaderCellDef class="filter-placeholder-cell"></th>
+                    </ng-container>
+                    <ng-container [matColumnDef]="'filter-popup'">
+                        <th mat-header-cell *matHeaderCellDef class="filter-placeholder-cell"></th>
+                    </ng-container>
+                    <ng-container [matColumnDef]="'filter-delete'">
+                        <th mat-header-cell *matHeaderCellDef class="filter-placeholder-cell"></th>
+                    </ng-container>
+                    <ng-container [matColumnDef]="'filter-freeze'">
+                        <th mat-header-cell *matHeaderCellDef class="filter-placeholder-cell"></th>
+                    </ng-container>
+                    <ng-container [matColumnDef]="'filter-hide'">
+                        <th mat-header-cell *matHeaderCellDef class="filter-placeholder-cell"></th>
+                    </ng-container>
+                    <ng-container [matColumnDef]="'filter-pin'">
+                        <th mat-header-cell *matHeaderCellDef class="filter-placeholder-cell"></th>
+                    </ng-container>
+                    @if (columnGroups.length > 0) {
+                        <tr mat-header-row *matHeaderRowDef="getGroupedColumns(); sticky: stickyHeader" class="mat-mdc-header-row group-header-row"></tr>
+                    }
+                    <!-- <tr mat-header-row *matHeaderRowDef=" getDisplayedColumns(); sticky: stickyHeader" class="mat-mdc-header-row"></tr> -->
+                    <tr style="display:none" mat-header-row *matHeaderRowDef=" getDisplayedColumns(); sticky: stickyHeader" class="mat-mdc-header-row"></tr>
+                    
+                    <!-- All Data Rows (with dynamic pinning classes) -->
+                    <!-- <tr mat-row *matRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex;" 
+                        class="mat-mdc-row data-row"
+                        [ngClass]="{
+                          'data-row':expandRows,
+                          'stripedRows':(stripedRows &&  i % 2 == 1),
+                          'hoverClass':rowHover, 
+                          'hidden':(hiddenCtrl.isSelected(row) && hideRows) || isRowHidden(i),
+                          'example-expanded-row':expandedElement === row,
+                          'pinned-row': isRowPinned(row),
+                          'pinned-top-row': isRowPinnedTop(row),
+                          'pinned-bottom-row': isRowPinnedBottom(row)
+                        }"
+                        (click)="expandRow(row, row !== expandedElement,i)">
+                    </tr> -->
+                    <tr mat-row *matRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex; " 
+                        class="mat-mdc-row data-row"
+                        [ngClass]="{
+                          'data-row':expandRows,
+                          'stripedRows':(stripedRows &&  i % 2 == 1),
+                          'hoverClass':rowHover, 
+                          'hidden':(hiddenCtrl.isSelected(row) && hideRows) || isRowHidden(i),
+                          'example-expanded-row':expandedElement === row,
+                          'pinned-row': isRowPinned(row),
+                          'mat-row-sticky-top': isRowPinnedTop(row),
+                          'mat-row-sticky-bottom': isRowPinnedBottom(row)
+                        }"
+                        (click)="expandRow(row, row !== expandedElement,i)">
                     </tr>
-                }
-                @if (showFooterRow) {
-                    <tr mat-footer-row *matFooterRowDef="getDisplayedColumns(); sticky: stickyFooter"></tr>
-                }
-            </table>
+                    <!-- <tr mat-header-row *matHeaderRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex; when: isRowPinnedTop(row)" 
+                        class="mat-mdc-row data-row"
+                        class="mat-mdc-header-row"
+                        [ngClass]="{
+                          'data-row':expandRows,
+                          'stripedRows':(stripedRows &&  i % 2 == 1),
+                          'hoverClass':rowHover, 
+                          'hidden':(hiddenCtrl.isSelected(row) && hideRows) || isRowHidden(i),
+                          'example-expanded-row':expandedElement === row,
+                          'pinned-row': isRowPinned(row),
+                          'pinned-top-row': isRowPinnedTop(row),
+                          'pinned-bottom-row': isRowPinnedBottom(row)
+                        }"
+                        (click)="expandRow(row, row !== expandedElement,i)">
+                    </tr> -->
+               
+                    @if (expandRows) {
+                        <tr mat-row *matRowDef="let row; columns: ['expandedDetail']; let i=dataIndex"
+                            class="example-detail-row"
+                            [ngClass]="{'hidden': isRowHidden(i)}">
+                        </tr>
+                    }
+                    @if (showFooterRow) {
+                        <tr mat-footer-row *matFooterRowDef="getDisplayedColumns(); sticky: stickyFooter"></tr>
+                    }
+                </table>
+            }
         }
         @else{
             <table mat-table #matTable #MyTable [id]="'matTableExt'+tableID" [dataSource]="dataSource" matSort cdkDropList
