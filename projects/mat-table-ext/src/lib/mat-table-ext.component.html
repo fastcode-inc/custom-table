@@ -136,7 +136,9 @@
         [style.height]="tableHeight ? tableHeight :'max-content'">
         
         @if(enableRowPinning){
-            <table style="position: sticky;top: 0;z-index: 111;" 
+            <div [style.max-height]="topPinnedMaxHeight" [style.overflow]="topPinnedMaxHeight ? 'auto' : 'visible'" 
+                 [style.position]="'sticky'" [style.top]="'0'" [style.z-index]="'111'">
+            <table style="width: 100%;" 
              mat-table #MyTableTop [id]="'matTableExtTop'+tableID" [dataSource]="pinnedTopDataSource" matSort cdkDropList
                 cdkDropListOrientation="horizontal" multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
                 (click)="saveCellEditing()" [style.width]="scrollbarH?'max-content':'100%'" 
@@ -179,9 +181,7 @@
                     </th>
                     <td mat-cell *matCellDef="let row ;let i=dataIndex" class="mat-mdc-cell">
                         @if (!row.editable && !cellEditing[i +'_'+column.field]) {
-                            <div (dblclick)="cellEditing[i +'_'+column.field] = inCellEditing;setCellData(row,i)"
-                                (click)="cellPopupEditing ? openCellPopupDialog(row, column, i) : null"
-                                [style.cursor]="cellPopupEditing ? 'pointer' : 'default'"
+                            <div [style.cursor]="'default'"
                                 matTooltip="{{column.cellTooltip?.value}}"
                                 [matTooltipPosition]="column?.cellTooltip?.tooltipPosition!">
                                 @if (!cellTemplateRef && !column?.cellTemplate && !cellTemplateRefMap[column.field]) {
@@ -325,19 +325,7 @@
                     <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
                         class="action-column-cells"> Edit </th>
                     <td mat-cell *matCellDef="let row; let i = dataIndex" class="inline-edit-column-cell">
-                        @if (!row.editable && !row.editmodal) {
-                            <mat-icon class="edit-column-icons" aria-hidden="false"
-                                (click)="enableInlineEditing(row,i)" fontIcon="edit_note">
-                            </mat-icon>
-                        }
-                        @if (row.editable && !row.editmodal) {
-                            <div class="inline-editing-controls">
-                                <mat-icon class="edit-column-icons" aria-hidden="false" (click)="saveInlineEditing(row,i)"
-                                    fontIcon="done"></mat-icon>
-                                <mat-icon class="edit-column-icons" aria-hidden="false" (click)="cancelInlineEditing(row,i)"
-                                    fontIcon="close"></mat-icon>
-                            </div>
-                        }
+                        <!-- Edit disabled in pinned top table -->
                     </td>
                     <td mat-footer-cell *matFooterCellDef> edit </td>
                 </ng-container>
@@ -346,8 +334,7 @@
                         class="action-column-cells"> Popup
                     </th>
                     <td mat-cell *matCellDef="let row; let i = index">
-                        <mat-icon aria-hidden="false" (click)="openEditingDialog(row)" fontIcon="edit">
-                        </mat-icon>
+                        <!-- Popup edit disabled in pinned top table -->
                     </td>
                     <td mat-footer-cell *matFooterCellDef></td>
                 </ng-container>
@@ -522,6 +509,7 @@
                     <tr mat-footer-row *matFooterRowDef="getDisplayedColumns(); sticky: stickyFooter"></tr>
                 }
             </table>
+            </div>
             
             <table mat-table #matTable #MyTable [id]="'matTableExt'+tableID" [dataSource]="dataSource" matSort cdkDropList
                 cdkDropListOrientation="horizontal" multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
@@ -880,7 +868,9 @@
                 }
             </table>
             @if (pinnedBtmDataSource && pinnedBtmDataSource.data.length > 0) {
-                <table style="position: sticky;bottom: 0;z-index: 111;"  mat-table #matTable #MyTable [id]="'matTableExtBtm'+tableID" [dataSource]="pinnedBtmDataSource" matSort cdkDropList
+                <div [style.max-height]="bottomPinnedMaxHeight" [style.overflow]="bottomPinnedMaxHeight ? 'auto' : 'visible'" 
+                     [style.position]="'sticky'" [style.bottom]="'0'" [style.z-index]="'111'">
+                <table style="width: 100%;"  mat-table #matTable #MyTable [id]="'matTableExtBtm'+tableID" [dataSource]="pinnedBtmDataSource" matSort cdkDropList
                     cdkDropListOrientation="horizontal" multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
                     (click)="saveCellEditing()" [style.width]="scrollbarH?'max-content':'100%'" 
                     [class]="'mat-mdc-table' + (tableClassName ? ' ' + tableClassName : '')">
@@ -922,9 +912,7 @@
                         </th>
                         <td mat-cell *matCellDef="let row ;let i=dataIndex" class="mat-mdc-cell">
                             @if (!row.editable && !cellEditing[i +'_'+column.field]) {
-                                <div (dblclick)="cellEditing[i +'_'+column.field] = inCellEditing;setCellData(row,i)"
-                                    (click)="cellPopupEditing ? openCellPopupDialog(row, column, i) : null"
-                                    [style.cursor]="cellPopupEditing ? 'pointer' : 'default'"
+                                <div [style.cursor]="'default'"
                                     matTooltip="{{column.cellTooltip?.value}}"
                                     [matTooltipPosition]="column?.cellTooltip?.tooltipPosition!">
                                     @if (!cellTemplateRef && !column?.cellTemplate && !cellTemplateRefMap[column.field]) {
@@ -1068,19 +1056,7 @@
                         <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
                             class="action-column-cells"> Edit </th>
                         <td mat-cell *matCellDef="let row; let i = dataIndex" class="inline-edit-column-cell">
-                            @if (!row.editable && !row.editmodal) {
-                                <mat-icon class="edit-column-icons" aria-hidden="false"
-                                    (click)="enableInlineEditing(row,i)" fontIcon="edit_note">
-                                </mat-icon>
-                            }
-                            @if (row.editable && !row.editmodal) {
-                                <div class="inline-editing-controls">
-                                    <mat-icon class="edit-column-icons" aria-hidden="false" (click)="saveInlineEditing(row,i)"
-                                        fontIcon="done"></mat-icon>
-                                    <mat-icon class="edit-column-icons" aria-hidden="false" (click)="cancelInlineEditing(row,i)"
-                                        fontIcon="close"></mat-icon>
-                                </div>
-                            }
+                            <!-- Edit disabled in pinned bottom table -->
                         </td>
                         <td mat-footer-cell *matFooterCellDef> edit </td>
                     </ng-container>
@@ -1089,8 +1065,7 @@
                             class="action-column-cells"> Popup
                         </th>
                         <td mat-cell *matCellDef="let row; let i = index">
-                            <mat-icon aria-hidden="false" (click)="openEditingDialog(row)" fontIcon="edit">
-                            </mat-icon>
+                            <!-- Popup edit disabled in pinned bottom table -->
                         </td>
                         <td mat-footer-cell *matFooterCellDef></td>
                     </ng-container>
@@ -1260,6 +1235,7 @@
                         <tr mat-footer-row *matFooterRowDef="getDisplayedColumns(); sticky: stickyFooter"></tr>
                     }
                 </table>
+                </div>
             }
         }
         @else{

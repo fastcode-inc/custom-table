@@ -169,6 +169,8 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit, O
   @Input() hiddenRowIndices: number[] = [];
   @Input() enableRowHiding: boolean = false;
   @Input() enableRowPinning: boolean = false;
+  @Input() topPinnedMaxHeight: string = ''; // Max height for top pinned table (e.g., '200px', '20vh')
+  @Input() bottomPinnedMaxHeight: string = ''; // Max height for bottom pinned table (e.g., '200px', '20vh')
   @Input() rowPinningFn?: (row: any, index: number) => 'top' | 'bottom' | null;
   @Input() rowHidingFilterFn?: (row: any, index: number) => boolean;
   @Input() pdfOrientation: 'portrait' | 'landscape' = 'portrait';
@@ -215,6 +217,11 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit, O
   currentRowIndex: number = -1;
   currentRow: MTExRow = {};
   cellEditing: Record<string, boolean> = {};
+  // Store original sizes before entering edit mode
+  private originalSizesBeforeEdit: {
+    columnWidths: number[];
+    rowHeight: number;
+  } | null = null;
   hideShowMenuGroup: FormGroup = this.formBuilder.group({});
   menuX: number = 0;
   menuY: number = 0;
@@ -521,6 +528,177 @@ updateColumns(updatedColumns: MTExColumn[]) {
     }
   }
 
+  /**
+   * Sync column sizes from the currently edited row in the middle table to top/bottom tables.
+   * This ensures proper alignment when a row is in edit mode with different height.
+   */
+  private syncColumnSizesFromEditedRow(editedRowIndex: number): void {
+    if (!this.enableRowPinning) return;
+
+    try {
+      const topTable = document.getElementById(`matTableExtTop${this.tableID}`) as HTMLElement | null;
+      if (!topTable) return;
+
+      // Capture original sizes from the top table header before modifying
+      if (!this.originalSizesBeforeEdit) {
+        const headerRow = topTable.querySelector(
+          'tr.mat-mdc-header-row:not(.group-header-row), tr.mat-header-row:not(.group-header-row)'
+        ) as HTMLElement | null;
+
+        if (headerRow) {
+          const headerCells = Array.from(headerRow.querySelectorAll('th, .mat-header-cell')) as HTMLElement[];
+          const headerRowHeight = Math.round(headerRow.getBoundingClientRect().height);
+          const columnWidths = headerCells.map(cell => Math.round(cell.getBoundingClientRect().width));
+          
+          this.originalSizesBeforeEdit = {
+            columnWidths,
+            rowHeight: headerRowHeight
+          };
+        }
+      }
+
+      const middleTable = document.getElementById(`matTableExt${this.tableID}`) as HTMLElement | null;
+      const bottomTable = document.getElementById(`matTableExtBtm${this.tableID}`) as HTMLElement | null;
+
+      if (!middleTable || !topTable) return;
+
+      // Find the edited row in the middle table
+      const editedRow = middleTable.querySelector(`tr.mat-mdc-row:nth-child(${editedRowIndex + 1})`) as HTMLElement | null;
+      if (!editedRow) {
+        // Fallback to normal sync if edited row not found
+        this.syncColumnSizesFromTop();
+        return;
+      }
+
+      const editedCells = Array.from(editedRow.querySelectorAll('td, .mat-cell')) as HTMLElement[];
+      if (!editedCells.length) return;
+
+      // Get the height of the edited row
+      const editedRowHeight = Math.round(editedRow.getBoundingClientRect().height);
+
+      // Sync widths and heights from edited row to top and bottom tables
+      // First, collect all widths in a single pass (layout read)
+      const cellWidths = editedCells.map(cell => Math.round(cell.getBoundingClientRect().width));
+
+      // Then, apply style changes in a separate pass (layout write)
+      cellWidths.forEach((w, index) => {
+        [topTable, bottomTable].forEach(tbl => {
+          if (!tbl) return;
+
+          // Update header cells in top table
+          if (tbl === topTable) {
+            const headerRow = tbl.querySelector('tr.mat-mdc-header-row:not(.group-header-row), tr.mat-header-row:not(.group-header-row)') as HTMLElement | null;
+            if (headerRow) {
+              const headerCells = headerRow.querySelectorAll('th, .mat-header-cell');
+              if (headerCells && headerCells[index]) {
+                const hc = headerCells[index] as HTMLElement;
+                hc.style.minWidth = `${w}px`;
+                hc.style.maxWidth = `${w}px`;
+                hc.style.boxSizing = 'border-box';
+              }
+            }
+          }
+
+          // Update data cells in both tables
+          const dataRow = tbl.querySelector('tr.mat-mdc-row, tr.mat-row') as HTMLElement | null;
+          if (dataRow) {
+            const dataCells = dataRow.querySelectorAll('td, .mat-cell');
+            if (dataCells && dataCells[index]) {
+              const dc = dataCells[index] as HTMLElement;
+              dc.style.minWidth = `${w}px`;
+              dc.style.maxWidth = `${w}px`;
+              dc.style.boxSizing = 'border-box';
+            }
+
+            // Set all data rows' height to match the edited row height
+            // const rows = tbl.querySelectorAll('tr.mat-mdc-row, tr.mat-row');
+            // rows.forEach((r: Element) => {
+            //   const reh = r as HTMLElement;
+            //   reh.style.height = `${editedRowHeight}px`;
+            //   reh.style.minHeight = `${editedRowHeight}px`;
+            //   reh.style.maxHeight = `${editedRowHeight}px`;
+            // });
+          }
+        });
+      });
+    } catch (err) {
+      console.warn('syncColumnSizesFromEditedRow failed', err);
+    }
+  }
+
+  /**
+   * Restore original column widths and row heights from before edit mode.
+   */
+  private restoreOriginalSizes(): void {
+    if (!this.enableRowPinning || !this.originalSizesBeforeEdit) return;
+
+    try {
+      const topTable = document.getElementById(`matTableExtTop${this.tableID}`) as HTMLElement | null;
+      const middleTable = document.getElementById(`matTableExt${this.tableID}`) as HTMLElement | null;
+      const bottomTable = document.getElementById(`matTableExtBtm${this.tableID}`) as HTMLElement | null;
+
+      if (!topTable) return;
+
+      const { columnWidths, rowHeight } = this.originalSizesBeforeEdit;
+
+      [topTable, middleTable, bottomTable].forEach(tbl => {
+        if (!tbl) return;
+
+        // Restore header cells in top table
+        if (tbl === topTable) {
+          const headerRow = tbl.querySelector(
+            'tr.mat-mdc-header-row:not(.group-header-row), tr.mat-header-row:not(.group-header-row)'
+          ) as HTMLElement | null;
+          if (headerRow) {
+            const headerCells = Array.from(headerRow.querySelectorAll('th, .mat-header-cell')) as HTMLElement[];
+            headerCells.forEach((cell, index) => {
+              if (columnWidths[index] !== undefined) {
+                const w = columnWidths[index];
+                cell.style.minWidth = `${w}px`;
+                cell.style.maxWidth = `${w}px`;
+                cell.style.boxSizing = 'border-box';
+                cell.style.height = `${rowHeight}px`;
+                cell.style.minHeight = `${rowHeight}px`;
+                cell.style.maxHeight = `${rowHeight}px`;
+              }
+            });
+          }
+        }
+
+        // Restore data cells
+        const dataRow = tbl.querySelector('tr.mat-mdc-row, tr.mat-row') as HTMLElement | null;
+        if (dataRow) {
+          const dataCells = Array.from(dataRow.querySelectorAll('td, .mat-cell')) as HTMLElement[];
+          dataCells.forEach((cell, index) => {
+            if (columnWidths[index] !== undefined) {
+              const w = columnWidths[index];
+              cell.style.minWidth = `${w}px`;
+              cell.style.maxWidth = `${w}px`;
+              cell.style.boxSizing = 'border-box';
+              cell.style.height = `${rowHeight}px`;
+              cell.style.minHeight = `${rowHeight}px`;
+              cell.style.maxHeight = `${rowHeight}px`;
+            }
+          });
+
+          // Restore all data rows' height
+          const rows = tbl.querySelectorAll('tr.mat-mdc-row, tr.mat-row');
+          rows.forEach((r: Element) => {
+            const reh = r as HTMLElement;
+            reh.style.height = `${rowHeight}px`;
+            reh.style.minHeight = `${rowHeight}px`;
+            reh.style.maxHeight = `${rowHeight}px`;
+          });
+        }
+      });
+
+      // Clear the stored sizes
+      this.originalSizesBeforeEdit = null;
+    } catch (err) {
+      console.warn('restoreOriginalSizes failed', err);
+    }
+  }
+
   ngOnDestroy(): void {
     window.removeEventListener('resize', this.onWindowResizeBound);
   }
@@ -813,7 +991,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
       }
     });
     
-    return filters;
+    return this.columnFilter ? filters : [];
   }
   /**
    * @param menuType type of menu to open from toolbar.
@@ -1271,15 +1449,39 @@ updateColumns(updatedColumns: MTExColumn[]) {
    * @param index index of the row where inline editing will be enabled.
    */
   enableInlineEditing(row: any, index: number) {
+    // Check if another row is currently in edit mode
+    const currentEditIndex = this.tableData.findIndex((r: any) => r.editable === true);
+    
+    if (currentEditIndex !== -1 && currentEditIndex !== index) {
+      // Disable the previous row's edit mode
+      this.tableData[currentEditIndex]['editable'] = false;
+      // Clear the temporary data for the previous row
+      this.rowDataTemp['e' + currentEditIndex] = {};
+      // Restore original sizes when switching rows
+      if (this.enableRowPinning && this.originalSizesBeforeEdit) {
+        this.restoreOriginalSizes();
+      }
+    }
+    
     const rowData: any = {};
     rowData['e' + index] = { ...row };
     this.rowDataTemp = rowData;
+    
     setTimeout(() => {
+      const wasEditable = this.tableData[index]['editable'];
       this.tableData[index]['editable'] = !this.tableData[index]['editable'];
+      
+      // If row is now in edit mode, sync sizes from this edited row
+      if (this.tableData[index]['editable'] && this.enableRowPinning) {
+        // Wait for DOM to update with edit controls
+        setTimeout(() => {
+          this.syncColumnSizesFromEditedRow(index);
+        }, 100);
+      } else if (!this.tableData[index]['editable'] && this.enableRowPinning) {
+        // Row was disabled, restore original sizes
+        this.restoreOriginalSizes();
+      }
     }, 0);
-    if (this.enableRowPinning) {
-      setTimeout(() => this.syncColumnSizesFromTop(), 80);
-    }
   }
   /**
    * @description This method will create and return data to inline editing template.
@@ -1325,11 +1527,23 @@ updateColumns(updatedColumns: MTExColumn[]) {
         }
       });
       this.rowDataTemp['e' + this.currentRowIndex] = {};
+      
+      // Restore sizes when switching from previous cell editing
+      if (this.enableRowPinning) {
+        this.restoreOriginalSizes();
+      }
     }
     
     this.currentRow = { ...row };
     this.currentRowIndex = index;
     this.rowDataTemp['e' + index] = { ...row };
+    
+    // Sync column sizes from the edited row when cell editing starts
+    if (this.enableRowPinning) {
+      setTimeout(() => {
+        this.syncColumnSizesFromEditedRow(index);
+      }, 50);
+    }
   }
   /**
    * @description This will restore the data and cencel the inline editing.
@@ -1342,6 +1556,11 @@ updateColumns(updatedColumns: MTExColumn[]) {
     this.dataSource = new MatTableDataSource(this.tableData);
     this.rowDataTemp['e' + index] = {};
     this.service.selectedRow.next(undefined);
+    
+    // Restore original sizes after canceling edit mode
+    if (this.enableRowPinning) {
+      this.restoreOriginalSizes();
+    }
   }
   /**
    * @description This method will save and update the inline editing data and emit the update row and index.
@@ -1366,6 +1585,11 @@ updateColumns(updatedColumns: MTExColumn[]) {
     };
     this.inlineChange.emit(data);
     this.tableData[index]['editable'] = false;
+    
+    // Restore original sizes after saving edit mode
+    if (this.enableRowPinning) {
+      this.restoreOriginalSizes();
+    }
   }
   /**
    * @description This method will save and update the cell editing data and emit the update row and index.
@@ -1390,6 +1614,11 @@ updateColumns(updatedColumns: MTExColumn[]) {
       };
       this.currentRowIndex = -1;
       this.cellChange.emit(data);
+      
+      // Restore original sizes after saving cell edits
+      if (this.enableRowPinning) {
+        this.restoreOriginalSizes();
+      }
     }
   }
   /**
