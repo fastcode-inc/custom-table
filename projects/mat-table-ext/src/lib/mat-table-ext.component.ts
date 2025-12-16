@@ -1903,8 +1903,16 @@ updateColumns(updatedColumns: MTExColumn[]) {
     }
     if (this.columnFilter) {
       this.dataSource.filterPredicate = this.createFilter();
-      this.pinnedTopDataSource.filterPredicate = this.createFilter();
-      this.pinnedBtmDataSource.filterPredicate = this.createFilter();
+      if (this.pinnedTopDataSource) {
+        if (this.pinnedTopDataSource.filterPredicate) {
+          this.pinnedTopDataSource.filterPredicate = this.createFilter();
+        }
+      }
+      if (this.pinnedBtmDataSource) {
+      if (this.pinnedBtmDataSource.filterPredicate) {
+        this.pinnedBtmDataSource.filterPredicate = this.createFilter();
+      }
+      }
     }
     this.cdr.detectChanges();
   }

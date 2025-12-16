@@ -55,7 +55,7 @@ export class ColumnPinningComponent implements OnInit {
     // Create a new array with updated column
     this.columns = this.columns.map(col => {
       if (column?.field == col.field) {
-        return { ...col, pinned: value };
+        return { ...col, pinned: value === null ? undefined : value };
       }
       return col;
     });
