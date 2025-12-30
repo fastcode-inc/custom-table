@@ -334,10 +334,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
     if (this.dataSource) {
       this.dataSource.paginator = this.paginator;
       this.dataSource.sort = this.sort;
-      if (this.enableRowPinning) {
-        this.pinnedTopDataSource.sort = this.sort;
-        this.pinnedBtmDataSource.sort = this.sort;
-      }
+      this.setSorting();
     }
     
     // Calculate and set pinned row offsets
@@ -346,6 +343,21 @@ updateColumns(updatedColumns: MTExColumn[]) {
     if (this.enableRowPinning) {
       setTimeout(() => this.syncColumnSizesFromTop(), 150);
       window.addEventListener('resize', this.onWindowResizeBound);
+    }
+  }
+
+  private setSorting() {
+    if (this.enableRowPinning) {
+      if (this.pinnedTopDataSource) {
+        if (this.pinnedTopDataSource.sort) {
+          this.pinnedTopDataSource.sort = this.sort;
+        }
+      }
+      if (this.pinnedBtmDataSource) {
+        if (this.pinnedBtmDataSource.sort) {
+          this.pinnedBtmDataSource.sort = this.sort;
+        }
+      }
     }
   }
 
@@ -1160,8 +1172,8 @@ updateColumns(updatedColumns: MTExColumn[]) {
     this.rowPinMenuRow = null;
   }
 
-  pinnedTopDataSource!: MatTableDataSource<any>;
-  pinnedBtmDataSource!: MatTableDataSource<any>;
+  pinnedTopDataSource: MatTableDataSource<any> = new MatTableDataSource<any>([]);
+  pinnedBtmDataSource: MatTableDataSource<any> = new MatTableDataSource<any>([]);
 
   /**
    * @description Pin row to top or bottom

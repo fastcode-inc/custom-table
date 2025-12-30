@@ -1,6 +1,6 @@
 # Mat Table Extension
 
-This library was generated with [Angular CLI](https://github.com/angular/angular-cli) version 14.2.10.
+This library was generated with [Angular CLI](https://github.com/angular/angular-cli) version 20.2.0.
 ## Documentation
 
 Check out the [demos and API](https://fastcode-inc.github.io/custom-table-doc).
@@ -12,6 +12,12 @@ Install the Extension library:
 
 ```bash
 $ npm i mat-table-ext
+```
+
+Install the required PDF export libraries:
+
+```bash
+$ npm i jspdf jspdf-autotable
 ```
 
 ## Setup

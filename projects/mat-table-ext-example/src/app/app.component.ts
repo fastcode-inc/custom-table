@@ -206,7 +206,7 @@ export class AppComponent implements AfterViewInit {
   cellPopupEditing: any = false;
   deleteRow: any = false;
   stripedRows: any = false;
-  rowSelection: any = false;
+  rowSelection: any = true;
   multiRowSelection: any = false;
   simpleFilter: any = false;
   selectionFilter: any = false;
@@ -219,7 +219,7 @@ export class AppComponent implements AfterViewInit {
   printButtonEnable: any = false;
   enableColumnGrouping: any = false;
   enableRowHiding: any = false;
-  enableRowPinning: any = true;
+  enableRowPinning: any = false;
   pdfOrientation: 'portrait' | 'landscape' = 'landscape';
   @ViewChild('cellTemplate1') cellTemplate1!: TemplateRef<any>;
   @ViewChild('cellTemplate2') cellTemplate2!: TemplateRef<any>;
