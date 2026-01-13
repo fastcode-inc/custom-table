@@ -29,12 +29,12 @@
     "@angular/platform-browser": "^20.0.0",
     "@angular/platform-browser-dynamic": "^20.0.0",
     "@angular/router": "^20.0.0",
-    "@ngx-translate/core": "^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0",
+    "@ngx-translate/core": "^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0"
+  },
+  "dependencies": {
     "tslib": "^2.3.0",
     "xlsx": "^0.18.5",
     "jspdf": "^3.0.0 || ^4.0.0",
     "jspdf-autotable": "^5.0.2"
-  },
-  "dependencies": {
   }
 }
