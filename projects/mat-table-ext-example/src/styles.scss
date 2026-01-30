@@ -1,23 +1,48 @@
 /* You can add global styles to this file, and also import other style files */
-@use '../../../node_modules/mat-table-ext/assets/theming' as mtx;
+@use '../../../projects/mat-table-ext/assets/_theming' as mtx;
 @use '@angular/material' as mat;
-// Plus imports for other components in your app.
+
+// Include core Material Design styles
 @include mat.core();
 
-// Define the default (light) theme.
-$candy-app-primary: mat.define-palette(mat.$green-palette);
-$candy-app-accent: mat.define-palette(mat.$purple-palette, A200, A100, A400);
-$candy-app-theme: mat.define-light-theme(
-  (
-    // Define the default colors for our app.
-    color: (
-      primary: $candy-app-primary,
-      accent: $candy-app-accent
-    ),
-    // Define the default typography for our app.
-    typography: mat.define-typography-config(),
-    // Define the default density level for our app.
-    density: 0,
-  )
-);
+// Define the M3 theme using available palettes
+$candy-app-primary: mat.$green-palette;
+$candy-app-accent: mat.$blue-palette;
+$candy-app-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: $candy-app-primary,
+    tertiary: $candy-app-accent,
+  ),
+  typography: (
+    brand-family: 'Roboto',
+    plain-family: 'Roboto',
+  ),
+  density: (
+    scale: 0,
+  ),
+));
+// Apply the theme globally
+html {
+  @include mat.all-component-themes($candy-app-theme);
+}
+
+// Apply mat-table-ext theme
 @include mtx.mat-table-ext-theme($candy-app-theme);
+
+// Override specific token for testing
+// .mat-table-ext-container {
+//   @include mat.table-overrides((
+//     background-color: orange,
+//     header-headline-color: red,
+//   ));
+// }
+
+// Example: Custom table class styling
+// Users can now specify tableClassName="my-custom-table" and style it like this:
+.my-custom-table {
+  @include mat.table-overrides((
+        background-color: orange,
+       header-headline-color: red,
+     ));
+}

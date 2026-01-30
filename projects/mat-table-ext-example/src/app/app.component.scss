@@ -1,0 +1,7 @@
+// Fix toggle button layout issues with M3 theming
+::ng-deep .mdc-switch__handle-track {
+    width: auto !important;
+  }
+
+// Ensure proper spacing for toggle sections
+

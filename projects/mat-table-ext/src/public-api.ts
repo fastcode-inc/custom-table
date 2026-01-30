@@ -9,3 +9,4 @@ export * from './lib/components/column-pinning/column-pinning.component';
 export * from './lib/components/editing/editing.component';
 export * from './lib/components/filter-columns-component/filter-columns-component.component';
 export * from './lib/directives/resize-column.directive';
+export * from './lib/models/tableExtModels';

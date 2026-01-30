@@ -1,22 +1,35 @@
+@use '@angular/material' as mat;
+
+.custom-primary-color {
+ color: #3f51b5 !important;
+ border-color: #3f51b5 !important;
+}
+
 table {
   min-width: 100%;
 }
 
-.mat-table-sticky-border-elem-right {
+.mat-mdc-table-sticky-border-elem-right {
   border-left: 1px solid #e0e0e0;
 }
-
-.mat-table-sticky-border-elem-left {
+.mat-mdc-table-sticky-border-elem-left {
   border-right: 1px solid #e0e0e0;
 }
 
 tr.example-detail-row {
-  display: table-row !important;
+  height: 0 !important;
+  overflow: hidden;
 }
 
 .example-element-detail {
   overflow: hidden;
   display: flex;
+  transition: height 300ms cubic-bezier(0.4, 0.0, 0.2, 1);
+  padding: 0;
+  
+  &[style*="height: auto"], &[style*="height: 1"] {
+    padding: 10px 0;
+  }
 }
 
 .hidden {
@@ -24,26 +37,40 @@ tr.example-detail-row {
 }
 
 .stripedRows {
-  background: #eaeaea !important;
+  background: var(--mat-table-row-hover-state-layer-color, #eaeaea) !important;
 }
 
 .hoverClass:hover {
-  background: #dbdbdb !important;
+  background: var(--mat-table-row-hover-state-layer-color, #dbdbdb) !important;
 }
 
 .filters-container {
   overflow: hidden;
-  max-height: 0px;
-  transition: max-height 0.5s ease-in-out;
+  // max-height: max-content;
+  transition: height 0.5s ease-in-out;
 }
 
 .animate {
-  max-height: 50px !important;
+  max-height: max-content !important;
+}
+
+.cell-popup-indicator {
+  font-size: 18px;
+  color: var(--mat-sys-color-primary, #1976d2);
+  cursor: pointer;
+  user-select: none;
+  display: inline-block;
+  transition: transform 0.2s;
+  
+  &:hover {
+    transform: scale(1.3);
+    color: var(--mat-sys-color-primary-container, #1565c0);
+  }
 }
 
 .resize-handle {
   display: inline-block;
-  border-right: 2px solid rgb(140, 140, 140);
+  border-right: 2px solid var(--mat-table-outline-color, rgb(140, 140, 140));
   position: absolute;
   top: 0;
   right: 0;
@@ -56,23 +83,25 @@ tr.example-detail-row {
   width: 20px;
 }
 
+/* Keep for legacy hover, but MDC classes are used below */
 table th:hover .resize-handle {
   opacity: 1;
   transition: 0.3s ease-in-out;
 }
 
-.mat-table.resizing {
+/* UPDATED: use MDC table classes */
+.mat-mdc-table.resizing {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
   cursor: col-resize;
 }
 
-.mat-table .mat-header-cell {
+.mat-mdc-table .mat-mdc-header-cell {
   position: relative;
 }
 
-.mat-table .mat-header-cell:not(:last-child) .resize-holder {
+.mat-mdc-table .mat-mdc-header-cell:not(:last-child) .resize-holder {
   cursor: col-resize;
   width: 20px;
   height: 100%;
@@ -104,7 +133,16 @@ table th:hover .resize-handle {
 .example-spacer {
   flex: 1 1 auto;
 }
-
+.export-button {
+  .export-button-content {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px; /* Replaces width and space-around for better spacing control */
+    width: 100%; /* Ensures content takes full button width */
+    padding: 0 4px; /* Optional: Adds padding for better spacing */
+  }
+}
 .export-button .mat-button-wrapper {
   display: flex !important;
   width: 8em;
@@ -119,7 +157,16 @@ table th:hover .resize-handle {
   width: 15em;
   height: 20em;
 }
+.inline-editing-field{
+  padding: 8px 0;
+}
+.inline-editing-field div.mat-mdc-form-field-subscript-wrapper{
+    display: none;
+  }
 
+// .inline-editing-field .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex{
+//   margin-top: -10px;
+// }
 .toolbar-menu-item {
   display: flex;
   height: 3em;
@@ -138,16 +185,32 @@ table th:hover .resize-handle {
 .hide-button .mat-button-wrapper,
 .pin-button .mat-button-wrapper {
   display: flex !important;
-  width: 5em;
-  justify-content: space-around;
   align-items: center;
+  gap: 5px;
+}
+
+.pin-button .mat-icon {
+  margin-right: 2px;
+}
+.pin-button{
+  padding-right: 10px !important;
+}
+.hide-button{
+  padding-right: 10px !important;
 }
 
 .hide-button,
 .pin-button,
-.export-button {
+.export-button,
+.print-button {
   height: 3em;
   border: 2px solid currentColor !important;
+}
+
+.print-button .mat-button-wrapper {
+  display: flex !important;
+  align-items: center;
+  gap: 5px;
 }
 
 .showHide-menu-columns-list {
@@ -178,4 +241,173 @@ table th:hover .resize-handle {
 }
 .global-search-field{
   width: -webkit-fill-available;
+}
+
+// M3 compatibility styles
+.mat-mdc-table {
+  --mat-table-container-elevation: 0;
+  --mat-table-row-hover-state-layer-color: var(--mat-sys-color-surface-variant);
+  --mat-table-row-hover-state-layer-opacity: 0.08;
+}
+
+// Column grouping styles
+.group-header-row {
+  background-color: var(--mat-sys-color-surface-container-low, #f5f5f5);
+  
+  .group-header-cell {
+    text-align: center !important;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 12px 16px;
+    // background: linear-gradient(180deg, 
+    //   var(--mat-sys-color-primary-container, #e3f2fd) 0%, 
+    //   var(--mat-sys-color-surface-container, #f0f0f0) 100%);
+    // color: var(--mat-sys-color-on-primary-container, #1565c0);
+    // border-bottom: 2px solid ;
+    // border-right: 1px solid ;
+    position: relative;
+    
+    // &:last-child {
+    //   border-right: 1px solid ;
+    // }
+    
+    &.ungrouped-header-cell {
+      // Empty ungrouped cells - maintain styling but no content
+      min-height: 48px;
+    }
+    
+    .group-header-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-align: center;
+      
+      .group-label {
+        font-weight: 600;
+        text-align: center;
+      }
+    }
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, 
+        transparent 0%, 
+        var(--mat-sys-color-primary, #1976d2) 50%, 
+        transparent 100%);
+      opacity: 0.3;
+    }
+  }
+}
+
+// Row freezing styles
+.frozen-row {
+  position: sticky !important;
+  z-index: 10;
+  background-color: var(--mat-sys-color-surface, #ffffff) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(to right, 
+      var(--mat-sys-color-primary, #1976d2) 0%, 
+      transparent 100%);
+  }
+}
+
+// Row freezing at bottom
+.frozen-row-bottom {
+  position: sticky !important;
+  z-index: 10;
+  background-color: var(--mat-sys-color-surface, #ffffff) !important;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(to right, 
+      var(--mat-sys-color-primary, #1976d2) 0%, 
+      transparent 100%);
+  }
+}
+
+.mat-mdc-header-cell {
+  --mat-table-header-container-background-color: var(--mat-sys-color-surface);
+  --mat-table-header-container-text-color: var(--mat-sys-color-on-surface);
+}
+
+.mat-mdc-cell {
+  --mat-table-cell-container-background-color: var(--mat-sys-color-surface);
+  --mat-table-cell-container-text-color: var(--mat-sys-color-on-surface);
+}
+
+.mat-mdc-row {
+  --mat-table-row-container-background-color: var(--mat-sys-color-surface);
+}
+
+.mat-mdc-paginator {
+  --mat-paginator-container-background-color: var(--mat-sys-color-surface);
+  --mat-paginator-container-text-color: var(--mat-sys-color-on-surface);
+}
+// Pinned rows styling
+.pinned-row {
+  background: var(--mat-sys-color-surface, #ffffff);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: sticky !important;
+  z-index: 10;
+  // font-weight: 700 !important;
+  
+  // td {
+  //   font-weight: 700 !important;
+  // }
+  
+  &.pinned-top-row {
+    // Top will be set dynamically per row via inline style
+    top: var(--pinned-row-top-offset, var(--pinned-top-base-offset, 0px));
+  }
+  
+  &.pinned-bottom-row {
+    // Bottom will be set dynamically per row via inline style
+    bottom: var(--pinned-row-bottom-offset, var(--pinned-bottom-base-offset, 0px));
+  }
+}
+
+.pinned-top-row {
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), transparent);
+  }
+}
+
+.pinned-bottom-row {
+  &::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.1), transparent);
+  }
 }

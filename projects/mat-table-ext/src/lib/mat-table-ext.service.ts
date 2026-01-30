@@ -7,6 +7,6 @@ import { BehaviorSubject } from 'rxjs';
 })
 export class MatTableExtService {
   public selectedRow = new BehaviorSubject<any>(null);
-  public selectedRowIndex = new BehaviorSubject<any>(null);
+  
   constructor(public http: HttpClient) { }
 }

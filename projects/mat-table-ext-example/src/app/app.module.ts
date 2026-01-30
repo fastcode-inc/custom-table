@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { AppComponent } from './app.component';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -13,10 +12,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpClientModule } from '@angular/common/http';
-import { MatTableExtModule } from 'mat-table-ext-test';
+import { MatTableExtModule } from '../../../../dist/mat-table-ext';
 
 @NgModule({
-  declarations: [AppComponent],
+  declarations: [],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
@@ -32,9 +31,8 @@ import { MatTableExtModule } from 'mat-table-ext-test';
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    MatSlideToggleModule,
+    MatSlideToggleModule
   ],
   providers: [],
-  bootstrap: [AppComponent],
 })
 export class AppModule {}

@@ -1,26 +1,47 @@
 
-    <ng-container *ngIf="obj">
-        <!-- Number Type -->
-        <mat-form-field *ngIf="obj.type == 'number'" appearance="outline" class="inline-editing-field" >
+@if (obj) {
+    <!-- Number Type -->
+    @if (obj.type == 'number') {
+        <mat-form-field appearance="outline" class="inline-editing-field" >
             <input matInput type="number" [formControl]="numberCtrl">
         </mat-form-field>
-        
-        <!-- String Type -->
-        <mat-form-field *ngIf="obj.type == 'string'" appearance="outline" class="inline-editing-field">
+    }
+    
+    <!-- String Type -->
+    @if (obj.type == 'string') {
+        <mat-form-field appearance="outline" class="inline-editing-field">
             <input matInput type="text" [formControl]="stringCtrl">
         </mat-form-field>
-        <mat-form-field *ngIf="obj.type == 'date'" appearance="outline" class="inline-editing-field">
+    }
+    @if (obj.type == 'textarea') {
+        <mat-form-field appearance="outline" class="inline-editing-field">
+            <textarea matInput rows="3" [formControl]="textareaCtrl"></textarea>
+        </mat-form-field>
+    }
+    @if (obj.type == 'date') {
+        <mat-form-field appearance="outline" class="inline-editing-field">
             <input matInput type="date" [formControl]="dateCtrl">
         </mat-form-field>
-        <!-- Selection Type -->
-        <mat-form-field *ngIf="obj.type == 'selection'" appearance="outline" class="inline-editing-field">
+    }
+        @if (obj.type == 'datepicker') {
+        <mat-form-field appearance="outline" class="inline-editing-field">
+            <input matInput [matDatepicker]="cellPicker" [formControl]="dateCtrl">
+            <mat-datepicker-toggle matIconSuffix [for]="cellPicker"></mat-datepicker-toggle>
+            <mat-datepicker #cellPicker></mat-datepicker>
+        </mat-form-field>
+        }
+    <!-- Selection Type -->
+    @if (obj.type == 'selection') {
+        <mat-form-field appearance="outline" class="inline-editing-field">
             <mat-select [value]="" [formControl]="selectionCtrl">
-                <mat-option *ngFor="let option of obj.options" [value]="option">
-                    {{option}}
-                </mat-option>
+                @for (option of obj.options; track option) {
+                    <mat-option [value]="option">{{option}}</mat-option>
+                }
             </mat-select>
         </mat-form-field>
-        <!-- Boolean Type -->
-        <mat-checkbox (click)="$event.stopPropagation()" *ngIf="obj.type == 'boolean'" color="primary" [formControl]="booleanCtrl"></mat-checkbox>
-
-    </ng-container>
+    }
+    <!-- Boolean Type -->
+    @if (obj.type == 'boolean') {
+        <mat-checkbox (click)="$event.stopPropagation()" color="primary" [formControl]="booleanCtrl"></mat-checkbox>
+    }
+}
