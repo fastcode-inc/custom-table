@@ -2102,14 +2102,25 @@ updateColumns(updatedColumns: MTExColumn[]) {
     `);
     windowPrint.document.write('</style></head><body>');
     
-    // Clone the table and remove all action columns
+    // Clone the table
     const tableClone = printContent.cloneNode(true) as HTMLElement;
-    
+
+    // Remove any <script> tags to prevent code execution
+    tableClone.querySelectorAll('script').forEach(s => s.remove());
+
+    // Remove all event handlers (e.g., onclick, onerror) from all elements
+    tableClone.querySelectorAll('*').forEach(el => {
+      Array.from(el.attributes).forEach(attr => {
+        if (attr.name.toLowerCase().startsWith('on')) {
+          el.removeAttribute(attr.name);
+        }
+      });
+    });
+
     // Define action column class selectors
     const actionColumnSelectors = [
       'th.action-column-cells',
       'td.inline-edit-column-cell',
-      // Remove columns by checking for action column names
       '[matColumnDef="select"]',
       '[matColumnDef="edit"]',
       '[matColumnDef="popup"]',
@@ -2117,13 +2128,13 @@ updateColumns(updatedColumns: MTExColumn[]) {
       '[matColumnDef="freeze"]',
       '[matColumnDef="hide"]',
     ];
-    
-    // Remove all matching elements
+
+    // Remove all matching action column elements
     actionColumnSelectors.forEach(selector => {
       const elements = tableClone.querySelectorAll(selector);
       elements.forEach(el => el.remove());
     });
-    
+
     // Also remove cells by index for action columns
     const actionColumnIndices: number[] = [];
     const headerRow = tableClone.querySelector('tr.mat-mdc-header-row');
@@ -2140,7 +2151,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
     const rows = tableClone.querySelectorAll('tr');
     rows.forEach((row, rowIndex) => {
       // Remove hidden rows (accounting for header rows)
-      const dataIndex = rowIndex - 1; // Subtract 1 for header row
+      const dataIndex = rowIndex - 1; 
       if (dataIndex >= 0 && this.hiddenRowIndices.includes(dataIndex)) {
         row.remove();
         return;
@@ -2155,7 +2166,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
         }
       }
     });
-    
+
     windowPrint.document.write(tableClone.outerHTML);
     windowPrint.document.write('</body></html>');
     windowPrint.document.close();
