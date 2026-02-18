@@ -402,7 +402,6 @@ updateColumns(updatedColumns: MTExColumn[]) {
         setTimeout(() => this.syncColumnSizesFromTop(), 10);
       }
       
-      console.log('Pinned row offsets:', { topOffset, bottomOffset });
     }, 100);
   }
 
@@ -535,9 +534,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
           }
         });
       });
-    } catch (err) {
-      console.warn('syncColumnSizesFromTop failed', err);
-    }
+    } catch (err) {}
   }
 
   /**
@@ -633,9 +630,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
           }
         });
       });
-    } catch (err) {
-      console.warn('syncColumnSizesFromEditedRow failed', err);
-    }
+    } catch (err) {}
   }
 
   /**
@@ -706,9 +701,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
 
       // Clear the stored sizes
       this.originalSizesBeforeEdit = null;
-    } catch (err) {
-      console.warn('restoreOriginalSizes failed', err);
-    }
+    } catch (err) {}
   }
 
   ngOnDestroy(): void {
@@ -1181,7 +1174,6 @@ updateColumns(updatedColumns: MTExColumn[]) {
    * @param position 'top' or 'bottom'
    */
   pinRow(row: any, position: 'top' | 'bottom'): void {
-    console.log('pinRow called:', { row, position, enableRowPinning: this.enableRowPinning });
     
     // Remove from other position if exists
     this.unpinRow(row);
@@ -1201,13 +1193,6 @@ updateColumns(updatedColumns: MTExColumn[]) {
       }
       this.pinnedBtmDataSource = new MatTableDataSource(this.pinnedBottomRows);
     }
-    
-    console.log('After pinning:', { 
-      pinnedTopRows: this.pinnedTopRows, 
-      pinnedBottomRows: this.pinnedBottomRows,
-      topLength: this.pinnedTopRows.length,
-      bottomLength: this.pinnedBottomRows.length
-    });
     
     this.rowPinningChange.emit({ row, position });
     this.closeRowPinMenu();
@@ -2464,9 +2449,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
 
       doc.save(`${this.toolbarTitle || 'table-export'}.pdf`);
 
-    } catch (error) {
-      console.error('Error exporting to PDF:', error);
-    }
+    } catch (error) {}
   }
 
 
