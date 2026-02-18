@@ -254,6 +254,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit, O
     'sorting',
     'columnGroups',
   ];
+  resizeListenerAttached: boolean = false;
   
 
   constructor(
@@ -343,6 +344,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
     if (this.enableRowPinning) {
       setTimeout(() => this.syncColumnSizesFromTop(), 150);
       window.addEventListener('resize', this.onWindowResizeBound);
+      this.resizeListenerAttached = true;
     }
   }
 
@@ -705,7 +707,9 @@ updateColumns(updatedColumns: MTExColumn[]) {
   }
 
   ngOnDestroy(): void {
-    window.removeEventListener('resize', this.onWindowResizeBound);
+    if(this.resizeListenerAttached) {
+      window.removeEventListener('resize', this.onWindowResizeBound);
+    }
   }
   /**
    * @description checks and updates the the column's hide and show properties.
