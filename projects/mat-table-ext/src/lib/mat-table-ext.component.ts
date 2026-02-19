@@ -120,8 +120,50 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit, O
   @ViewChild('MyTable', { read: ElementRef }) tableElement!: ElementRef;
 
   // Table inputs
-  @Input() dataSource!: MatTableDataSource<any>;
-  @Input() columns: MTExColumn[] = [];
+  private _dataSource!: MatTableDataSource<any>;
+  @Input() 
+  set dataSource(value: MatTableDataSource<any>) {
+    if (!value) {
+      console.warn('MatTableExt: dataSource is required.');
+      return;
+    }
+    this._dataSource = value;
+    if (this._dataSource) {
+      this.tableData = this._dataSource.data;
+    }
+  }
+  get dataSource(): MatTableDataSource<any> {
+    return this._dataSource;
+  }
+
+  private _columns: MTExColumn[] = [];
+  @Input()
+  set columns(value: MTExColumn[]) {
+    if (!Array.isArray(value)) {
+      console.warn('MatTableExt: columns must be an array.');
+      this._columns = [];
+      return;
+    }
+    this._columns = value;
+  }
+  get columns(): MTExColumn[] {
+    return this._columns;
+  }
+
+  private _pageSizeOptions: number[] = [10, 50, 100];
+  @Input()
+  set pageSizeOptions(value: number[]) {
+    if (!Array.isArray(value) || value.length === 0) {
+      console.warn('MatTableExt: pageSizeOptions must be a non-empty array. Using defaults [10, 50, 100].');
+      this._pageSizeOptions = [10, 50, 100];
+      return;
+    }
+    this._pageSizeOptions = value.filter(n => typeof n === 'number' && n > 0);
+  }
+  get pageSizeOptions(): number[] {
+    return this._pageSizeOptions;
+  }
+
   @Input() columnResizable: boolean = false;
   @Input() stripedRows: boolean = false;
   @Input() rowHover: boolean = false;
@@ -154,7 +196,6 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit, O
   @Input() showFirstLastButtons: boolean = false;
   @Input() exportButtonEnable: boolean = false;
   @Input() printButtonEnable: boolean = false;
-  @Input() pageSizeOptions: number[] = [10, 50, 100];
   @Input() toolbarTemplateRef!: TemplateRef<any> | undefined;
   @Input() headerTemplateRef!: TemplateRef<any> | null;
   @Input() cellTemplateRef!: TemplateRef<any> | undefined;
@@ -311,7 +352,33 @@ updateColumns(updatedColumns: MTExColumn[]) {
   }
 }
   ngOnChanges(changes: SimpleChanges) {
+    this.validateInputs(changes);
     this.setPropertyValue(changes);
+  }
+
+  private validateInputs(changes: SimpleChanges) {
+    for (const propName in changes) {
+      const change = changes[propName];
+      const value = change.currentValue;
+
+      // Skip validation for properties already handled by setters
+      if (['dataSource', 'columns', 'pageSizeOptions'].includes(propName)) continue;
+
+      // Validate boolean inputs
+      if (typeof this[propName as keyof this] === 'boolean' && value !== undefined && value !== null) {
+        if (typeof value !== 'boolean') {
+          console.warn(`MatTableExt: Input '${propName}' expected boolean, got ${typeof value}. Coercing to boolean.`);
+          this[propName as keyof this] = !!value as any;
+        }
+      }
+
+      // Validate string inputs
+      if (['toolbarTitle', 'tableHeight', 'toolbarHeight', 'tableWidth', 'tableClassName', 'topPinnedMaxHeight', 'bottomPinnedMaxHeight'].includes(propName)) {
+        if (value !== undefined && value !== null && typeof value !== 'string') {
+          console.warn(`MatTableExt: Input '${propName}' expected string, got ${typeof value}.`);
+        }
+      }
+    }
   }
 
   ngOnInit() {
