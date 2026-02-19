@@ -1,6 +1,6 @@
 @for (column of columns; track column.field) {
     <div class="pinning-list-item">
-        <button mat-icon-button (click)="changeValue(column)">
+        <button matIconButton (click)="changeValue(column)">
             <mat-icon matTooltip="{{column['pinned'] ? (column['pinned'] | titlecase) : 'None'}}"
                 svgIcon="{{column['pinned'] == 'left' || column['pinned'] == 'right' ? icons[column['pinned']] : 'pinNone'}}"
                 class="pinning-icon"></mat-icon>

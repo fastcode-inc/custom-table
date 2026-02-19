@@ -60,6 +60,7 @@
                 [style.top.px]="menuY"></div>
         </mat-toolbar>
     }
+    
     <mat-menu #menu="matMenu" (closed)="menuClosed()" id="exportMenu">
         @if (exportMenuCtrl) {
             <mat-option (click)="exportTable('xlsx')">Export to Excel</mat-option>
@@ -356,7 +357,7 @@
                         class="action-column-cells"> Hide
                     </th>
                     <td mat-cell *matCellDef="let row;let i=dataIndex">
-                        <button mat-icon-button (click)="toggleRowHide(i)" 
+                        <button matIconButton (click)="toggleRowHide(i)" 
                             [matTooltip]="isRowHidden(i) ? 'Unhide Row' : 'Hide Row'"
                             matTooltipPosition="above">
                             <mat-icon [color]="isRowHidden(i) ? 'primary' : ''" aria-hidden="false">
@@ -372,7 +373,7 @@
                         class="action-column-cells"> Pinning
                     </th>
                     <td mat-cell *matCellDef="let row;let i=dataIndex">
-                        <button mat-icon-button 
+                        <button matIconButton 
                             [matMenuTriggerFor]="pinMenu"
                             (click)="openRowPinMenu($event, row)"
                             [matTooltip]="getRowPinPosition(row) ? 'Pinned ' + getRowPinPosition(row) : 'Pin Row'"
@@ -743,7 +744,7 @@
                         class="action-column-cells"> Hide
                     </th>
                     <td mat-cell *matCellDef="let row;let i=dataIndex">
-                        <button mat-icon-button (click)="toggleRowHide(i)" 
+                        <button matIconButton (click)="toggleRowHide(i)" 
                             [matTooltip]="isRowHidden(i) ? 'Unhide Row' : 'Hide Row'"
                             matTooltipPosition="above">
                             <mat-icon [color]="isRowHidden(i) ? 'primary' : ''" aria-hidden="false">
@@ -759,7 +760,7 @@
                         class="action-column-cells"> Pin
                     </th>
                     <td mat-cell *matCellDef="let row;let i=dataIndex">
-                        <button mat-icon-button 
+                        <button matIconButton 
                             [matMenuTriggerFor]="pinMenu"
                             (click)="openRowPinMenu($event, row)"
                             [matTooltip]="getRowPinPosition(row) ? 'Pinned ' + getRowPinPosition(row) : 'Pin Row'"
@@ -1087,7 +1088,7 @@
                             class="action-column-cells"> Hide
                         </th>
                         <td mat-cell *matCellDef="let row;let i=dataIndex">
-                            <button mat-icon-button (click)="toggleRowHide(i)" 
+                            <button matIconButton (click)="toggleRowHide(i)" 
                                 [matTooltip]="isRowHidden(i) ? 'Unhide Row' : 'Hide Row'"
                                 matTooltipPosition="above">
                                 <mat-icon [color]="isRowHidden(i) ? 'primary' : ''" aria-hidden="false">
@@ -1103,7 +1104,7 @@
                             class="action-column-cells"> Pin
                         </th>
                         <td mat-cell *matCellDef="let row;let i=dataIndex">
-                            <button mat-icon-button 
+                            <button matIconButton 
                                 [matMenuTriggerFor]="pinMenu"
                                 (click)="openRowPinMenu($event, row)"
                                 [matTooltip]="getRowPinPosition(row) ? 'Pinned ' + getRowPinPosition(row) : 'Pin Row'"
@@ -1471,7 +1472,7 @@
                         class="action-column-cells"> Hide
                     </th>
                     <td mat-cell *matCellDef="let row;let i=dataIndex">
-                        <button mat-icon-button (click)="toggleRowHide(i)" 
+                        <button matIconButton (click)="toggleRowHide(i)" 
                             [matTooltip]="isRowHidden(i) ? 'Unhide Row' : 'Hide Row'"
                             matTooltipPosition="above">
                             <mat-icon [color]="isRowHidden(i) ? 'primary' : ''" aria-hidden="false">
@@ -1487,7 +1488,7 @@
                         class="action-column-cells"> Pinning
                     </th>
                     <td mat-cell *matCellDef="let row;let i=dataIndex">
-                        <button mat-icon-button 
+                        <button matIconButton 
                             [matMenuTriggerFor]="pinMenu"
                             (click)="openRowPinMenu($event, row)"
                             [matTooltip]="getRowPinPosition(row) ? 'Pinned ' + getRowPinPosition(row) : 'Pin Row'"

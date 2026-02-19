@@ -1,6 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 @use '../../../projects/mat-table-ext/assets/_theming' as mtx;
 @use '@angular/material' as mat;
+@import '../../../projects/mat-table-ext/src/styles.scss';
 
 // Include core Material Design styles
 @include mat.core();

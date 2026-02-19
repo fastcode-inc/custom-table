@@ -73,7 +73,6 @@ import { ResizeColumnDirective } from './directives/resize-column.directive';
   selector: 'mat-table-ext',
   templateUrl: 'mat-table-ext.component.html',
   styleUrls: ['mat-table-ext.scss'],
-  encapsulation: ViewEncapsulation.None,
   standalone: true,
   imports: [
     CommonModule,

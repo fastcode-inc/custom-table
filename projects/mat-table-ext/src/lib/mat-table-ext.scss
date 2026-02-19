@@ -1,8 +1,8 @@
 @use '@angular/material' as mat;
 
 .custom-primary-color {
- color: #3f51b5 !important;
- border-color: #3f51b5 !important;
+  color: #3f51b5 !important;
+  border-color: #3f51b5 !important;
 }
 
 table {
@@ -12,6 +12,7 @@ table {
 .mat-mdc-table-sticky-border-elem-right {
   border-left: 1px solid #e0e0e0;
 }
+
 .mat-mdc-table-sticky-border-elem-left {
   border-right: 1px solid #e0e0e0;
 }
@@ -26,8 +27,9 @@ tr.example-detail-row {
   display: flex;
   transition: height 300ms cubic-bezier(0.4, 0.0, 0.2, 1);
   padding: 0;
-  
-  &[style*="height: auto"], &[style*="height: 1"] {
+
+  &[style*="height: auto"],
+  &[style*="height: 1"] {
     padding: 10px 0;
   }
 }
@@ -61,7 +63,7 @@ tr.example-detail-row {
   user-select: none;
   display: inline-block;
   transition: transform 0.2s;
-  
+
   &:hover {
     transform: scale(1.3);
     color: var(--mat-sys-color-primary-container, #1565c0);
@@ -130,19 +132,20 @@ table th:hover .resize-handle {
   font-family: Roboto, "Helvetica Neue", sans-serif;
 }
 
-.example-spacer {
-  flex: 1 1 auto;
-}
 .export-button {
   .export-button-content {
     display: flex !important;
     align-items: center;
     justify-content: space-between;
-    gap: 4px; /* Replaces width and space-around for better spacing control */
-    width: 100%; /* Ensures content takes full button width */
-    padding: 0 4px; /* Optional: Adds padding for better spacing */
+    gap: 4px;
+    /* Replaces width and space-around for better spacing control */
+    width: 100%;
+    /* Ensures content takes full button width */
+    padding: 0 4px;
+    /* Optional: Adds padding for better spacing */
   }
 }
+
 .export-button .mat-button-wrapper {
   display: flex !important;
   width: 8em;
@@ -157,16 +160,7 @@ table th:hover .resize-handle {
   width: 15em;
   height: 20em;
 }
-.inline-editing-field{
-  padding: 8px 0;
-}
-.inline-editing-field div.mat-mdc-form-field-subscript-wrapper{
-    display: none;
-  }
 
-// .inline-editing-field .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex{
-//   margin-top: -10px;
-// }
 .toolbar-menu-item {
   display: flex;
   height: 3em;
@@ -192,10 +186,12 @@ table th:hover .resize-handle {
 .pin-button .mat-icon {
   margin-right: 2px;
 }
-.pin-button{
+
+.pin-button {
   padding-right: 10px !important;
 }
-.hide-button{
+
+.hide-button {
   padding-right: 10px !important;
 }
 
@@ -239,7 +235,8 @@ table th:hover .resize-handle {
 .inline-editing-controls {
   display: flex;
 }
-.global-search-field{
+
+.global-search-field {
   width: -webkit-fill-available;
 }
 
@@ -253,7 +250,7 @@ table th:hover .resize-handle {
 // Column grouping styles
 .group-header-row {
   background-color: var(--mat-sys-color-surface-container-low, #f5f5f5);
-  
+
   .group-header-cell {
     text-align: center !important;
     font-weight: 600;
@@ -268,29 +265,29 @@ table th:hover .resize-handle {
     // border-bottom: 2px solid ;
     // border-right: 1px solid ;
     position: relative;
-    
+
     // &:last-child {
     //   border-right: 1px solid ;
     // }
-    
+
     &.ungrouped-header-cell {
       // Empty ungrouped cells - maintain styling but no content
       min-height: 48px;
     }
-    
+
     .group-header-content {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
       text-align: center;
-      
+
       .group-label {
         font-weight: 600;
         text-align: center;
       }
     }
-    
+
     &::after {
       content: '';
       position: absolute;
@@ -298,10 +295,10 @@ table th:hover .resize-handle {
       left: 0;
       right: 0;
       height: 2px;
-      background: linear-gradient(90deg, 
-        transparent 0%, 
-        var(--mat-sys-color-primary, #1976d2) 50%, 
-        transparent 100%);
+      background: linear-gradient(90deg,
+          transparent 0%,
+          var(--mat-sys-color-primary, #1976d2) 50%,
+          transparent 100%);
       opacity: 0.3;
     }
   }
@@ -313,7 +310,7 @@ table th:hover .resize-handle {
   z-index: 10;
   background-color: var(--mat-sys-color-surface, #ffffff) !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -321,9 +318,9 @@ table th:hover .resize-handle {
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(to right, 
-      var(--mat-sys-color-primary, #1976d2) 0%, 
-      transparent 100%);
+    background: linear-gradient(to right,
+        var(--mat-sys-color-primary, #1976d2) 0%,
+        transparent 100%);
   }
 }
 
@@ -333,7 +330,7 @@ table th:hover .resize-handle {
   z-index: 10;
   background-color: var(--mat-sys-color-surface, #ffffff) !important;
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -341,9 +338,9 @@ table th:hover .resize-handle {
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(to right, 
-      var(--mat-sys-color-primary, #1976d2) 0%, 
-      transparent 100%);
+    background: linear-gradient(to right,
+        var(--mat-sys-color-primary, #1976d2) 0%,
+        transparent 100%);
   }
 }
 
@@ -365,6 +362,7 @@ table th:hover .resize-handle {
   --mat-paginator-container-background-color: var(--mat-sys-color-surface);
   --mat-paginator-container-text-color: var(--mat-sys-color-on-surface);
 }
+
 // Pinned rows styling
 .pinned-row {
   background: var(--mat-sys-color-surface, #ffffff);
@@ -372,16 +370,16 @@ table th:hover .resize-handle {
   position: sticky !important;
   z-index: 10;
   // font-weight: 700 !important;
-  
+
   // td {
   //   font-weight: 700 !important;
   // }
-  
+
   &.pinned-top-row {
     // Top will be set dynamically per row via inline style
     top: var(--pinned-row-top-offset, var(--pinned-top-base-offset, 0px));
   }
-  
+
   &.pinned-bottom-row {
     // Bottom will be set dynamically per row via inline style
     bottom: var(--pinned-row-bottom-offset, var(--pinned-bottom-base-offset, 0px));
@@ -410,4 +408,16 @@ table th:hover .resize-handle {
     height: 2px;
     background: linear-gradient(to top, rgba(0, 0, 0, 0.1), transparent);
   }
+}
+
+.example-spacer {
+  flex: 1 1 auto;
+}
+
+.inline-editing-field {
+  padding: 8px 0;
+}
+
+.inline-editing-field div.mat-mdc-form-field-subscript-wrapper {
+  display: none;
 }

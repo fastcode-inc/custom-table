@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TitleCasePipe } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-column-pinning',
@@ -13,6 +14,7 @@ import { TitleCasePipe } from '@angular/common';
   imports: [
     CommonModule,
     MatIconModule,
+    MatButtonModule,
     MatTooltipModule,
     TitleCasePipe
   ]
