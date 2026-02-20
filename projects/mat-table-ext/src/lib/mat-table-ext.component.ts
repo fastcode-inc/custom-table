@@ -50,7 +50,8 @@ import {
 import { MatTableExtService } from '../lib/mat-table-ext.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';
-import * as XLSX from 'xlsx';
+import * as ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -2008,13 +2009,13 @@ updateColumns(updatedColumns: MTExColumn[]) {
  * @description This method is used to export table data.
  * @param type type of file to be exported.
  */
-  exportTable(type: string) {
+  async exportTable(type: string) {
+    console.log("From exportTable()");
     try {
       const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
-      
       // Get visible columns in the correct order (grouped first, ungrouped at end)
       let visibleColumns: MTExColumn[] = [];
-      
+
       if (this.columnGroups.length > 0) {
         const groupedFields = new Set<string>();
         
@@ -2022,7 +2023,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
         this.columnGroups.forEach(group => {
           group.columns.forEach(colField => groupedFields.add(colField));
         });
-        
+
         // Add grouped columns first (in group order)
         this.columnGroups.forEach(group => {
           group.columns.forEach(colField => {
@@ -2033,7 +2034,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
             }
           });
         });
-        
+
         // Add ungrouped columns at the end
         this.columnsArray.forEach(col => {
           const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
@@ -2050,23 +2051,22 @@ updateColumns(updatedColumns: MTExColumn[]) {
         });
       }
 
-      const data: any[] = [];
+      // Initialize ExcelJS Workbook and Worksheet
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Sheet1');
       
+      // ExcelJS rows are 1-indexed
+      let currentRowIndex = 1; 
+
       // Add group headers if they exist
       if (this.columnGroups.length > 0) {
-        const groupRow: any[] = [];
+        const groupRow: any[] = new Array(visibleColumns.length).fill('');
         const columnIndexMap: { [key: string]: number } = {};
         
         visibleColumns.forEach((col, idx) => {
-          columnIndexMap[col.field] = idx;
+          columnIndexMap[col.field] = idx + 1; // 1-indexed for ExcelJS columns
         });
-        
-        // Initialize group row with empty strings
-        for (let i = 0; i < visibleColumns.length; i++) {
-          groupRow.push('');
-        }
-        
-        // Fill in group labels
+
         this.columnGroups.forEach(group => {
           const groupCols = group.columns.filter(colField => 
             visibleColumns.find(vc => vc.field === colField)
@@ -2074,16 +2074,26 @@ updateColumns(updatedColumns: MTExColumn[]) {
           
           if (groupCols.length > 0) {
             const firstColIndex = columnIndexMap[groupCols[0]];
-            groupRow[firstColIndex] = group.label;
+            groupRow[firstColIndex - 1] = group.label;
+            
+            // Merge cells if group spans multiple columns
+            // Note: CSV formats don't natively support merged cells, but ExcelJS will just output the value in the first column
+            if (groupCols.length > 1) {
+              const lastColIndex = columnIndexMap[groupCols[groupCols.length - 1]];
+              worksheet.mergeCells(currentRowIndex, firstColIndex, currentRowIndex, lastColIndex);
+            }
           }
         });
         
-        data.push(groupRow);
+        worksheet.addRow(groupRow);
+        currentRowIndex++;
       }
-      
+
       // Add column headers
-      data.push(visibleColumns.map(col => col.header || col.field));
-      
+      const headerRow = visibleColumns.map(col => col.header || col.field);
+      worksheet.addRow(headerRow);
+      currentRowIndex++;
+
       // Add data rows (exclude hidden rows)
       this.dataSource.data.forEach((row, index) => {
         // Skip hidden rows
@@ -2097,49 +2107,35 @@ updateColumns(updatedColumns: MTExColumn[]) {
           if (value instanceof Date) return new Intl.DateTimeFormat('en-US').format(value);
           return value;
         });
-        data.push(rowData);
+        
+        worksheet.addRow(rowData);
+        currentRowIndex++;
       });
-      
-      const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data);
-      
-      // Add merge cells for group headers if they exist
-      if (this.columnGroups.length > 0) {
-        if (!ws['!merges']) {
-          ws['!merges'] = [];
-        }
-        const columnIndexMap: { [key: string]: number } = {};
-        
-        visibleColumns.forEach((col, idx) => {
-          columnIndexMap[col.field] = idx;
-        });
-        
-        this.columnGroups.forEach(group => {
-          const groupCols = group.columns.filter(colField => 
-            visibleColumns.find(vc => vc.field === colField)
-          );
-          
-          if (groupCols.length > 1 && ws['!merges']) {
-            const firstColIndex = columnIndexMap[groupCols[0]];
-            const lastColIndex = columnIndexMap[groupCols[groupCols.length - 1]];
-            
-            ws['!merges'].push({
-              s: { r: 0, c: firstColIndex },
-              e: { r: 0, c: lastColIndex }
-            });
-          }
-        });
+
+      // Write to buffer based on the requested file type
+      let buffer: any;
+      let blob: Blob;
+
+      if (type.toLowerCase() === 'csv') {
+        buffer = await workbook.csv.writeBuffer();
+        blob = new Blob([buffer], { type: 'text/csv;charset=utf-8;' });
+      } else {
+        // Default to xlsx
+        buffer = await workbook.xlsx.writeBuffer();
+        blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        // Enforce the xlsx extension just in case an invalid type was passed
+        type = 'xlsx'; 
       }
-      
-      const wb: XLSX.WorkBook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-      XLSX.writeFile(wb, `tablesheets.${type}`);
-  } catch (error) {
-    // Emit error event for parent component to handle
-    this.exportError.emit({
-      type,
-      error: error instanceof Error ? error.message : "Export failed"
-    });
-  }
+
+      saveAs(blob, `tablesheets.${type}`);
+
+    } catch (error) {
+      // Emit error event for parent component to handle
+      this.exportError.emit({
+        type,
+        error: error instanceof Error ? error.message : "Export failed"
+      });
+    }
   }
 /**
  * @description This method is used to print the table with proper styling.
@@ -2554,62 +2550,62 @@ updateColumns(updatedColumns: MTExColumn[]) {
  * @param ws work sheet
  * @returns custom generated worksheet to be used in export.
  */
-  writeSheetData(ws: XLSX.WorkSheet): XLSX.WorkSheet {
-    let displayedColumns = this.getDisplayedColumns();
-    var nMerges = this.getMergeIndex(ws['!merges'] || []);
-    var merges = ws['!merges'] || [];
-    let data: XLSX.WorkSheet = {
-      '!cols': [],
-      '!rows': [],
-      '!merges': nMerges,
-    };
-    var range = XLSX.utils.decode_range(ws['!ref'] || '');
-    let extracolumns = ['popup', 'delete', 'select', 'edit'];
-    let keys = Object.keys(ws);
-    let nKey = 'A';
-    keys.forEach((key, i) => {
-      if (ws[key]?.v && typeof ws[key]?.v === 'string') {
-        if (
-          !extracolumns.includes(ws[key].v.toLowerCase()) &&
-          displayedColumns.includes(ws[key].v.toLowerCase())
-        ) {
-          let lastRowIndex = range?.e?.r;
-          data[key] = ws[key];
-          let chr = key.charAt(0);
-          for (let j = 2; j <= lastRowIndex; j++) {
-            if (
-              ws[chr + (j + 1)] !== undefined &&
-              (typeof ws[chr + (j + 1)].v === 'string' ||
-                typeof ws[chr + (j + 1)].v === 'number')
-            ) {
-              data[nKey + j] = ws[chr + (j + 1)];
-            }
-          }
-          nKey = String.fromCharCode(nKey.charCodeAt(0) + 1);
-        }
-      }
-    });
-    if (this.rowSelection) {
-      let chr = 'A';
-      for (let i = 1; i < range.e.c + 1; i++) {
-        data[chr + 1] = data[String.fromCharCode(chr.charCodeAt(0) + 1) + 1];
-        chr = String.fromCharCode(chr.charCodeAt(0) + 1);
-        if (i == range.e.c) {
-          data[chr + 1] = undefined;
-        }
-      }
-    }
-    if (this.rowSelection && this.expandRows) {
-      merges.forEach((merge) => {
-        data['A' + merge.s.r] = ws['A' + (merge.s.r + 1)];
-      });
-    }
-    range.e.r--;
-    let nRef = XLSX.utils.encode_range(range);
-    data['!ref'] = nRef;
-    data['!fullref'] = nRef;
-    return data;
-  }
+  // writeSheetData(ws: XLSX.WorkSheet): XLSX.WorkSheet {
+  //   let displayedColumns = this.getDisplayedColumns();
+  //   var nMerges = this.getMergeIndex(ws['!merges'] || []);
+  //   var merges = ws['!merges'] || [];
+  //   let data: XLSX.WorkSheet = {
+  //     '!cols': [],
+  //     '!rows': [],
+  //     '!merges': nMerges,
+  //   };
+  //   var range = XLSX.utils.decode_range(ws['!ref'] || '');
+  //   let extracolumns = ['popup', 'delete', 'select', 'edit'];
+  //   let keys = Object.keys(ws);
+  //   let nKey = 'A';
+  //   keys.forEach((key, i) => {
+  //     if (ws[key]?.v && typeof ws[key]?.v === 'string') {
+  //       if (
+  //         !extracolumns.includes(ws[key].v.toLowerCase()) &&
+  //         displayedColumns.includes(ws[key].v.toLowerCase())
+  //       ) {
+  //         let lastRowIndex = range?.e?.r;
+  //         data[key] = ws[key];
+  //         let chr = key.charAt(0);
+  //         for (let j = 2; j <= lastRowIndex; j++) {
+  //           if (
+  //             ws[chr + (j + 1)] !== undefined &&
+  //             (typeof ws[chr + (j + 1)].v === 'string' ||
+  //               typeof ws[chr + (j + 1)].v === 'number')
+  //           ) {
+  //             data[nKey + j] = ws[chr + (j + 1)];
+  //           }
+  //         }
+  //         nKey = String.fromCharCode(nKey.charCodeAt(0) + 1);
+  //       }
+  //     }
+  //   });
+  //   if (this.rowSelection) {
+  //     let chr = 'A';
+  //     for (let i = 1; i < range.e.c + 1; i++) {
+  //       data[chr + 1] = data[String.fromCharCode(chr.charCodeAt(0) + 1) + 1];
+  //       chr = String.fromCharCode(chr.charCodeAt(0) + 1);
+  //       if (i == range.e.c) {
+  //         data[chr + 1] = undefined;
+  //       }
+  //     }
+  //   }
+  //   if (this.rowSelection && this.expandRows) {
+  //     merges.forEach((merge) => {
+  //       data['A' + merge.s.r] = ws['A' + (merge.s.r + 1)];
+  //     });
+  //   }
+  //   range.e.r--;
+  //   let nRef = XLSX.utils.encode_range(range);
+  //   data['!ref'] = nRef;
+  //   data['!fullref'] = nRef;
+  //   return data;
+  // }
   getMergeIndex(merges: any[]) {
     var arr: any[] = [];
     merges.forEach((element: any) => {
