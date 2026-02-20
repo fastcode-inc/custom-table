@@ -194,34 +194,34 @@ export class MatTableExtComponent<T extends Record<string, unknown> = Record<str
   @Output() rowPinningChange: EventEmitter<{row: T, position: 'top' | 'bottom' | null}> = 
     new EventEmitter<{row: T, position: 'top' | 'bottom' | null}>();
   tableID = new Date().getTime();
-  columnPinningOptions: MTExColumnPinOption[] = [];
+  private columnPinningOptions: MTExColumnPinOption[] = [];
   exportMenuCtrl: boolean = false;
   columnPinMenuCtrl: boolean = false;
   hideShowMenuCtrl: boolean = false;
   rowDataTemp: Record<string, T> = {};
   inlineEditingTemplateRefData: Record<string, unknown> = {};
-  displayedColumns: string[] = [];
+  private displayedColumns: string[] = [];
   showHideColumnsArray: MTExColumn<T>[] = [];
-  columnsList: string[] = [];
+  private columnsList: string[] = [];
   columnsArray: MTExColumn<T>[] = [];
-  headersFiltersIds: string[] = [];
-  columnsToDisplayWithExpand: string[] = [];
+  protected headersFiltersIds: string[] = [];
+  protected columnsToDisplayWithExpand: string[] = [];
   selection = new SelectionModel<T>(false, []);
   hiddenCtrl = new SelectionModel<string>(true, []);
   tableData: T[] = [];
-  filterValues: Record<string, string | number | boolean> = {};
+  private filterValues: Record<string, string | number | boolean> = {};
   pinnedTopRows: T[] = [];
-  pinnedBottomRows: T[] = [];
-  rowPinMenuPosition = { x: '0px', y: '0px' };
+  private pinnedBottomRows: T[] = [];
+  private rowPinMenuPosition = { x: '0px', y: '0px' };
   rowPinMenuRow: T | null = null;
   globalFilter = '';
   showHideFilter = '';
-  individualFilter = '';
+  private individualFilter = '';
   toggleFilters = false;
-  hideRows = false;
+  protected hideRows = false;
   expandedElement: T | null = null;
   currentRowIndex: number = -1;
-  currentRow: T = {} as T;
+  private currentRow: T = {} as T;
   cellEditing: Record<string, boolean> = {};
   // Store original sizes before entering edit mode
   private originalSizesBeforeEdit: {
@@ -231,7 +231,7 @@ export class MatTableExtComponent<T extends Record<string, unknown> = Record<str
   hideShowMenuGroup: FormGroup = this.formBuilder.group({});
   menuX: number = 0;
   menuY: number = 0;
-  dynamicDisplayedColumns: any[] = [
+  private dynamicDisplayedColumns: any[] = [
     { filter: false, name: 'select', show: false },
     { filter: false, name: 'edit', show: false },
     { filter: false, name: 'popup', show: false },
@@ -241,7 +241,7 @@ export class MatTableExtComponent<T extends Record<string, unknown> = Record<str
     { filter: false, name: 'pin', show: false },
     { filter: false, name: 'expand', show: false },
   ];
-  inputPropertyKeys: string[] = [
+  private inputPropertyKeys: string[] = [
     'dataSource',
     'columns',
     'inlineRowEditing',
@@ -263,11 +263,11 @@ export class MatTableExtComponent<T extends Record<string, unknown> = Record<str
   
 
   constructor(
-    public dialog: MatDialog,
-    public service: MatTableExtService,
-    public formBuilder: FormBuilder,
-    public domSanitizer: DomSanitizer,
-    public matIconRegistry: MatIconRegistry,
+    private dialog: MatDialog,
+    private service: MatTableExtService<T>,
+    private formBuilder: FormBuilder,
+    private domSanitizer: DomSanitizer,
+    private matIconRegistry: MatIconRegistry,
     private cdr: ChangeDetectorRef
   ) {
     this.addIconsToRegistry();
@@ -1524,7 +1524,7 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
    * @param row updated row from inline editing template.
    */
   updateInlineTemplateData = (row: MTExRow) => {
-    this.service.selectedRow.next(row);
+    this.service.selectedRow.next(row as T);
   };
   /**
    * @description This method set data for in-cell editing.

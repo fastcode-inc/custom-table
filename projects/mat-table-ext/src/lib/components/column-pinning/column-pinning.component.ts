@@ -22,7 +22,7 @@ import { MatButtonModule } from '@angular/material/button';
 export class ColumnPinningComponent<T extends MTExRowData = MTExRowData> implements OnInit {
   @Input() columns!: MTExColumn<T>[];
   @Output() columnsChanged: EventEmitter<MTExColumn<T>[]> = new EventEmitter();
-  public icons = {
+  icons = {
     left: 'pinLeft',
     right: 'pinRight',
     none: 'pinNone',

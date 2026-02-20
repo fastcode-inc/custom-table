@@ -36,22 +36,22 @@ import { MatIconModule } from '@angular/material/icon';
   ]
 })
 export class EditingComponent<T extends MTExRowData = MTExRowData> implements OnInit {
-  public templateRef!: TemplateRef<EditingTemplateContext<T>>;
-  public keys: string[] = [];
-  public templateKeys: string[] = [];
-  public types: Record<string, MTExColumnType> = {};
-  public templateTypes: Record<string, MTExColumnType> = {};
-  public columns: MTExColumn<T>[] = [];
-  public templateRow: Partial<T> = {};
+  templateRef!: TemplateRef<EditingTemplateContext<T>>;
+  keys: string[] = [];
+  templateKeys: string[] = [];
+  types: Record<string, MTExColumnType> = {};
+  templateTypes: Record<string, MTExColumnType> = {};
+  columns: MTExColumn<T>[] = [];
+  templateRow: Partial<T> = {};
   public isCellEdit: boolean = false;
   public cellColumn!: MTExColumn<T>;
   public cellValue: unknown;
   public cellField: string = '';
   
   constructor(
-    public dialogRef: MatDialogRef<EditingComponent<T>>,
+    private dialogRef: MatDialogRef<EditingComponent<T>>,
     @Inject(MAT_DIALOG_DATA) public dialogData: EditingDialogData<T>,
-    public service: MatTableExtService<T>
+    private service: MatTableExtService<T>
   ) { }
   
   ngOnInit(): void {
