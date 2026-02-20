@@ -143,7 +143,10 @@
              mat-table #MyTableTop [id]="'matTableExtTop'+tableID" [dataSource]="pinnedTopDataSource" matSort cdkDropList
                 cdkDropListOrientation="horizontal" multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
                 (click)="saveCellEditing()" [style.width]="scrollbarH?'max-content':'100%'" 
-                [class]="'mat-mdc-table' + (tableClassName ? ' ' + tableClassName : '')">
+                [class]="'mat-mdc-table' + (tableClassName ? ' ' + tableClassName : '')"
+                role="grid"
+                [attr.aria-rowcount]="dataSource.data.length"
+                [attr.aria-busy]="loadingIndicator">
     
                 <!-- Row selection column -->
                 <ng-container matColumnDef="select">
@@ -497,7 +500,9 @@
                       'mat-row-sticky-top': isRowPinnedTop(row),
                       'mat-row-sticky-bottom': isRowPinnedBottom(row)
                     }"
-                    (click)="expandRow(row, row !== expandedElement,i)">
+                    (click)="expandRow(row, row !== expandedElement,i)"
+                    [attr.aria-selected]="selection.isSelected(row)"
+                    [attr.aria-expanded]="expandedElement === row">
                 </tr>
            
                 @if (expandRows) {
@@ -515,7 +520,10 @@
             <table mat-table #matTable #MyTable [id]="'matTableExt'+tableID" [dataSource]="dataSource" matSort cdkDropList
                 cdkDropListOrientation="horizontal" multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
                 (click)="saveCellEditing()" [style.width]="scrollbarH?'max-content':'100%'" 
-                [class]="'mat-mdc-table' + (tableClassName ? ' ' + tableClassName : '')">
+                [class]="'mat-mdc-table' + (tableClassName ? ' ' + tableClassName : '')"
+                role="grid"
+                [attr.aria-rowcount]="dataSource.data.length"
+                [attr.aria-busy]="loadingIndicator">
     
                 <!-- Row selection column -->
                 <ng-container matColumnDef="select">
@@ -840,7 +848,9 @@
                       'mat-row-sticky-top': isRowPinnedTop(row),
                       'mat-row-sticky-bottom': isRowPinnedBottom(row)
                     }"
-                    (click)="expandRow(row, row !== expandedElement,i)">
+                    (click)="expandRow(row, row !== expandedElement,i)"
+                    [attr.aria-selected]="selection.isSelected(row)"
+                    [attr.aria-expanded]="expandedElement === row">
                 </tr>
                 <!-- <tr mat-header-row *matHeaderRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex; when: isRowPinnedTop(row)" 
                     class="mat-mdc-row data-row"
@@ -874,7 +884,10 @@
                 <table style="width: 100%;"  mat-table #matTable #MyTable [id]="'matTableExtBtm'+tableID" [dataSource]="pinnedBtmDataSource" matSort cdkDropList
                     cdkDropListOrientation="horizontal" multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
                     (click)="saveCellEditing()" [style.width]="scrollbarH?'max-content':'100%'" 
-                    [class]="'mat-mdc-table' + (tableClassName ? ' ' + tableClassName : '')">
+                    [class]="'mat-mdc-table' + (tableClassName ? ' ' + tableClassName : '')"
+                    role="grid"
+                    [attr.aria-rowcount]="dataSource.data.length"
+                    [attr.aria-busy]="loadingIndicator">
         
                     <!-- Row selection column -->
                     <ng-container matColumnDef="select">
@@ -1208,7 +1221,9 @@
                           'mat-row-sticky-top': isRowPinnedTop(row),
                           'mat-row-sticky-bottom': isRowPinnedBottom(row)
                         }"
-                        (click)="expandRow(row, row !== expandedElement,i)">
+                        (click)="expandRow(row, row !== expandedElement,i)"
+                        [attr.aria-selected]="selection.isSelected(row)"
+                        [attr.aria-expanded]="expandedElement === row">
                     </tr>
                     <!-- <tr mat-header-row *matHeaderRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex; when: isRowPinnedTop(row)" 
                         class="mat-mdc-row data-row"
@@ -1243,7 +1258,10 @@
             <table mat-table #matTable #MyTable [id]="'matTableExt'+tableID" [dataSource]="dataSource" matSort cdkDropList
                 cdkDropListOrientation="horizontal" multiTemplateDataRows (cdkDropListDropped)="onDrop($event)"
                 (click)="saveCellEditing()" [style.width]="scrollbarH?'max-content':'100%'" 
-                [class]="'mat-mdc-table' + (tableClassName ? ' ' + tableClassName : '')">
+                [class]="'mat-mdc-table' + (tableClassName ? ' ' + tableClassName : '')"
+                role="grid"
+                [attr.aria-rowcount]="dataSource.data.length"
+                [attr.aria-busy]="loadingIndicator">
     
                 <!-- Row selection column -->
                 <ng-container matColumnDef="select">
@@ -1607,7 +1625,9 @@
                       'mat-row-sticky-top': isRowPinnedTop(row),
                       'mat-row-sticky-bottom': isRowPinnedBottom(row)
                     }"
-                    (click)="expandRow(row, row !== expandedElement,i)">
+                    (click)="expandRow(row, row !== expandedElement,i)"
+                    [attr.aria-selected]="selection.isSelected(row)"
+                    [attr.aria-expanded]="expandedElement === row">
                 </tr>
                 <!-- <tr mat-header-row *matHeaderRowDef="let row; columns:getDisplayedColumns(); let i=dataIndex; when: isRowPinnedTop(row)" 
                     class="mat-mdc-row data-row"
