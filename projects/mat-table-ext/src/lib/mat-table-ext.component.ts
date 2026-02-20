@@ -9,6 +9,7 @@ import { SelectionModel } from '@angular/cdk/collections';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   ChangeDetectorRef,
   ElementRef,
   EventEmitter,
@@ -74,6 +75,7 @@ import { ResizeColumnDirective } from './directives/resize-column.directive';
   templateUrl: 'mat-table-ext.component.html',
   styleUrls: ['mat-table-ext.scss'],
   encapsulation: ViewEncapsulation.None,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
   imports: [
     CommonModule,
@@ -228,6 +230,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit, O
     new EventEmitter<any>();
   @Output() rowPinningChange: EventEmitter<{row: any, position: 'top' | 'bottom' | null}> = 
     new EventEmitter<any>();
+  @Output() exportError = new EventEmitter<{type: string, error: string}>();
   tableID = new Date().getTime();
   columnPinningOptions: MTExColumnPinOption[] = [];
   exportMenuCtrl: boolean = false;
@@ -345,7 +348,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
   
   // Force change detection
   this.cdr.markForCheck();
-  this.cdr.detectChanges();
+  // this.cdr.detectChanges();
   // Re-sync column sizes in case column ordering/visibility changed
   if (this.enableRowPinning) {
     setTimeout(() => this.syncColumnSizesFromTop(), 80);
@@ -876,7 +879,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
     },
     columnGroups: (value: any) => {
       this.columnGroups = value.currentValue || [];
-      this.cdr.detectChanges();
+      this.cdr.markForCheck();
       // When group headers change, re-sync column sizes for pinned tables
       if (this.enableRowPinning) {
         setTimeout(() => this.syncColumnSizesFromTop(), 80);
@@ -1378,7 +1381,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
       }
     });
     
-    this.cdr.detectChanges();
+    this.cdr.markForCheck();
   }
 
   /**
@@ -1386,7 +1389,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
    */
   private updateDataSourceForPinning(): void {
     // Trigger change detection
-    this.cdr.detectChanges();
+    this.cdr.markForCheck();
     
     // Force table to re-render rows
     if (this.table) {
@@ -1982,7 +1985,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
       }
       }
     }
-    this.cdr.detectChanges();
+    this.cdr.markForCheck();
   }
 /**
  * @description This method is called in constructor method to add SVGs into icon registration.
@@ -2006,129 +2009,137 @@ updateColumns(updatedColumns: MTExColumn[]) {
  * @param type type of file to be exported.
  */
   exportTable(type: string) {
-    const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
-    
-    // Get visible columns in the correct order (grouped first, ungrouped at end)
-    let visibleColumns: MTExColumn[] = [];
-    
-    if (this.columnGroups.length > 0) {
-      const groupedFields = new Set<string>();
+    try {
+      const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
       
-      // Collect all fields that belong to groups
-      this.columnGroups.forEach(group => {
-        group.columns.forEach(colField => groupedFields.add(colField));
-      });
+      // Get visible columns in the correct order (grouped first, ungrouped at end)
+      let visibleColumns: MTExColumn[] = [];
       
-      // Add grouped columns first (in group order)
-      this.columnGroups.forEach(group => {
-        group.columns.forEach(colField => {
-          const col = this.columnsArray.find(c => c.field === colField);
-          const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === colField);
-          if (col && displayCol && displayCol.show && !visibleColumns.includes(col)) {
+      if (this.columnGroups.length > 0) {
+        const groupedFields = new Set<string>();
+        
+        // Collect all fields that belong to groups
+        this.columnGroups.forEach(group => {
+          group.columns.forEach(colField => groupedFields.add(colField));
+        });
+        
+        // Add grouped columns first (in group order)
+        this.columnGroups.forEach(group => {
+          group.columns.forEach(colField => {
+            const col = this.columnsArray.find(c => c.field === colField);
+            const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === colField);
+            if (col && displayCol && displayCol.show && !visibleColumns.includes(col)) {
+              visibleColumns.push(col);
+            }
+          });
+        });
+        
+        // Add ungrouped columns at the end
+        this.columnsArray.forEach(col => {
+          const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
+          if (!groupedFields.has(col.field) && displayCol && displayCol.show && 
+              !actionColumns.includes(col.field) && !visibleColumns.includes(col)) {
             visibleColumns.push(col);
           }
         });
-      });
-      
-      // Add ungrouped columns at the end
-      this.columnsArray.forEach(col => {
-        const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
-        if (!groupedFields.has(col.field) && displayCol && displayCol.show && 
-            !actionColumns.includes(col.field) && !visibleColumns.includes(col)) {
-          visibleColumns.push(col);
-        }
-      });
-    } else {
-      // No groups, use default order
-      visibleColumns = this.columnsArray.filter(col => {
-        const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
-        return displayCol && displayCol.show && !actionColumns.includes(col.field);
-      });
-    }
+      } else {
+        // No groups, use default order
+        visibleColumns = this.columnsArray.filter(col => {
+          const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
+          return displayCol && displayCol.show && !actionColumns.includes(col.field);
+        });
+      }
 
-    const data: any[] = [];
-    
-    // Add group headers if they exist
-    if (this.columnGroups.length > 0) {
-      const groupRow: any[] = [];
-      const columnIndexMap: { [key: string]: number } = {};
+      const data: any[] = [];
       
-      visibleColumns.forEach((col, idx) => {
-        columnIndexMap[col.field] = idx;
-      });
-      
-      // Initialize group row with empty strings
-      for (let i = 0; i < visibleColumns.length; i++) {
-        groupRow.push('');
-      }
-      
-      // Fill in group labels
-      this.columnGroups.forEach(group => {
-        const groupCols = group.columns.filter(colField => 
-          visibleColumns.find(vc => vc.field === colField)
-        );
+      // Add group headers if they exist
+      if (this.columnGroups.length > 0) {
+        const groupRow: any[] = [];
+        const columnIndexMap: { [key: string]: number } = {};
         
-        if (groupCols.length > 0) {
-          const firstColIndex = columnIndexMap[groupCols[0]];
-          groupRow[firstColIndex] = group.label;
+        visibleColumns.forEach((col, idx) => {
+          columnIndexMap[col.field] = idx;
+        });
+        
+        // Initialize group row with empty strings
+        for (let i = 0; i < visibleColumns.length; i++) {
+          groupRow.push('');
         }
-      });
-      
-      data.push(groupRow);
-    }
-    
-    // Add column headers
-    data.push(visibleColumns.map(col => col.header || col.field));
-    
-    // Add data rows (exclude hidden rows)
-    this.dataSource.data.forEach((row, index) => {
-      // Skip hidden rows
-      if (this.hiddenRowIndices.includes(index)) {
-        return;
-      }
-      const rowData = visibleColumns.map(col => {
-        const value = row[col.field];
-        if (value === null || value === undefined) return '';
-        if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-        if (value instanceof Date) return new Intl.DateTimeFormat('en-US').format(value);
-        return value;
-      });
-      data.push(rowData);
-    });
-    
-    const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data);
-    
-    // Add merge cells for group headers if they exist
-    if (this.columnGroups.length > 0) {
-      if (!ws['!merges']) {
-        ws['!merges'] = [];
-      }
-      const columnIndexMap: { [key: string]: number } = {};
-      
-      visibleColumns.forEach((col, idx) => {
-        columnIndexMap[col.field] = idx;
-      });
-      
-      this.columnGroups.forEach(group => {
-        const groupCols = group.columns.filter(colField => 
-          visibleColumns.find(vc => vc.field === colField)
-        );
         
-        if (groupCols.length > 1 && ws['!merges']) {
-          const firstColIndex = columnIndexMap[groupCols[0]];
-          const lastColIndex = columnIndexMap[groupCols[groupCols.length - 1]];
+        // Fill in group labels
+        this.columnGroups.forEach(group => {
+          const groupCols = group.columns.filter(colField => 
+            visibleColumns.find(vc => vc.field === colField)
+          );
           
-          ws['!merges'].push({
-            s: { r: 0, c: firstColIndex },
-            e: { r: 0, c: lastColIndex }
-          });
+          if (groupCols.length > 0) {
+            const firstColIndex = columnIndexMap[groupCols[0]];
+            groupRow[firstColIndex] = group.label;
+          }
+        });
+        
+        data.push(groupRow);
+      }
+      
+      // Add column headers
+      data.push(visibleColumns.map(col => col.header || col.field));
+      
+      // Add data rows (exclude hidden rows)
+      this.dataSource.data.forEach((row, index) => {
+        // Skip hidden rows
+        if (this.hiddenRowIndices.includes(index)) {
+          return;
         }
+        const rowData = visibleColumns.map(col => {
+          const value = row[col.field];
+          if (value === null || value === undefined) return '';
+          if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+          if (value instanceof Date) return new Intl.DateTimeFormat('en-US').format(value);
+          return value;
+        });
+        data.push(rowData);
       });
-    }
-    
-    const wb: XLSX.WorkBook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-    XLSX.writeFile(wb, `tablesheets.${type}`);
+      
+      const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(data);
+      
+      // Add merge cells for group headers if they exist
+      if (this.columnGroups.length > 0) {
+        if (!ws['!merges']) {
+          ws['!merges'] = [];
+        }
+        const columnIndexMap: { [key: string]: number } = {};
+        
+        visibleColumns.forEach((col, idx) => {
+          columnIndexMap[col.field] = idx;
+        });
+        
+        this.columnGroups.forEach(group => {
+          const groupCols = group.columns.filter(colField => 
+            visibleColumns.find(vc => vc.field === colField)
+          );
+          
+          if (groupCols.length > 1 && ws['!merges']) {
+            const firstColIndex = columnIndexMap[groupCols[0]];
+            const lastColIndex = columnIndexMap[groupCols[groupCols.length - 1]];
+            
+            ws['!merges'].push({
+              s: { r: 0, c: firstColIndex },
+              e: { r: 0, c: lastColIndex }
+            });
+          }
+        });
+      }
+      
+      const wb: XLSX.WorkBook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+      XLSX.writeFile(wb, `tablesheets.${type}`);
+  } catch (error) {
+    // Emit error event for parent component to handle
+    this.exportError.emit({
+      type,
+      error: error instanceof Error ? error.message : "Export failed"
+    });
+  }
   }
 /**
  * @description This method is used to print the table with proper styling.
@@ -2520,7 +2531,13 @@ updateColumns(updatedColumns: MTExColumn[]) {
 
       doc.save(`${this.toolbarTitle || 'table-export'}.pdf`);
 
-    } catch (error) {}
+    } catch (error) {
+      // Emit error event for parent component to handle
+      this.exportError.emit({
+        type: 'pdf',
+        error: error instanceof Error ? error.message : "Export failed"
+      });
+    }
   }
 
 
