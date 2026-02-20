@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MTExColumn, MTExRowData } from '../../models/tableExtModels';
 import { CommonModule } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -22,9 +23,9 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
     MatDatepickerModule
   ]
 })
-export class FilterColumnsComponentComponent implements OnInit {
-  @Input() obj!: any;
-  @Output() filterOutput: EventEmitter<any> = new EventEmitter<any>();
+export class FilterColumnsComponentComponent<T extends MTExRowData = MTExRowData> implements OnInit {
+  @Input() obj!: MTExColumn<T>;
+  @Output() filterOutput: EventEmitter<Record<string, string | number | boolean | Date | null>> = new EventEmitter<Record<string, string | number | boolean | Date | null>>();
   stringCtrl: FormControl = new FormControl();
   numberCtrl: FormControl = new FormControl();
   dateCtrl: FormControl = new FormControl();
@@ -56,7 +57,7 @@ export class FilterColumnsComponentComponent implements OnInit {
    * @description This method is make value is valid and not null.
    * @param value value to check its type.
    */
-  checkValue(value: any) {
+  checkValue(value: string | number | boolean | Date | null | undefined) {
     if (value || value == '') {
       this.emitOutput(value);
     } else if (value == null) {
@@ -67,8 +68,9 @@ export class FilterColumnsComponentComponent implements OnInit {
  * @description This method will emit seach value to parent component.
  * @param value value on which base table rows are filtered. 
  */
-  emitOutput(value: any) {
-    let obj = { [this.obj.field]: value };
+  emitOutput(value: string | number | boolean | Date | null | undefined) {
+    const safeValue = value === undefined ? null : value;
+    const obj = { [this.obj.field]: safeValue };
     this.filterOutput.emit(obj);
   }
 }

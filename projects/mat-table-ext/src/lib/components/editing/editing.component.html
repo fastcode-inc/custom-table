@@ -120,8 +120,8 @@
                     @if (types[key] == 'selection') {
                         <mat-form-field appearance="outline" class="inline-editing-field">
                             <mat-label>{{key | titlecase}}</mat-label>
-                            <mat-select [value]="dialogData['row'][key].value" [(ngModel)]="dialogData['row'][key].value">
-                                @for (option of dialogData['row'][key].options; track option) {
+                            <mat-select [ngModel]="getSelectionValue(key)" (ngModelChange)="setSelectionValue(key, $event)">
+                                @for (option of getSelectionOptions(key); track option) {
                                     <mat-option [value]="option">{{option}}</mat-option>
                                 }
                             </mat-select>
@@ -149,5 +149,5 @@
     </div>
 }
 @if (templateRef) {
-    <ng-container [ngTemplateOutlet]="templateRef" [ngTemplateOutletContext]="{data:{row:templateRow,columns:columns,columnKeys:templateKeys,columnTypes:templateTypes,closeDialog:closeTemplateDialog}}"></ng-container>
+    <ng-container [ngTemplateOutlet]="templateRef" [ngTemplateOutletContext]="{$implicit:{row:templateRow,columns:columns,columnKeys:templateKeys,columnTypes:templateTypes,closeDialog:closeTemplateDialog}}"></ng-container>
 }

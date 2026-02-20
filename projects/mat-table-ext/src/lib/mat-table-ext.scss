@@ -419,5 +419,5 @@ table th:hover .resize-handle {
 }
 
 .inline-editing-field div.mat-mdc-form-field-subscript-wrapper {
-  display: none;
+  display: none !important;
 }

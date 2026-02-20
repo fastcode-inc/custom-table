@@ -172,7 +172,7 @@
     
                         @if (column.headerTemplate || headerTemplateRef) {
                             <ng-template [ngTemplateOutlet]="column.headerTemplate || headerTemplateRef"
-                                [ngTemplateOutletContext]="{data:column}"></ng-template>
+                                [ngTemplateOutletContext]="{$implicit:column, data:column}"></ng-template>
                         }
                         @if (!headerTemplateRef && !column.headerTemplate) {
                             <span matTooltip="{{column.headerTooltip?.value}}"
@@ -190,22 +190,22 @@
                                 }
                                 @if (cellTemplateRefMap[column.field]) {
                                     <ng-container [ngTemplateOutlet]="cellTemplateRefMap[column.field]"
-                                        [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
                                     </ng-container>
                                 }
                                 @if (cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
                                     <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                        [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
                                     </ng-container>
                                 }
                                 @if (!cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
                                     <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                        [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
                                     </ng-container>
                                 }
                                 @if (cellTemplateRef && !column.cellTemplate && !cellTemplateRefMap[column.field]) {
                                     <ng-container [ngTemplateOutlet]="cellTemplateRef"
-                                        [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
                                     </ng-container>
                                 }
                             </div>
@@ -214,11 +214,11 @@
                             <div (click)="$event.stopPropagation()">
                                 @if (inlineEditingTemplateRef && !cellEditing[i +'_'+column.field]) {
                                     <ng-container [ngTemplateOutlet]="inlineEditingTemplateRef"
-                                        [ngTemplateOutletContext]="{data:getInlineEditingData(row,i,column)}"></ng-container>
+                                        [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), field:column.field, index:i}"></ng-container>
                                 }
                                 @if (cellEditingTemplateRef && !(row.editable)) {
                                     <ng-container [ngTemplateOutlet]="cellEditingTemplateRef"
-                                        [ngTemplateOutletContext]="{data:getInlineEditingData(row,i,column)}"></ng-container>
+                                        [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), index:i}"></ng-container>
                                 }
                                 @if (!inlineEditingTemplateRef && (row.editable) && rowDataTemp['e'+i]) {
                                     @if (column.type == 'number') {
@@ -395,7 +395,7 @@
                                 [@detailExpand]="element == expandedElement ? 'expanded' : 'collapsed'">
                                 @if (expansionTemplateRef) {
                                     <ng-container [ngTemplateOutlet]="expansionTemplateRef"
-                                        [ngTemplateOutletContext]="{$explicit:element,row:element,index:i}">
+                                        [ngTemplateOutletContext]="{'$implicit':element, '$explicit':element, row:element, index:i}">
                                     </ng-container>
                                 }
                             </div>
@@ -543,8 +543,8 @@
                         [mat-sort-header]="column.field" [disabled]="!sorting || column.disabled === true">
     
                         @if (column.headerTemplate || headerTemplateRef) {
-                            <ng-template [ngTemplateOutlet]="column.headerTemplate || headerTemplateRef"
-                                [ngTemplateOutletContext]="{data:column}"></ng-template>
+                                <ng-template [ngTemplateOutlet]="column.headerTemplate || headerTemplateRef"
+                                    [ngTemplateOutletContext]="{$implicit:column, data:column}"></ng-template>
                         }
                         @if (!headerTemplateRef && !column.headerTemplate) {
                             <span matTooltip="{{column.headerTooltip?.value}}"
@@ -564,22 +564,22 @@
                                 }
                                 @if (cellTemplateRefMap[column.field]) {
                                     <ng-container [ngTemplateOutlet]="cellTemplateRefMap[column.field]"
-                                        [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
                                     </ng-container>
                                 }
                                 @if (cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
                                     <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                        [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
                                     </ng-container>
                                 }
                                 @if (!cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
                                     <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                        [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
                                     </ng-container>
                                 }
                                 @if (cellTemplateRef && !column.cellTemplate && !cellTemplateRefMap[column.field]) {
                                     <ng-container [ngTemplateOutlet]="cellTemplateRef"
-                                        [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
                                     </ng-container>
                                 }
                             </div>
@@ -588,11 +588,11 @@
                             <div (click)="$event.stopPropagation()">
                                 @if (inlineEditingTemplateRef && !cellEditing[i +'_'+column.field]) {
                                     <ng-container [ngTemplateOutlet]="inlineEditingTemplateRef"
-                                        [ngTemplateOutletContext]="{data:getInlineEditingData(row,i,column)}"></ng-container>
+                                        [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), field:column.field, index:i}"></ng-container>
                                 }
                                 @if (cellEditingTemplateRef && !(row.editable)) {
                                     <ng-container [ngTemplateOutlet]="cellEditingTemplateRef"
-                                        [ngTemplateOutletContext]="{data:getInlineEditingData(row,i,column)}"></ng-container>
+                                        [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), index:i}"></ng-container>
                                 }
                                 @if (!inlineEditingTemplateRef && (row.editable) && rowDataTemp['e'+i]) {
                                     @if (column.type == 'number') {
@@ -782,7 +782,7 @@
                                 [@detailExpand]="element == expandedElement ? 'expanded' : 'collapsed'">
                                 @if (expansionTemplateRef) {
                                     <ng-container [ngTemplateOutlet]="expansionTemplateRef"
-                                        [ngTemplateOutletContext]="{$explicit:element,row:element,index:i}">
+                                        [ngTemplateOutletContext]="{'$implicit':element, '$explicit':element, row:element, index:i}">
                                     </ng-container>
                                 }
                             </div>
@@ -902,8 +902,8 @@
                             [mat-sort-header]="column.field" [disabled]="!sorting || column.disabled === true">
         
                             @if (column.headerTemplate || headerTemplateRef) {
-                                <ng-template [ngTemplateOutlet]="column.headerTemplate || headerTemplateRef"
-                                    [ngTemplateOutletContext]="{data:column}"></ng-template>
+                                    <ng-template [ngTemplateOutlet]="column.headerTemplate || headerTemplateRef"
+                                        [ngTemplateOutletContext]="{$implicit:column, data:column}"></ng-template>
                             }
                             @if (!headerTemplateRef && !column.headerTemplate) {
                                 <span matTooltip="{{column.headerTooltip?.value}}"
@@ -921,22 +921,22 @@
                                     }
                                     @if (cellTemplateRefMap[column.field]) {
                                         <ng-container [ngTemplateOutlet]="cellTemplateRefMap[column.field]"
-                                            [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                            [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
                                         </ng-container>
                                     }
                                     @if (cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
                                         <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                            [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                            [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
                                         </ng-container>
                                     }
                                     @if (!cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
                                         <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                            [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                            [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
                                         </ng-container>
                                     }
                                     @if (cellTemplateRef && !column.cellTemplate && !cellTemplateRefMap[column.field]) {
                                         <ng-container [ngTemplateOutlet]="cellTemplateRef"
-                                            [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                            [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
                                         </ng-container>
                                     }
                                 </div>
@@ -945,11 +945,11 @@
                                 <div (click)="$event.stopPropagation()">
                                     @if (inlineEditingTemplateRef && !cellEditing[i +'_'+column.field]) {
                                         <ng-container [ngTemplateOutlet]="inlineEditingTemplateRef"
-                                            [ngTemplateOutletContext]="{data:getInlineEditingData(row,i,column)}"></ng-container>
+                                            [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), field:column.field, index:i}"></ng-container>
                                     }
                                     @if (cellEditingTemplateRef && !(row.editable)) {
                                         <ng-container [ngTemplateOutlet]="cellEditingTemplateRef"
-                                            [ngTemplateOutletContext]="{data:getInlineEditingData(row,i,column)}"></ng-container>
+                                            [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), index:i}"></ng-container>
                                     }
                                     @if (!inlineEditingTemplateRef && (row.editable) && rowDataTemp['e'+i]) {
                                         @if (column.type == 'number') {
@@ -1126,7 +1126,7 @@
                                     [@detailExpand]="element == expandedElement ? 'expanded' : 'collapsed'">
                                     @if (expansionTemplateRef) {
                                         <ng-container [ngTemplateOutlet]="expansionTemplateRef"
-                                            [ngTemplateOutletContext]="{$explicit:element,row:element,index:i}">
+                                            [ngTemplateOutletContext]="{'$implicit':element, '$explicit':element, row:element, index:i}">
                                         </ng-container>
                                     }
                                 </div>
@@ -1271,8 +1271,8 @@
                         [mat-sort-header]="column.field" [disabled]="!sorting || column.disabled === true">
     
                         @if (column.headerTemplate || headerTemplateRef) {
-                            <ng-template [ngTemplateOutlet]="column.headerTemplate || headerTemplateRef"
-                                [ngTemplateOutletContext]="{data:column}"></ng-template>
+                                <ng-template [ngTemplateOutlet]="column.headerTemplate || headerTemplateRef"
+                                    [ngTemplateOutletContext]="{$implicit:column, data:column}"></ng-template>
                         }
                         @if (!headerTemplateRef && !column.headerTemplate) {
                             <span matTooltip="{{column.headerTooltip?.value}}"
@@ -1292,22 +1292,22 @@
                                 }
                                 @if (cellTemplateRefMap[column.field]) {
                                     <ng-container [ngTemplateOutlet]="cellTemplateRefMap[column.field]"
-                                        [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
                                     </ng-container>
                                 }
                                 @if (cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
                                     <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                        [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
                                     </ng-container>
                                 }
                                 @if (!cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
                                     <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                        [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
                                     </ng-container>
                                 }
                                 @if (cellTemplateRef && !column.cellTemplate && !cellTemplateRefMap[column.field]) {
                                     <ng-container [ngTemplateOutlet]="cellTemplateRef"
-                                        [ngTemplateOutletContext]="{row:row,column:column,index:i}">
+                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
                                     </ng-container>
                                 }
                             </div>
@@ -1316,11 +1316,11 @@
                             <div (click)="$event.stopPropagation()">
                                 @if (inlineEditingTemplateRef && !cellEditing[i +'_'+column.field]) {
                                     <ng-container [ngTemplateOutlet]="inlineEditingTemplateRef"
-                                        [ngTemplateOutletContext]="{data:getInlineEditingData(row,i,column)}"></ng-container>
+                                        [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), field:column.field, index:i}"></ng-container>
                                 }
                                 @if (cellEditingTemplateRef && !(row.editable)) {
                                     <ng-container [ngTemplateOutlet]="cellEditingTemplateRef"
-                                        [ngTemplateOutletContext]="{data:getInlineEditingData(row,i,column)}"></ng-container>
+                                        [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), index:i}"></ng-container>
                                 }
                                 @if (!inlineEditingTemplateRef && (row.editable) && rowDataTemp['e'+i]) {
                                     @if (column.type == 'number') {
@@ -1510,7 +1510,7 @@
                                 [@detailExpand]="element == expandedElement ? 'expanded' : 'collapsed'">
                                 @if (expansionTemplateRef) {
                                     <ng-container [ngTemplateOutlet]="expansionTemplateRef"
-                                        [ngTemplateOutletContext]="{$explicit:element,row:element,index:i}">
+                                        [ngTemplateOutletContext]="{'$implicit':element, '$explicit':element, row:element, index:i}">
                                     </ng-container>
                                 }
                             </div>

@@ -20,6 +20,7 @@ import {
   OnChanges,
   OnInit,
   OnDestroy,
+  SimpleChange,
   SimpleChanges,
   TemplateRef,
   ViewChild,
@@ -45,6 +46,12 @@ import {
   ColumnVisibility,
   MTExColumnGroup,
   RowPinning,
+  MTExCellContext,
+  MTExHeaderContext,
+  MTExRowData,
+  MTExInlineEditingContext,
+  MTExCellEditingContext,
+  MTExExpandedDetailContext,
 } from '../lib/models/tableExtModels';
 import { MatTableExtService } from '../lib/mat-table-ext.service';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -109,18 +116,18 @@ import { ResizeColumnDirective } from './directives/resize-column.directive';
     ]),
   ],
 })
-export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
+export class MatTableExtComponent<T extends Record<string, unknown> = Record<string, unknown>> implements OnInit, OnChanges, AfterViewInit, OnDestroy {
   @ViewChild(MatMenuTrigger) menuTrigger!: MatMenuTrigger;
   @ViewChild('columnMenuTrigger') columnMenuTrigger!: MatMenuTrigger;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
   @ViewChild('matTable', { read: ElementRef }) matTableRef!: ElementRef;
-  @ViewChild('MyTable') table!: MatTable<any>;
+  @ViewChild('MyTable') table!: MatTable<T>;
   @ViewChild('MyTable', { read: ElementRef }) tableElement!: ElementRef;
 
   // Table inputs
-  @Input() dataSource!: MatTableDataSource<any>;
-  @Input() columns: MTExColumn[] = [];
+  @Input() dataSource!: MatTableDataSource<T>;
+  @Input() columns: MTExColumn<T>[] = [];
   @Input() columnResizable: boolean = false;
   @Input() stripedRows: boolean = false;
   @Input() rowHover: boolean = false;
@@ -143,7 +150,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit, O
   @Input() toolbarHeight: string = '50px';
   @Input() tableWidth: string = '100%';
   @Input() scrollbarH: boolean = false;
-  @Input() toolbarTemplate: TemplateRef<any> | undefined;
+  @Input() toolbarTemplate: TemplateRef<{$implicit: MatTableExtComponent<T>}> | undefined;
   @Input() columnHidable: boolean = false;
   @Input() columnPinnable: boolean = false;
   @Input() globalSearch: boolean = false;
@@ -154,15 +161,15 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit, O
   @Input() exportButtonEnable: boolean = false;
   @Input() printButtonEnable: boolean = false;
   @Input() pageSizeOptions: number[] = [10, 50, 100];
-  @Input() toolbarTemplateRef!: TemplateRef<any> | undefined;
-  @Input() headerTemplateRef!: TemplateRef<any> | null;
-  @Input() cellTemplateRef!: TemplateRef<any> | undefined;
-  @Input() expansionTemplateRef!: TemplateRef<any> | undefined;
-  @Input() popupEditingTemplateRef!: TemplateRef<any> | undefined;
-  @Input() inlineEditingTemplateRef!: TemplateRef<any> | undefined;
-  @Input() cellEditingTemplateRef!: TemplateRef<any> | undefined;
-  @Input() cellPopupEditingTemplateRef!: TemplateRef<any> | undefined;
-  @Input() cellTemplateRefMap: CellTemplateRefMap = {};
+  @Input() toolbarTemplateRef!: TemplateRef<{$implicit: MatTableExtComponent<T>}> | undefined;
+  @Input() headerTemplateRef!: TemplateRef<MTExHeaderContext<T>> | null;
+  @Input() cellTemplateRef!: TemplateRef<MTExCellContext<T>> | undefined;
+  @Input() expansionTemplateRef!: TemplateRef<MTExExpandedDetailContext<T>> | undefined;
+  @Input() popupEditingTemplateRef!: TemplateRef<MTExCellEditingContext<T>> | undefined;
+  @Input() inlineEditingTemplateRef!: TemplateRef<MTExInlineEditingContext<T>> | undefined;
+  @Input() cellEditingTemplateRef!: TemplateRef<MTExCellEditingContext<T>> | undefined;
+  @Input() cellPopupEditingTemplateRef!: TemplateRef<MTExCellEditingContext<T>> | undefined;
+  @Input() cellTemplateRefMap: CellTemplateRefMap<T> = {};
   @Input() tableClassName: string = '';
   @Input() columnGroups: MTExColumnGroup[] = [];
   @Input() hiddenRowIndices: number[] = [];
@@ -170,51 +177,51 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit, O
   @Input() enableRowPinning: boolean = false;
   @Input() topPinnedMaxHeight: string = ''; // Max height for top pinned table (e.g., '200px', '20vh')
   @Input() bottomPinnedMaxHeight: string = ''; // Max height for bottom pinned table (e.g., '200px', '20vh')
-  @Input() rowPinningFn?: (row: any, index: number) => 'top' | 'bottom' | null;
-  @Input() rowHidingFilterFn?: (row: any, index: number) => boolean;
+  @Input() rowPinningFn?: (row: T, index: number) => 'top' | 'bottom' | null;
+  @Input() rowHidingFilterFn?: (row: T, index: number) => boolean;
   @Input() pdfOrientation: 'portrait' | 'landscape' = 'portrait';
 
   // Table outputs
-  @Output() inlineChange: EventEmitter<any> = new EventEmitter<RowChange>();
-  @Output() cellChange: EventEmitter<any> = new EventEmitter<RowChange>();
-  @Output() popupChange: EventEmitter<any> = new EventEmitter<RowChange>();
-  @Output() rowDeleted: EventEmitter<any> = new EventEmitter<any>();
-  @Output() scroll: EventEmitter<any> = new EventEmitter<any>();
-  @Output() selectionChanged: EventEmitter<RowSelectionChange> =
-    new EventEmitter<any>();
-  @Output() expansionChange: EventEmitter<ExpansionChange> =
-    new EventEmitter<any>();
-  @Output() rowPinningChange: EventEmitter<{row: any, position: 'top' | 'bottom' | null}> = 
-    new EventEmitter<any>();
+  @Output() inlineChange: EventEmitter<RowChange<T>> = new EventEmitter<RowChange<T>>();
+  @Output() cellChange: EventEmitter<RowChange<T>> = new EventEmitter<RowChange<T>>();
+  @Output() popupChange: EventEmitter<RowChange<T>> = new EventEmitter<RowChange<T>>();
+  @Output() rowDeleted: EventEmitter<T> = new EventEmitter<T>();
+  @Output() scroll: EventEmitter<Event> = new EventEmitter<Event>();
+  @Output() selectionChanged: EventEmitter<RowSelectionChange<T>> =
+    new EventEmitter<RowSelectionChange<T>>();
+  @Output() expansionChange: EventEmitter<ExpansionChange<T>> =
+    new EventEmitter<ExpansionChange<T>>();
+  @Output() rowPinningChange: EventEmitter<{row: T, position: 'top' | 'bottom' | null}> = 
+    new EventEmitter<{row: T, position: 'top' | 'bottom' | null}>();
   tableID = new Date().getTime();
   columnPinningOptions: MTExColumnPinOption[] = [];
   exportMenuCtrl: boolean = false;
   columnPinMenuCtrl: boolean = false;
   hideShowMenuCtrl: boolean = false;
-  rowDataTemp: Record<string, MTExRow> = {};
-  inlineEditingTemplateRefData: any = {};
+  rowDataTemp: Record<string, T> = {};
+  inlineEditingTemplateRefData: Record<string, unknown> = {};
   displayedColumns: string[] = [];
-  showHideColumnsArray: MTExColumn[] = [];
+  showHideColumnsArray: MTExColumn<T>[] = [];
   columnsList: string[] = [];
-  columnsArray: MTExColumn[] = [];
+  columnsArray: MTExColumn<T>[] = [];
   headersFiltersIds: string[] = [];
   columnsToDisplayWithExpand: string[] = [];
-  selection = new SelectionModel<any>(false, []);
-  hiddenCtrl = new SelectionModel<any>(true, []);
-  tableData: MTExRow[] = [];
+  selection = new SelectionModel<T>(false, []);
+  hiddenCtrl = new SelectionModel<string>(true, []);
+  tableData: T[] = [];
   filterValues: Record<string, string | number | boolean> = {};
-  pinnedTopRows: any[] = [];
-  pinnedBottomRows: any[] = [];
+  pinnedTopRows: T[] = [];
+  pinnedBottomRows: T[] = [];
   rowPinMenuPosition = { x: '0px', y: '0px' };
-  rowPinMenuRow: any = null;
+  rowPinMenuRow: T | null = null;
   globalFilter = '';
   showHideFilter = '';
   individualFilter = '';
   toggleFilters = false;
   hideRows = false;
-  expandedElement: any | null;
+  expandedElement: T | null = null;
   currentRowIndex: number = -1;
-  currentRow: MTExRow = {};
+  currentRow: T = {} as T;
   cellEditing: Record<string, boolean> = {};
   // Store original sizes before entering edit mode
   private originalSizesBeforeEdit: {
@@ -277,7 +284,7 @@ export class MatTableExtComponent implements OnInit, OnChanges, AfterViewInit, O
  * Handle column pinning changes from ColumnPinningComponent
  * @param updatedColumns Updated columns array with new pinning states
  */
-updateColumns(updatedColumns: MTExColumn[]) {
+updateColumns(updatedColumns: MTExColumn<T>[]) {
   // Create a completely new columnsArray to trigger change detection
   this.columnsArray = updatedColumns.map(col => ({ ...col }));
   
@@ -746,43 +753,43 @@ updateColumns(updatedColumns: MTExColumn[]) {
   /**
    * @description This mapping is used to set and update changesin the table.
    */
-  setPropertiesMap: any = {
-    dataSource: (value: any) => this.setTableDataSource(value),
-    columns: (value: any) => this.setColumnsData(value.currentValue),
-    inlineRowEditing: (value: any) =>
+  setPropertiesMap: Record<string, (value: SimpleChange) => void> = {
+    dataSource: (value: SimpleChange) => this.setTableDataSource(value),
+    columns: (value: SimpleChange) => this.setColumnsData(value.currentValue),
+    inlineRowEditing: (value: SimpleChange) =>
       this.showHideColumn('edit', value.currentValue),
-    popupRowEditing: (value: any) =>
+    popupRowEditing: (value: SimpleChange) =>
       this.showHideColumn('popup', value.currentValue),
-    enableDelete: (value: any) =>
+    enableDelete: (value: SimpleChange) =>
       this.showHideColumn('delete', value.currentValue),
-    enableRowFreezing: (value: any) =>
+    enableRowFreezing: (value: SimpleChange) =>
       this.showHideColumn('freeze', value.currentValue),
-    enableRowHiding: (value: any) =>
+    enableRowHiding: (value: SimpleChange) =>
       this.showHideColumn('hide', value.currentValue),
-    enableRowPinning: (value: any) => {
+    enableRowPinning: (value: SimpleChange) => {
       this.showHideColumn('pin', value.currentValue);
       if (value.currentValue) {
         this.initializePinnedRows();
       }
     },
-    rowSelection: (value: any) => this.setRowSelection(value.currentValue),
-    multiRowSelection: (value: any) => {
-      this.selection = new SelectionModel<any>(value.currentValue, []);
+    rowSelection: (value: SimpleChange) => this.setRowSelection(value.currentValue),
+    multiRowSelection: (value: SimpleChange) => {
+      this.selection = new SelectionModel<T>(value.currentValue, []);
     },
-    stickyHeader: (value: any) => {
+    stickyHeader: (value: SimpleChange) => {
       this.stickyHeader = value.currentValue;
       // Recalculate pinned row offsets when sticky header changes
       setTimeout(() => this.updatePinnedRowOffsets(), 100);
     },
-    stickyFooter: (value: any) => {
+    stickyFooter: (value: SimpleChange) => {
       this.stickyFooter = value.currentValue;
       // Recalculate pinned row offsets when sticky footer changes
       setTimeout(() => this.updatePinnedRowOffsets(), 100);
     },
-    columnFilter: (value: any) => this.setColumnFilter(value.currentValue),
-    globalSearch: (value: any) =>
+    columnFilter: (value: SimpleChange) => this.setColumnFilter(value.currentValue),
+    globalSearch: (value: SimpleChange) =>
       (this.dataSource.filterPredicate = this.createFilter()),
-    expandRows: (value: any) => {
+    expandRows: (value: SimpleChange) => {
       this.loadingIndicator = true;
       this.dataSource = new MatTableDataSource(this.tableData);
       if (value.currentValue == true) {
@@ -802,14 +809,14 @@ updateColumns(updatedColumns: MTExColumn[]) {
         this.loadingIndicator = false;
       }, 200);
     },
-    sorting: (value: any) => {
+    sorting: (value: SimpleChange) => {
       this.dataSource.sort = this.sort;
       if (this.enableRowPinning) {
         this.pinnedTopDataSource.sort = this.sort;
         this.pinnedBtmDataSource.sort = this.sort;
       }
     },
-    columnGroups: (value: any) => {
+    columnGroups: (value: SimpleChange) => {
       this.columnGroups = value.currentValue || [];
       this.cdr.detectChanges();
       // When group headers change, re-sync column sizes for pinned tables
@@ -822,13 +829,13 @@ updateColumns(updatedColumns: MTExColumn[]) {
    * @description used set data source for table.
    * @param value data source value from user.
    */
-  setTableDataSource(value: any) {
+  setTableDataSource(value: SimpleChange) {
     if (value.currentValue) {
       this.tableData = value.currentValue.data;
       this.dataSource = value.currentValue;
       this.reCal();
     } else {
-      this.dataSource = new MatTableDataSource([{}]);
+      this.dataSource = new MatTableDataSource([{} as T]);
     }
   }
   /**
@@ -836,7 +843,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
    * @param value boolean value to show or hide selection Column from table.
    */
   setRowSelection(value: boolean) {
-    this.selection = new SelectionModel<any>(true, []);
+    this.selection = new SelectionModel<T>(true, []);
     this.updateSelectionColumnVisibility(value);
   }
 
@@ -1039,7 +1046,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
    * @description set list of columns to display in table.
    * @param columns columns array from user input.
    */
-  setColumnsData(columns: MTExColumn[]) {
+  setColumnsData(columns: MTExColumn<T>[]) {
     if (columns.length) {
       this.columnsArray = [...columns];
       this.setColumnsList(columns);
@@ -1050,7 +1057,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
    * @description set list of columns to display in table.
    * @param columns columns array from user input with configurations.
    */
-  setColumnsList(columns: MTExColumn[]) {
+  setColumnsList(columns: MTExColumn<T>[]) {
     this.columnsList = [];
     this.displayedColumns = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
     let columnsArray: DisplayColumn[] = [];
@@ -1155,7 +1162,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
    * @param event Mouse event
    * @param row The row to pin
    */
-  openRowPinMenu(event: MouseEvent, row: any): void {
+  openRowPinMenu(event: MouseEvent, row: T): void {
     event.stopPropagation();
     this.rowPinMenuPosition = {
       x: event.clientX + 'px',
@@ -1171,22 +1178,22 @@ updateColumns(updatedColumns: MTExColumn[]) {
     this.rowPinMenuRow = null;
   }
 
-  pinnedTopDataSource: MatTableDataSource<any> = new MatTableDataSource<any>([]);
-  pinnedBtmDataSource: MatTableDataSource<any> = new MatTableDataSource<any>([]);
+  pinnedTopDataSource: MatTableDataSource<T> = new MatTableDataSource<T>([]);
+  pinnedBtmDataSource: MatTableDataSource<T> = new MatTableDataSource<T>([]);
 
   /**
    * @description Pin row to top or bottom
    * @param row The row to pin
    * @param position 'top' or 'bottom'
    */
-  pinRow(row: any, position: 'top' | 'bottom'): void {
+  pinRow(row: T, position: 'top' | 'bottom'): void {
     console.log('pinRow called:', { row, position, enableRowPinning: this.enableRowPinning });
     
     // Remove from other position if exists
     this.unpinRow(row);
     
     // Mark the row with pinning metadata
-    row._pinnedPosition = position;
+    (row as Record<string, unknown>)['_pinnedPosition'] = position;
     
     // Add to the selected position
     if (position === 'top') {
@@ -1217,7 +1224,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
    * @description Unpin row from any position
    * @param row The row to unpin
    */
-  unpinRow(row: any): void {
+  unpinRow(row: T): void {
     const topIndex = this.pinnedTopRows.indexOf(row);
     if (topIndex > -1) {
       this.pinnedTopRows.splice(topIndex, 1);
@@ -1231,7 +1238,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
     }
     
     // Clear pinning metadata
-    delete row._pinnedPosition;
+    delete (row as Record<string, unknown>)['_pinnedPosition'];
     
     // Update the data source to trigger re-render
     this.updateDataSourceForPinning();
@@ -1245,7 +1252,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
    * @param row The row to check
    * @returns true if pinned
    */
-  isRowPinned(row: any): boolean {
+  isRowPinned(row: T): boolean {
     return this.pinnedTopRows.includes(row) || this.pinnedBottomRows.includes(row);
   }
 
@@ -1313,10 +1320,10 @@ updateColumns(updatedColumns: MTExColumn[]) {
     this.dataSource.data.forEach((row, index) => {
       const position = this.rowPinningFn!(row, index);
       if (position === 'top') {
-        row._pinnedPosition = 'top';
+        (row as Record<string, unknown>)['_pinnedPosition'] = 'top';
         this.pinnedTopRows.push(row);
       } else if (position === 'bottom') {
-        row._pinnedPosition = 'bottom';
+        (row as Record<string, unknown>)['_pinnedPosition'] = 'bottom';
         this.pinnedBottomRows.push(row);
       }
     });
@@ -1435,8 +1442,8 @@ updateColumns(updatedColumns: MTExColumn[]) {
    */
   applyGlobalFilter(searchValue: string) {
     this.globalFilter = searchValue;
-    let columns: any = {};
-    this.columnsArray.forEach((column: MTExColumn) => {
+    const columns: Record<string, string> = {};
+    this.columnsArray.forEach((column: MTExColumn<T>) => {
       if (column.field) columns[column.field] = searchValue;
     });
     this.dataSource.filter = JSON.stringify(columns);
@@ -1446,9 +1453,12 @@ updateColumns(updatedColumns: MTExColumn[]) {
    * @param searchValue value to be searched from table rows.
    * @param column filter will be applied based on this column field.
    */
-  applyColumnFilter(searchValue: FilterSearchValue, column: MTExColumn) {
+  applyColumnFilter(searchValue: FilterSearchValue, column: MTExColumn<T>) {
     this.individualFilter = column.field;
-    this.filterValues[column.field] = searchValue[column.field];
+    const value = searchValue[column.field];
+    if (value !== undefined && value !== null) {
+      this.filterValues[column.field] = value as string | number | boolean;
+    }
     this.dataSource.filter = JSON.stringify(this.filterValues);
     if (this.enableRowPinning) {
       setTimeout(() => this.syncColumnSizesFromTop(), 80);
@@ -1461,13 +1471,13 @@ updateColumns(updatedColumns: MTExColumn[]) {
    */
   enableInlineEditing(row: any, index: number) {
     // Check if another row is currently in edit mode
-    const currentEditIndex = this.tableData.findIndex((r: any) => r.editable === true);
+    const currentEditIndex = this.tableData.findIndex((r: any) => r['editable'] === true);
     
     if (currentEditIndex !== -1 && currentEditIndex !== index) {
       // Disable the previous row's edit mode
-      this.tableData[currentEditIndex]['editable'] = false;
+      (this.tableData[currentEditIndex] as any)['editable'] = false;
       // Clear the temporary data for the previous row
-      this.rowDataTemp['e' + currentEditIndex] = {};
+      this.rowDataTemp['e' + currentEditIndex] = {} as T;
       // Restore original sizes when switching rows
       if (this.enableRowPinning && this.originalSizesBeforeEdit) {
         this.restoreOriginalSizes();
@@ -1479,16 +1489,16 @@ updateColumns(updatedColumns: MTExColumn[]) {
     this.rowDataTemp = rowData;
     
     setTimeout(() => {
-      const wasEditable = this.tableData[index]['editable'];
-      this.tableData[index]['editable'] = !this.tableData[index]['editable'];
+      const wasEditable = (this.tableData[index] as any)['editable'];
+      (this.tableData[index] as any)['editable'] = !(this.tableData[index] as any)['editable'];
       
       // If row is now in edit mode, sync sizes from this edited row
-      if (this.tableData[index]['editable'] && this.enableRowPinning) {
+      if ((this.tableData[index] as any)['editable'] && this.enableRowPinning) {
         // Wait for DOM to update with edit controls
         setTimeout(() => {
           this.syncColumnSizesFromEditedRow(index);
         }, 100);
-      } else if (!this.tableData[index]['editable'] && this.enableRowPinning) {
+      } else if (!(this.tableData[index] as any)['editable'] && this.enableRowPinning) {
         // Row was disabled, restore original sizes
         this.restoreOriginalSizes();
       }
@@ -1500,7 +1510,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
    * @param index index of the row where inline editing will be enabled.
    * @param column current column of the table.
    */
-  getInlineEditingData(row: MTExRow, index: number, column: MTExColumn) {
+  getInlineEditingData(row: MTExRow, index: number, column: MTExColumn<T>) {
     this.inlineEditingTemplateRefData = {
       row: { ...row },
       column: { ...column },
@@ -1526,10 +1536,10 @@ updateColumns(updatedColumns: MTExColumn[]) {
     if (this.currentRowIndex !== -1 && this.currentRowIndex !== index) {
       // Find and cancel the previous inline editing row
       const previousEditableRow = this.tableData.find((r: any, i: number) => 
-        i === this.currentRowIndex && r.editable
+        i === this.currentRowIndex && r['editable']
       );
       if (previousEditableRow) {
-        previousEditableRow['editable'] = false;
+        (previousEditableRow as any)['editable'] = false;
       }
       // Clear previous cell editing states
       Object.keys(this.cellEditing).forEach(key => {
@@ -1537,7 +1547,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
           delete this.cellEditing[key];
         }
       });
-      this.rowDataTemp['e' + this.currentRowIndex] = {};
+      this.rowDataTemp['e' + this.currentRowIndex] = {} as T;
       
       // Restore sizes when switching from previous cell editing
       if (this.enableRowPinning) {
@@ -1545,9 +1555,9 @@ updateColumns(updatedColumns: MTExColumn[]) {
       }
     }
     
-    this.currentRow = { ...row };
+    this.currentRow = { ...row } as T;
     this.currentRowIndex = index;
-    this.rowDataTemp['e' + index] = { ...row };
+    this.rowDataTemp['e' + index] = { ...row } as T;
     
     // Sync column sizes from the edited row when cell editing starts
     if (this.enableRowPinning) {
@@ -1562,11 +1572,11 @@ updateColumns(updatedColumns: MTExColumn[]) {
    * @param index index of the row where inline editing will be enabled.
    */
   cancelInlineEditing(row: MTExRow, index: number) {
-    this.tableData.filter((a: any, i: number) => i == index)[0]['editable'] =
-      !this.tableData.filter((a: any, i: number) => i == index)[0]['editable'];
+    (this.tableData.filter((a: any, i: number) => i == index)[0] as any)['editable'] =
+      !(this.tableData.filter((a: any, i: number) => i == index)[0] as any)['editable'];
     this.dataSource = new MatTableDataSource(this.tableData);
-    this.rowDataTemp['e' + index] = {};
-    this.service.selectedRow.next(undefined);
+    this.rowDataTemp['e' + index] = {} as T;
+    this.service.selectedRow.next(null);
     
     // Restore original sizes after canceling edit mode
     if (this.enableRowPinning) {
@@ -1580,22 +1590,22 @@ updateColumns(updatedColumns: MTExColumn[]) {
    */
   saveInlineEditing(row: MTExRow, index: number) {
     if (!this.inlineEditingTemplateRef) {
-      this.tableData[index] = { ...this.rowDataTemp['e' + index] };
-      row = { ...this.rowDataTemp['e' + index] };
+      this.tableData[index] = { ...this.rowDataTemp['e' + index] } as T;
+      row = { ...this.rowDataTemp['e' + index] } as MTExRow;
     } else {
       let changedData = this.service.selectedRow.value;
       if (changedData) {
-        this.tableData[index] = { ...changedData };
+        this.tableData[index] = { ...changedData } as T;
       }
     }
     this.dataSource = new MatTableDataSource(this.tableData);
-    this.rowDataTemp['e' + index] = {};
-    let data: RowChange = {
-      row: row,
+    this.rowDataTemp['e' + index] = {} as T;
+    let data: RowChange<T> = {
+      row: row as T,
       index: index,
     };
     this.inlineChange.emit(data);
-    this.tableData[index]['editable'] = false;
+    (this.tableData[index] as any)['editable'] = false;
     
     // Restore original sizes after saving edit mode
     if (this.enableRowPinning) {
@@ -1612,15 +1622,15 @@ updateColumns(updatedColumns: MTExColumn[]) {
       if (this.cellEditingTemplateRef) {
         let changedData = this.service.selectedRow.value;
         if (changedData) {
-          this.tableData[index] = { ...changedData };
+          this.tableData[index] = { ...changedData } as T;
         }
       } else {
-        this.tableData[index] = { ...this.rowDataTemp['e' + index] };
+        this.tableData[index] = { ...this.rowDataTemp['e' + index] } as T;
       }
       this.dataSource = new MatTableDataSource(this.tableData);
-      this.rowDataTemp['e' + index] = {};
-      let data: RowChange = {
-        row: { ...this.tableData[index] },
+      this.rowDataTemp['e' + index] = {} as T;
+      let data: RowChange<T> = {
+        row: { ...this.tableData[index] } as T,
         index: index,
       };
       this.currentRowIndex = -1;
@@ -1642,7 +1652,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
     // this.dataSource = new MatTableDataSource(this.tableData);
     // this.dataSource.paginator = this.paginator;
     // this.dataSource.sort = this.sort;
-    this.rowDeleted.emit({ removedRow: row, fromIndex: index });
+    this.rowDeleted.emit(row as T);
   }
 
   /**
@@ -1653,8 +1663,8 @@ updateColumns(updatedColumns: MTExColumn[]) {
    */
   expandRow(row: MTExRow, expand: boolean, index: number) {
     if (this.expandRows) {
-      this.expansionChange.emit({ data: row, expanded: expand, index: index });
-      this.expandedElement = this.expandedElement === row ? null : row;
+      this.expansionChange.emit({ data: row as T, expanded: expand, index: index });
+      this.expandedElement = this.expandedElement === (row as T) ? null : (row as T);
     }
   }
   /**
@@ -1677,11 +1687,11 @@ updateColumns(updatedColumns: MTExColumn[]) {
       .open(EditingComponent, dialogConfig)
       .afterClosed()
       .subscribe((data) => {
-        let index = this.tableData.indexOf(row);
+        let index = this.tableData.indexOf(row as T);
         if (data && index > -1) {
           this.tableData[index] = data;
           this.dataSource = new MatTableDataSource(this.tableData);
-          let dataChange: RowChange = {
+          let dataChange: RowChange<T> = {
             row: data,
             index: index,
           };
@@ -1698,7 +1708,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
    * @param column column definition of the cell to edit.
    * @param rowIndex index of the row.
    */
-  openCellPopupDialog(row: any, column: MTExColumn, rowIndex: number) {
+  openCellPopupDialog(row: any, column: MTExColumn<T>, rowIndex: number) {
     const dialogConfig = new MatDialogConfig();
     dialogConfig.disableClose = true;
     dialogConfig.width = '400px';
@@ -1718,10 +1728,10 @@ updateColumns(updatedColumns: MTExColumn[]) {
       .afterClosed()
       .subscribe((data) => {
         if (data && data.field && rowIndex > -1) {
-          this.tableData[rowIndex][data.field] = data.value;
+          (this.tableData[rowIndex] as any)[data.field] = data.value;
           this.dataSource = new MatTableDataSource(this.tableData);
-          let dataChange: RowChange = {
-            row: { ...this.tableData[rowIndex] },
+          let dataChange: RowChange<T> = {
+            row: { ...this.tableData[rowIndex] } as T,
             index: rowIndex,
           };
           this.cellChange.emit(dataChange);
@@ -1769,10 +1779,10 @@ updateColumns(updatedColumns: MTExColumn[]) {
    * @description create form control for columns for hiding and and pinning purpose
    * @param columns list of columns to be displayed
    */
-  setToolbarMenuControls(columns: MTExColumn[]) {
+  setToolbarMenuControls(columns: MTExColumn<T>[]) {
     if (columns.length > 0 && this.showToolbar) {
       const group = this.formBuilder.group({});
-      columns.forEach((column: MTExColumn) => {
+      columns.forEach((column: MTExColumn<T>) => {
         const control = this.formBuilder.control(true);
         group.addControl(column.field, control);
       });
@@ -1784,7 +1794,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
    * @param column current column
    * @param event mouse event used to set the menu position
    */
-  openPinnablePropertyMenu(column: MTExColumn, event: MouseEvent): void {
+  openPinnablePropertyMenu(column: MTExColumn<T>, event: MouseEvent): void {
     this.menuX = event.clientX;
     this.menuY = event.clientY;
     let options: MTExColumnPinOption[] = [
@@ -1830,7 +1840,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
   filterColumns(value: string) {
     if (value !== '') {
       this.showHideColumnsArray = this.columnsArray.filter(
-        (col: MTExColumn) => {
+        (col: MTExColumn<T>) => {
           return col.header!.toLowerCase().includes(value.toLowerCase());
         }
       );
@@ -1842,7 +1852,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
    * @description This method is used to open hide show column menu.
    * @param columns columns array to display in hide show menu.
    */
-  openHideShowMenu(columns: MTExColumn[]) {
+  openHideShowMenu(columns: MTExColumn<T>[]) {
     this.showHideColumnsArray = [...columns];
     this.columnMenuTrigger.openMenu();
   }
@@ -1890,8 +1900,9 @@ updateColumns(updatedColumns: MTExColumn[]) {
     if (!this.selection.isEmpty()) {
       let values = [...this.selection.selected];
       values.forEach((value) => {
-        if (!this.hiddenCtrl.isSelected(value)) {
-          this.hiddenCtrl.toggle(value);
+        const rowId = JSON.stringify(value);
+        if (!this.hiddenCtrl.isSelected(rowId)) {
+          this.hiddenCtrl.toggle(rowId);
         }
       });
       this.selection.clear();
@@ -1952,7 +1963,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
     const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
     
     // Get visible columns in the correct order (grouped first, ungrouped at end)
-    let visibleColumns: MTExColumn[] = [];
+    let visibleColumns: MTExColumn<T>[] = [];
     
     if (this.columnGroups.length > 0) {
       const groupedFields = new Set<string>();
@@ -2184,7 +2195,7 @@ updateColumns(updatedColumns: MTExColumn[]) {
       const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
 
       // Get visible columns in the correct order (grouped first, ungrouped at end)
-      let visibleColumns: MTExColumn[] = [];
+      let visibleColumns: MTExColumn<T>[] = [];
       
       if (this.columnGroups.length > 0) {
         const groupedFields = new Set<string>();
