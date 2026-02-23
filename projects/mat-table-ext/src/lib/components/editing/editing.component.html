@@ -3,7 +3,7 @@
         <div mat-dialog-title class="dialog-title-container">
             <h4 style="margin: 0;">{{ isCellEdit ? 'Edit Cell' : 'Edit Row' }}</h4>
             <span class="example-spacer"></span>
-            <button style="margin-right: -10px;" mat-icon-button aria-label="Example icon button with a vertical three dot icon">
+            <button style="margin-right: -10px;" matIconButton aria-label="Example icon button with a vertical three dot icon">
                 <mat-icon mat-dialog-close style="cursor: pointer;" fxFlex="5">close</mat-icon>
             </button>
         </div>
@@ -77,7 +77,8 @@
             
             <!-- Row-level editing -->
             @if (!isCellEdit) {
-                <div style="display: flex; flex-direction: column;">\n                @for (key of keys; track key) {
+                <div style="display: flex; flex-direction: column;">
+                                  @for (key of keys; track key) {
                     <!-- Number Type -->
                     @if (types[key] == 'number') {
                         <mat-form-field appearance="outline" class="inline-editing-field">
@@ -119,8 +120,8 @@
                     @if (types[key] == 'selection') {
                         <mat-form-field appearance="outline" class="inline-editing-field">
                             <mat-label>{{key | titlecase}}</mat-label>
-                            <mat-select [value]="dialogData['row'][key].value" [(ngModel)]="dialogData['row'][key].value">
-                                @for (option of dialogData['row'][key].options; track option) {
+                            <mat-select [ngModel]="getSelectionValue(key)" (ngModelChange)="setSelectionValue(key, $event)">
+                                @for (option of getSelectionOptions(key); track option) {
                                     <mat-option [value]="option">{{option}}</mat-option>
                                 }
                             </mat-select>
@@ -148,5 +149,5 @@
     </div>
 }
 @if (templateRef) {
-    <ng-container [ngTemplateOutlet]="templateRef" [ngTemplateOutletContext]="{data:{row:templateRow,columns:columns,columnKeys:templateKeys,columnTypes:templateTypes,closeDialog:closeTemplateDialog}}"></ng-container>
+    <ng-container [ngTemplateOutlet]="templateRef" [ngTemplateOutletContext]="{$implicit:{row:templateRow,columns:columns,columnKeys:templateKeys,columnTypes:templateTypes,closeDialog:closeTemplateDialog}}"></ng-container>
 }

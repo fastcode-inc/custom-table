@@ -1,7 +1,48 @@
 import { TemplateRef } from '@angular/core';
 import { Observable } from 'rxjs';
+
+/** Generic row data type - defaults to Record<string, unknown> for flexibility */
+export type MTExRowData = Record<string, unknown>;
+
+/** Context type for cell templates */
+export interface MTExCellContext<T = MTExRowData> {
+  $implicit: T;
+  row: T;
+  column: MTExColumn<T>;
+  index: number;
+}
+
+/** Context type for header templates */
+export interface MTExHeaderContext<T = MTExRowData> {
+  $implicit: MTExColumn<T>;
+  data: MTExColumn<T>;
+}
+
+/** Context type for inline editing templates */
+export interface MTExInlineEditingContext<T = MTExRowData> {
+  $implicit: T;
+  data: T;
+  field: string;
+  index: number;
+}
+
+/** Context type for cell editing templates */
+export interface MTExCellEditingContext<T = MTExRowData> {
+  $implicit: T;
+  data: T;
+  index: number;
+}
+
+/** Context type for expanded detail templates */
+export interface MTExExpandedDetailContext<T = MTExRowData> {
+  $implicit: T;
+  $explicit: T;
+  row: T;
+  index: number;
+}
+
 /** Column definition of mat-table-ext. */
-export interface MTExColumn {
+export interface MTExColumn<T = MTExRowData> {
   field: string;
   options?: string[];
   header?: string;
@@ -23,12 +64,12 @@ export interface MTExColumn {
   sortProp?: MTExColumnSortProp;
   typeParameter?: MTExColumnTypeParameter;
   tag?: MTExColumnTag;
-  formatter?: (rowData: any, colDef?: MTExColumn) => void;
-  cellTemplate?: TemplateRef<any> | null;
-  headerTemplate?: TemplateRef<any> | null;
+  formatter?: (rowData: T, colDef?: MTExColumn<T>) => string | number | boolean | null | undefined;
+  cellTemplate?: TemplateRef<MTExCellContext<T>> | null;
+  headerTemplate?: TemplateRef<MTExHeaderContext<T>> | null;
   showExpand?: boolean;
   description?: string;
-  summary?: ((data: any[], colDef?: MTExColumn) => void) | string;
+  summary?: ((data: T[], colDef?: MTExColumn<T>) => string | number) | string;
   class?: string;
   groupName?: string;
 }
@@ -72,22 +113,22 @@ export interface DisplayColumn {
   name: string;
   show: boolean;
 }
-export interface RowChange {
-  row: { [key: string]: any };
+export interface RowChange<T = MTExRowData> {
+  row: T;
   index: number;
 }
-export interface RowSelectionChange {
-  row: { [key: string]: any };
+export interface RowSelectionChange<T = MTExRowData> {
+  row: T;
   index: number;
   isSelected: boolean;
 }
-export interface ExpansionChange {
-  data: { [key: string]: any };
+export interface ExpansionChange<T = MTExRowData> {
+  data: T;
   index: number;
   expanded: boolean;
 }
-export interface CellTemplateRefMap {
-  [key: string]: TemplateRef<any>;
+export interface CellTemplateRefMap<T = MTExRowData> {
+  [key: string]: TemplateRef<MTExCellContext<T>>;
 }
 /** Possible column type values. */
 export declare type MTExColumnType =
@@ -111,17 +152,17 @@ export declare type TooltipPosition =
   | 'after';
 
 /** Cell template. */
-export interface MTExCellTemplate {
-  [key: string]: TemplateRef<any>;
+export interface MTExCellTemplate<T = MTExRowData> {
+  [key: string]: TemplateRef<MTExCellContext<T>>;
 }
 export interface FilterSearchValue {
-  [key: string]: any;
+  [key: string]: string | number | boolean | Date | null | undefined;
 }
-export interface MTExRow {
-  [key: string]: any;
+export interface MTExRow extends MTExRowData {
+  [key: string]: unknown;
 }
 export interface ColumnVisibility {
-  [key: string]: any;
+  [key: string]: boolean;
 }
 
 export interface MTExColumnPinOption {
@@ -143,13 +184,13 @@ export interface RowPinning {
 export declare type RowPinPosition = 'top' | 'bottom' | null;
 
 /** Function type to determine row pinning position */
-export declare type RowPinningFunction = (row: any, index: number) => RowPinPosition;
+export declare type RowPinningFunction<T = MTExRowData> = (row: T, index: number) => RowPinPosition;
 
 /** Function type to determine if a row should be hidden */
-export declare type RowHidingFilterFunction = (row: any, index: number) => boolean;
+export declare type RowHidingFilterFunction<T = MTExRowData> = (row: T, index: number) => boolean;
 
 /** Table configuration for pinned tables */
-export interface MTExPinnedTableConfig {
+export interface MTExPinnedTableConfig<T = MTExRowData> {
   /** Enable row pinning feature */
   enableRowPinning?: boolean;
   /** Maximum height for the top pinned table (e.g., '200px', '20vh'). When set, enables scrolling if rows exceed this height. */
@@ -157,22 +198,22 @@ export interface MTExPinnedTableConfig {
   /** Maximum height for the bottom pinned table (e.g., '200px', '20vh'). When set, enables scrolling if rows exceed this height. */
   pinnedBottomTableMaxHeight?: string;
   /** Function to determine which rows should be pinned and their position */
-  rowPinningFn?: RowPinningFunction;
+  rowPinningFn?: RowPinningFunction<T>;
 }
 
 /** Table configuration for row hiding */
-export interface MTExRowHidingConfig {
+export interface MTExRowHidingConfig<T = MTExRowData> {
   /** Enable row hiding feature */
   enableRowHiding?: boolean;
   /** Array of row indices to hide */
   hiddenRowIndices?: number[];
   /** Function to determine if a row should be hidden */
-  rowHidingFilterFn?: RowHidingFilterFunction;
+  rowHidingFilterFn?: RowHidingFilterFunction<T>;
 }
 
 /** Event emitted when row pinning changes */
-export interface RowPinningChangeEvent {
-  row: any;
+export interface RowPinningChangeEvent<T = MTExRowData> {
+  row: T;
   position: RowPinPosition;
   index?: number;
 }

@@ -8,10 +8,10 @@
 
 .column-headers {
   font-family: Roboto, 'Helvetica Neue', sans-serif;
-  font-size: 14px; /* Adjust font size for better alignment */
+  // font-size: 14px; /* Adjust font size for better alignment */
 }
 
-button[mat-icon-button] {
+button[matIconButton] {
   background: none; /* Remove any background */
   border: none; /* Remove border/outline */
   outline: none; /* Explicitly remove outline */

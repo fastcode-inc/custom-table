@@ -5,8 +5,8 @@ import { BehaviorSubject } from 'rxjs';
 @Injectable({
   providedIn: 'root'
 })
-export class MatTableExtService {
-  public selectedRow = new BehaviorSubject<any>(null);
+export class MatTableExtService<T = Record<string, unknown>> {
+  public selectedRow = new BehaviorSubject<T | null>(null);
   
   constructor(public http: HttpClient) { }
 }

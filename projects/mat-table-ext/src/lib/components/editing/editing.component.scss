@@ -17,3 +17,15 @@
 .spacer {
     flex-grow: 1;
 }
+
+.example-spacer {
+    flex: 1 1 auto;
+}
+
+.inline-editing-field {
+    padding: 8px 0;
+}
+
+.inline-editing-field div.mat-mdc-form-field-subscript-wrapper {
+    display: none;
+}

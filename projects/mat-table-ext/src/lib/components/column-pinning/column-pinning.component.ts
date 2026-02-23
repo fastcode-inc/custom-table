@@ -1,9 +1,10 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { MTExColumn } from '../../models/tableExtModels';
+import { MTExColumn, MTExRowData } from '../../models/tableExtModels';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TitleCasePipe } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
 
 @Component({
   selector: 'app-column-pinning',
@@ -13,14 +14,15 @@ import { TitleCasePipe } from '@angular/common';
   imports: [
     CommonModule,
     MatIconModule,
+    MatButtonModule,
     MatTooltipModule,
     TitleCasePipe
   ]
 })
-export class ColumnPinningComponent implements OnInit {
-  @Input() columns!: MTExColumn[];
-  @Output() columnsChanged: EventEmitter<MTExColumn[]> = new EventEmitter();
-  public icons = {
+export class ColumnPinningComponent<T extends MTExRowData = MTExRowData> implements OnInit {
+  @Input() columns!: MTExColumn<T>[];
+  @Output() columnsChanged: EventEmitter<MTExColumn<T>[]> = new EventEmitter();
+  icons = {
     left: 'pinLeft',
     right: 'pinRight',
     none: 'pinNone',
@@ -32,7 +34,7 @@ export class ColumnPinningComponent implements OnInit {
    * @description This method is called when pin value changes for a column.
    * @param column column of which to set the pin value
    */
-  changeValue(column: MTExColumn) {
+  changeValue(column: MTExColumn<T>) {
     if (column.pinned) {
       if (column.pinned == 'left') {
         this.setColumnPinValue(column, 'right');
@@ -51,7 +53,7 @@ export class ColumnPinningComponent implements OnInit {
    * @param column column of which to set the pin value
    * @param value pin value to set
    */
-  setColumnPinValue(column: MTExColumn, value: 'left' | 'right' | null) {
+  setColumnPinValue(column: MTExColumn<T>, value: 'left' | 'right' | null) {
     // Create a new array with updated column
     this.columns = this.columns.map(col => {
       if (column?.field == col.field) {
