@@ -1,4 +1,136 @@
 <div [style.width]="tableWidth">
+
+    <!-- ==================== SHARED TEMPLATES ==================== -->
+
+    <!-- Shared: Read-only cell display content -->
+    <ng-template #cellDisplayTpl let-row="row" let-column="column" let-i="index">
+        @if (!cellTemplateRef && !column?.cellTemplate && !cellTemplateRefMap[column.field]) {
+            <span>{{row[column.field]}}</span>
+        }
+        @if (cellTemplateRefMap[column.field]) {
+            <ng-container [ngTemplateOutlet]="cellTemplateRefMap[column.field]"
+                [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
+            </ng-container>
+        }
+        @if (cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
+            <ng-container [ngTemplateOutlet]="column.cellTemplate"
+                [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
+            </ng-container>
+        }
+        @if (!cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
+            <ng-container [ngTemplateOutlet]="column.cellTemplate"
+                [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
+            </ng-container>
+        }
+        @if (cellTemplateRef && !column.cellTemplate && !cellTemplateRefMap[column.field]) {
+            <ng-container [ngTemplateOutlet]="cellTemplateRef"
+                [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
+            </ng-container>
+        }
+    </ng-template>
+
+    <!-- Shared: Editing form fields (type switch) -->
+    <ng-template #editingFieldsTpl let-row="row" let-column="column" let-i="index">
+        @if (column.type == 'number') {
+            <mat-form-field appearance="outline" class="inline-editing-field">
+                <input matInput type="number" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                    [ngModelOptions]="{standalone: true}">
+            </mat-form-field>
+        }
+        @if (column.type == 'string') {
+            <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
+                <input matInput type="text" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                    [ngModelOptions]="{standalone: true}">
+            </mat-form-field>
+        }
+        @if (column.type == 'textarea') {
+            <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
+                <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                    [ngModelOptions]="{standalone: true}"></textarea>
+            </mat-form-field>
+        }
+        @if (column.type == 'date') {
+            <mat-form-field appearance="outline" class="inline-editing-field">
+                <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                    [ngModelOptions]="{standalone: true}">
+            </mat-form-field>
+        }
+        @if (column.type == 'datepicker') {
+            <mat-form-field appearance="outline" class="inline-editing-field">
+                <input matInput [matDatepicker]="sharedPicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                    [ngModelOptions]="{standalone: true}">
+                <mat-datepicker-toggle matIconSuffix [for]="sharedPicker"></mat-datepicker-toggle>
+                <mat-datepicker #sharedPicker></mat-datepicker>
+            </mat-form-field>
+        }
+        @if (column.type == 'selection') {
+            <mat-form-field appearance="outline" class="inline-editing-field">
+                <mat-select [value]="rowDataTemp['e'+i][column.field]"
+                    [(ngModel)]="rowDataTemp['e'+i][column.field]">
+                    @for (option of column.options; track option) {
+                        <mat-option [value]="option">{{option}}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+        }
+        @if (column.type == 'boolean') {
+            <mat-checkbox (click)="$event.stopPropagation()" color="primary" [(ngModel)]="row[column.field]"></mat-checkbox>
+        }
+    </ng-template>
+
+    <!-- Shared: Full editable cell content wrapper -->
+    <ng-template #editCellTpl let-row="row" let-column="column" let-i="index">
+        <div (click)="$event.stopPropagation()">
+            @if (inlineEditingTemplateRef && !cellEditing[i +'_'+column.field]) {
+                <ng-container [ngTemplateOutlet]="inlineEditingTemplateRef"
+                    [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), field:column.field, index:i}"></ng-container>
+            }
+            @if (cellEditingTemplateRef && !(row.editable)) {
+                <ng-container [ngTemplateOutlet]="cellEditingTemplateRef"
+                    [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), index:i}"></ng-container>
+            }
+            @if (!inlineEditingTemplateRef && (row.editable) && rowDataTemp['e'+i]) {
+                <ng-container [ngTemplateOutlet]="editingFieldsTpl"
+                    [ngTemplateOutletContext]="{row:row, column:column, index:i}"></ng-container>
+            }
+            @if (!cellEditingTemplateRef && cellEditing[i +'_'+column.field]) {
+                <ng-container [ngTemplateOutlet]="editingFieldsTpl"
+                    [ngTemplateOutletContext]="{row:row, column:column, index:i}"></ng-container>
+            }
+        </div>
+    </ng-template>
+
+    <!-- Shared: Header cell content -->
+    <ng-template #headerCellContentTpl let-column="column">
+        @if (column.headerTemplate || headerTemplateRef) {
+            <ng-template [ngTemplateOutlet]="column.headerTemplate || headerTemplateRef"
+                [ngTemplateOutletContext]="{$implicit:column, data:column}"></ng-template>
+        }
+        @if (!headerTemplateRef && !column.headerTemplate) {
+            <span matTooltip="{{column.headerTooltip?.value}}"
+                [matTooltipPosition]="column?.headerTooltip?.tooltipPosition!"
+                [class.disabled]="!sorting || column.disabled === true">{{column.header}}</span>
+        }
+    </ng-template>
+
+    <!-- Shared: Expanded detail content -->
+    <ng-template #expandedDetailContentTpl let-element="element" let-i="index">
+        <div class="example-element-detail"
+            [@detailExpand]="element == expandedElement ? 'expanded' : 'collapsed'">
+            @if (expansionTemplateRef) {
+                <ng-container [ngTemplateOutlet]="expansionTemplateRef"
+                    [ngTemplateOutletContext]="{'$implicit':element, '$explicit':element, row:element, index:i}">
+                </ng-container>
+            }
+        </div>
+    </ng-template>
+
+    <!-- Shared: Data row definition -->
+    <ng-template #dataRowClassesTpl>
+    </ng-template>
+
+    <!-- ==================== END SHARED TEMPLATES ==================== -->
+
     @if (globalSearch) {
         <mat-form-field class="global-search-field" appearance="fill">
             <mat-label>Search</mat-label>
@@ -173,151 +305,21 @@
                         [columnsResizable]="columnResizable" [index]="i" class="mat-mdc-header-cell"
                         [mat-sort-header]="column.field" [disabled]="!sorting || column.disabled === true">
     
-                        @if (column.headerTemplate || headerTemplateRef) {
-                            <ng-template [ngTemplateOutlet]="column.headerTemplate || headerTemplateRef"
-                                [ngTemplateOutletContext]="{$implicit:column, data:column}"></ng-template>
-                        }
-                        @if (!headerTemplateRef && !column.headerTemplate) {
-                            <span matTooltip="{{column.headerTooltip?.value}}"
-                                [matTooltipPosition]="column?.headerTooltip?.tooltipPosition!"
-                                [class.disabled]="!sorting || column.disabled === true">{{column.header}}</span>
-                        }
+                        <ng-container [ngTemplateOutlet]="headerCellContentTpl"
+                            [ngTemplateOutletContext]="{column:column}"></ng-container>
                     </th>
                     <td mat-cell *matCellDef="let row ;let i=dataIndex" class="mat-mdc-cell">
                         @if (!row.editable && !cellEditing[i +'_'+column.field]) {
                             <div [style.cursor]="'default'"
                                 matTooltip="{{column.cellTooltip?.value}}"
                                 [matTooltipPosition]="column?.cellTooltip?.tooltipPosition!">
-                                @if (!cellTemplateRef && !column?.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                    <span>{{row[column.field]}}</span>
-                                }
-                                @if (cellTemplateRefMap[column.field]) {
-                                    <ng-container [ngTemplateOutlet]="cellTemplateRefMap[column.field]"
-                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
-                                    </ng-container>
-                                }
-                                @if (cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                    <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
-                                    </ng-container>
-                                }
-                                @if (!cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                    <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
-                                    </ng-container>
-                                }
-                                @if (cellTemplateRef && !column.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                    <ng-container [ngTemplateOutlet]="cellTemplateRef"
-                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
-                                    </ng-container>
-                                }
+                                <ng-container [ngTemplateOutlet]="cellDisplayTpl"
+                                    [ngTemplateOutletContext]="{row:row, column:column, index:i}"></ng-container>
                             </div>
                         }
                         @if (row.editable || cellEditing[i +'_'+column.field]) {
-                            <div (click)="$event.stopPropagation()">
-                                @if (inlineEditingTemplateRef && !cellEditing[i +'_'+column.field]) {
-                                    <ng-container [ngTemplateOutlet]="inlineEditingTemplateRef"
-                                        [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), field:column.field, index:i}"></ng-container>
-                                }
-                                @if (cellEditingTemplateRef && !(row.editable)) {
-                                    <ng-container [ngTemplateOutlet]="cellEditingTemplateRef"
-                                        [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), index:i}"></ng-container>
-                                }
-                                @if (!inlineEditingTemplateRef && (row.editable) && rowDataTemp['e'+i]) {
-                                    @if (column.type == 'number') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="number" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'string') {
-                                        <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
-                                            <input matInput type="text" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'textarea') {
-                                        <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
-                                            <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}"></textarea>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'date') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'datepicker') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput [matDatepicker]="inlinePicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                            <mat-datepicker-toggle matIconSuffix [for]="inlinePicker"></mat-datepicker-toggle>
-                                            <mat-datepicker #inlinePicker></mat-datepicker>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'selection') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <mat-select [value]="rowDataTemp['e'+i][column.field]"
-                                                [(ngModel)]="rowDataTemp['e'+i][column.field]">
-                                                @for (option of column.options; track option) {
-                                                    <mat-option [value]="option">{{option}}</mat-option>
-                                                }
-                                            </mat-select>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'boolean') {
-                                        <mat-checkbox (click)="$event.stopPropagation()" color="primary" [(ngModel)]="row[column.field]"></mat-checkbox>
-                                    }
-                                }
-                                @if (!cellEditingTemplateRef && cellEditing[i +'_'+column.field]) {
-                                    @if (column.type == 'number') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="number" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'string') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="text" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'textarea') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}"></textarea>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'date') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'datepicker') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput [matDatepicker]="cellPicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                            <mat-datepicker-toggle matIconSuffix [for]="cellPicker"></mat-datepicker-toggle>
-                                            <mat-datepicker #cellPicker></mat-datepicker>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'selection') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <mat-select [value]="rowDataTemp['e'+i][column.field]"
-                                                [(ngModel)]="rowDataTemp['e'+i][column.field]">
-                                                @for (option of column.options; track option) {
-                                                    <mat-option [value]="option">{{option}}</mat-option>
-                                                }
-                                            </mat-select>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'boolean') {
-                                        <mat-checkbox (click)="$event.stopPropagation()" color="primary" [(ngModel)]="row[column.field]"></mat-checkbox>
-                                    }
-                                }
-                            </div>
+                            <ng-container [ngTemplateOutlet]="editCellTpl"
+                                [ngTemplateOutletContext]="{row:row, column:column, index:i}"></ng-container>
                         }
                     </td>
                     @if (showFooterRow) {
@@ -550,15 +552,8 @@
                         [columnsResizable]="columnResizable" [index]="i" class="mat-mdc-header-cell"
                         [mat-sort-header]="column.field" [disabled]="!sorting || column.disabled === true">
     
-                        @if (column.headerTemplate || headerTemplateRef) {
-                                <ng-template [ngTemplateOutlet]="column.headerTemplate || headerTemplateRef"
-                                    [ngTemplateOutletContext]="{$implicit:column, data:column}"></ng-template>
-                        }
-                        @if (!headerTemplateRef && !column.headerTemplate) {
-                            <span matTooltip="{{column.headerTooltip?.value}}"
-                                [matTooltipPosition]="column?.headerTooltip?.tooltipPosition!"
-                                [class.disabled]="!sorting || column.disabled === true">{{column.header}}</span>
-                        }
+                        <ng-container [ngTemplateOutlet]="headerCellContentTpl"
+                            [ngTemplateOutletContext]="{column:column}"></ng-container>
                     </th>
                     <td mat-cell *matCellDef="let row ;let i=dataIndex" class="mat-mdc-cell">
                         @if (!row.editable && !cellEditing[i +'_'+column.field]) {
@@ -567,136 +562,13 @@
                                 [style.cursor]="cellPopupEditing ? 'pointer' : 'default'"
                                 matTooltip="{{column.cellTooltip?.value}}"
                                 [matTooltipPosition]="column?.cellTooltip?.tooltipPosition!">
-                                @if (!cellTemplateRef && !column?.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                    <span>{{row[column.field]}}</span>
-                                }
-                                @if (cellTemplateRefMap[column.field]) {
-                                    <ng-container [ngTemplateOutlet]="cellTemplateRefMap[column.field]"
-                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
-                                    </ng-container>
-                                }
-                                @if (cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                    <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
-                                    </ng-container>
-                                }
-                                @if (!cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                    <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
-                                    </ng-container>
-                                }
-                                @if (cellTemplateRef && !column.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                    <ng-container [ngTemplateOutlet]="cellTemplateRef"
-                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
-                                    </ng-container>
-                                }
+                                <ng-container [ngTemplateOutlet]="cellDisplayTpl"
+                                    [ngTemplateOutletContext]="{row:row, column:column, index:i}"></ng-container>
                             </div>
                         }
                         @if (row.editable || cellEditing[i +'_'+column.field]) {
-                            <div (click)="$event.stopPropagation()">
-                                @if (inlineEditingTemplateRef && !cellEditing[i +'_'+column.field]) {
-                                    <ng-container [ngTemplateOutlet]="inlineEditingTemplateRef"
-                                        [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), field:column.field, index:i}"></ng-container>
-                                }
-                                @if (cellEditingTemplateRef && !(row.editable)) {
-                                    <ng-container [ngTemplateOutlet]="cellEditingTemplateRef"
-                                        [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), index:i}"></ng-container>
-                                }
-                                @if (!inlineEditingTemplateRef && (row.editable) && rowDataTemp['e'+i]) {
-                                    @if (column.type == 'number') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="number" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'string') {
-                                        <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
-                                            <input matInput type="text" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'textarea') {
-                                        <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
-                                            <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}"></textarea>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'date') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'datepicker') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput [matDatepicker]="inlinePicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                            <mat-datepicker-toggle matIconSuffix [for]="inlinePicker"></mat-datepicker-toggle>
-                                            <mat-datepicker #inlinePicker></mat-datepicker>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'selection') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <mat-select [value]="rowDataTemp['e'+i][column.field]"
-                                                [(ngModel)]="rowDataTemp['e'+i][column.field]">
-                                                @for (option of column.options; track option) {
-                                                    <mat-option [value]="option">{{option}}</mat-option>
-                                                }
-                                            </mat-select>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'boolean') {
-                                        <mat-checkbox (click)="$event.stopPropagation()" color="primary" [(ngModel)]="row[column.field]"></mat-checkbox>
-                                    }
-                                }
-                                @if (!cellEditingTemplateRef && cellEditing[i +'_'+column.field]) {
-                                    @if (column.type == 'number') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="number" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'string') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="text" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'textarea') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}"></textarea>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'date') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'datepicker') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput [matDatepicker]="cellPicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                            <mat-datepicker-toggle matIconSuffix [for]="cellPicker"></mat-datepicker-toggle>
-                                            <mat-datepicker #cellPicker></mat-datepicker>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'selection') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <mat-select [value]="rowDataTemp['e'+i][column.field]"
-                                                [(ngModel)]="rowDataTemp['e'+i][column.field]">
-                                                @for (option of column.options; track option) {
-                                                    <mat-option [value]="option">{{option}}</mat-option>
-                                                }
-                                            </mat-select>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'boolean') {
-                                        <mat-checkbox (click)="$event.stopPropagation()" color="primary" [(ngModel)]="row[column.field]"></mat-checkbox>
-                                    }
-                                }
-                            </div>
+                            <ng-container [ngTemplateOutlet]="editCellTpl"
+                                [ngTemplateOutletContext]="{row:row, column:column, index:i}"></ng-container>
                         }
                     </td>
                     @if (showFooterRow) {
@@ -914,151 +786,21 @@
                             [columnsResizable]="columnResizable" [index]="i" class="mat-mdc-header-cell"
                             [mat-sort-header]="column.field" [disabled]="!sorting || column.disabled === true">
         
-                            @if (column.headerTemplate || headerTemplateRef) {
-                                    <ng-template [ngTemplateOutlet]="column.headerTemplate || headerTemplateRef"
-                                        [ngTemplateOutletContext]="{$implicit:column, data:column}"></ng-template>
-                            }
-                            @if (!headerTemplateRef && !column.headerTemplate) {
-                                <span matTooltip="{{column.headerTooltip?.value}}"
-                                    [matTooltipPosition]="column?.headerTooltip?.tooltipPosition!"
-                                    [class.disabled]="!sorting || column.disabled === true">{{column.header}}</span>
-                            }
+                            <ng-container [ngTemplateOutlet]="headerCellContentTpl"
+                                [ngTemplateOutletContext]="{column:column}"></ng-container>
                         </th>
                         <td mat-cell *matCellDef="let row ;let i=dataIndex" class="mat-mdc-cell">
                             @if (!row.editable && !cellEditing[i +'_'+column.field]) {
                                 <div [style.cursor]="'default'"
                                     matTooltip="{{column.cellTooltip?.value}}"
                                     [matTooltipPosition]="column?.cellTooltip?.tooltipPosition!">
-                                    @if (!cellTemplateRef && !column?.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                        <span>{{row[column.field]}}</span>
-                                    }
-                                    @if (cellTemplateRefMap[column.field]) {
-                                        <ng-container [ngTemplateOutlet]="cellTemplateRefMap[column.field]"
-                                            [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
-                                        </ng-container>
-                                    }
-                                    @if (cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                        <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                            [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
-                                        </ng-container>
-                                    }
-                                    @if (!cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                        <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                            [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
-                                        </ng-container>
-                                    }
-                                    @if (cellTemplateRef && !column.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                        <ng-container [ngTemplateOutlet]="cellTemplateRef"
-                                            [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
-                                        </ng-container>
-                                    }
+                                    <ng-container [ngTemplateOutlet]="cellDisplayTpl"
+                                        [ngTemplateOutletContext]="{row:row, column:column, index:i}"></ng-container>
                                 </div>
                             }
                             @if (row.editable || cellEditing[i +'_'+column.field]) {
-                                <div (click)="$event.stopPropagation()">
-                                    @if (inlineEditingTemplateRef && !cellEditing[i +'_'+column.field]) {
-                                        <ng-container [ngTemplateOutlet]="inlineEditingTemplateRef"
-                                            [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), field:column.field, index:i}"></ng-container>
-                                    }
-                                    @if (cellEditingTemplateRef && !(row.editable)) {
-                                        <ng-container [ngTemplateOutlet]="cellEditingTemplateRef"
-                                            [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), index:i}"></ng-container>
-                                    }
-                                    @if (!inlineEditingTemplateRef && (row.editable) && rowDataTemp['e'+i]) {
-                                        @if (column.type == 'number') {
-                                            <mat-form-field appearance="outline" class="inline-editing-field">
-                                                <input matInput type="number" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                    [ngModelOptions]="{standalone: true}">
-                                            </mat-form-field>
-                                        }
-                                        @if (column.type == 'string') {
-                                            <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
-                                                <input matInput type="text" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                    [ngModelOptions]="{standalone: true}">
-                                            </mat-form-field>
-                                        }
-                                        @if (column.type == 'textarea') {
-                                            <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
-                                                <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                    [ngModelOptions]="{standalone: true}"></textarea>
-                                            </mat-form-field>
-                                        }
-                                        @if (column.type == 'date') {
-                                            <mat-form-field appearance="outline" class="inline-editing-field">
-                                                <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                    [ngModelOptions]="{standalone: true}">
-                                            </mat-form-field>
-                                        }
-                                        @if (column.type == 'datepicker') {
-                                            <mat-form-field appearance="outline" class="inline-editing-field">
-                                                <input matInput [matDatepicker]="inlinePicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                    [ngModelOptions]="{standalone: true}">
-                                                <mat-datepicker-toggle matIconSuffix [for]="inlinePicker"></mat-datepicker-toggle>
-                                                <mat-datepicker #inlinePicker></mat-datepicker>
-                                            </mat-form-field>
-                                        }
-                                        @if (column.type == 'selection') {
-                                            <mat-form-field appearance="outline" class="inline-editing-field">
-                                                <mat-select [value]="rowDataTemp['e'+i][column.field]"
-                                                    [(ngModel)]="rowDataTemp['e'+i][column.field]">
-                                                    @for (option of column.options; track option) {
-                                                        <mat-option [value]="option">{{option}}</mat-option>
-                                                    }
-                                                </mat-select>
-                                            </mat-form-field>
-                                        }
-                                        @if (column.type == 'boolean') {
-                                            <mat-checkbox (click)="$event.stopPropagation()" color="primary" [(ngModel)]="row[column.field]"></mat-checkbox>
-                                        }
-                                    }
-                                    @if (!cellEditingTemplateRef && cellEditing[i +'_'+column.field]) {
-                                        @if (column.type == 'number') {
-                                            <mat-form-field appearance="outline" class="inline-editing-field">
-                                                <input matInput type="number" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                    [ngModelOptions]="{standalone: true}">
-                                            </mat-form-field>
-                                        }
-                                        @if (column.type == 'string') {
-                                            <mat-form-field appearance="outline" class="inline-editing-field">
-                                                <input matInput type="text" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                    [ngModelOptions]="{standalone: true}">
-                                            </mat-form-field>
-                                        }
-                                        @if (column.type == 'textarea') {
-                                            <mat-form-field appearance="outline" class="inline-editing-field">
-                                                <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                    [ngModelOptions]="{standalone: true}"></textarea>
-                                            </mat-form-field>
-                                        }
-                                        @if (column.type == 'date') {
-                                            <mat-form-field appearance="outline" class="inline-editing-field">
-                                                <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                    [ngModelOptions]="{standalone: true}">
-                                            </mat-form-field>
-                                        }
-                                        @if (column.type == 'datepicker') {
-                                            <mat-form-field appearance="outline" class="inline-editing-field">
-                                                <input matInput [matDatepicker]="cellPicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                    [ngModelOptions]="{standalone: true}">
-                                                <mat-datepicker-toggle matIconSuffix [for]="cellPicker"></mat-datepicker-toggle>
-                                                <mat-datepicker #cellPicker></mat-datepicker>
-                                            </mat-form-field>
-                                        }
-                                        @if (column.type == 'selection') {
-                                            <mat-form-field appearance="outline" class="inline-editing-field">
-                                                <mat-select [value]="rowDataTemp['e'+i][column.field]"
-                                                    [(ngModel)]="rowDataTemp['e'+i][column.field]">
-                                                    @for (option of column.options; track option) {
-                                                        <mat-option [value]="option">{{option}}</mat-option>
-                                                    }
-                                                </mat-select>
-                                            </mat-form-field>
-                                        }
-                                        @if (column.type == 'boolean') {
-                                            <mat-checkbox (click)="$event.stopPropagation()" color="primary" [(ngModel)]="row[column.field]"></mat-checkbox>
-                                        }
-                                    }
-                                </div>
+                                <ng-container [ngTemplateOutlet]="editCellTpl"
+                                    [ngTemplateOutletContext]="{row:row, column:column, index:i}"></ng-container>
                             }
                         </td>
                         @if (showFooterRow) {
@@ -1288,15 +1030,8 @@
                         [columnsResizable]="columnResizable" [index]="i" class="mat-mdc-header-cell"
                         [mat-sort-header]="column.field" [disabled]="!sorting || column.disabled === true">
     
-                        @if (column.headerTemplate || headerTemplateRef) {
-                                <ng-template [ngTemplateOutlet]="column.headerTemplate || headerTemplateRef"
-                                    [ngTemplateOutletContext]="{$implicit:column, data:column}"></ng-template>
-                        }
-                        @if (!headerTemplateRef && !column.headerTemplate) {
-                            <span matTooltip="{{column.headerTooltip?.value}}"
-                                [matTooltipPosition]="column?.headerTooltip?.tooltipPosition!"
-                                [class.disabled]="!sorting || column.disabled === true">{{column.header}}</span>
-                        }
+                        <ng-container [ngTemplateOutlet]="headerCellContentTpl"
+                            [ngTemplateOutletContext]="{column:column}"></ng-container>
                     </th>
                     <td mat-cell *matCellDef="let row ;let i=dataIndex" class="mat-mdc-cell">
                         @if (!row.editable && !cellEditing[i +'_'+column.field]) {
@@ -1305,136 +1040,13 @@
                                 [style.cursor]="cellPopupEditing ? 'pointer' : 'default'"
                                 matTooltip="{{column.cellTooltip?.value}}"
                                 [matTooltipPosition]="column?.cellTooltip?.tooltipPosition!">
-                                @if (!cellTemplateRef && !column?.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                    <span>{{row[column.field]}}</span>
-                                }
-                                @if (cellTemplateRefMap[column.field]) {
-                                    <ng-container [ngTemplateOutlet]="cellTemplateRefMap[column.field]"
-                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
-                                    </ng-container>
-                                }
-                                @if (cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                    <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
-                                    </ng-container>
-                                }
-                                @if (!cellTemplateRef && column.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                    <ng-container [ngTemplateOutlet]="column.cellTemplate"
-                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
-                                    </ng-container>
-                                }
-                                @if (cellTemplateRef && !column.cellTemplate && !cellTemplateRefMap[column.field]) {
-                                    <ng-container [ngTemplateOutlet]="cellTemplateRef"
-                                        [ngTemplateOutletContext]="{$implicit:row, row:row,column:column,index:i}">
-                                    </ng-container>
-                                }
+                                <ng-container [ngTemplateOutlet]="cellDisplayTpl"
+                                    [ngTemplateOutletContext]="{row:row, column:column, index:i}"></ng-container>
                             </div>
                         }
                         @if (row.editable || cellEditing[i +'_'+column.field]) {
-                            <div (click)="$event.stopPropagation()">
-                                @if (inlineEditingTemplateRef && !cellEditing[i +'_'+column.field]) {
-                                    <ng-container [ngTemplateOutlet]="inlineEditingTemplateRef"
-                                        [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), field:column.field, index:i}"></ng-container>
-                                }
-                                @if (cellEditingTemplateRef && !(row.editable)) {
-                                    <ng-container [ngTemplateOutlet]="cellEditingTemplateRef"
-                                        [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), index:i}"></ng-container>
-                                }
-                                @if (!inlineEditingTemplateRef && (row.editable) && rowDataTemp['e'+i]) {
-                                    @if (column.type == 'number') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="number" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'string') {
-                                        <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
-                                            <input matInput type="text" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'textarea') {
-                                        <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
-                                            <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}"></textarea>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'date') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'datepicker') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput [matDatepicker]="inlinePicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                            <mat-datepicker-toggle matIconSuffix [for]="inlinePicker"></mat-datepicker-toggle>
-                                            <mat-datepicker #inlinePicker></mat-datepicker>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'selection') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <mat-select [value]="rowDataTemp['e'+i][column.field]"
-                                                [(ngModel)]="rowDataTemp['e'+i][column.field]">
-                                                @for (option of column.options; track option) {
-                                                    <mat-option [value]="option">{{option}}</mat-option>
-                                                }
-                                            </mat-select>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'boolean') {
-                                        <mat-checkbox (click)="$event.stopPropagation()" color="primary" [(ngModel)]="row[column.field]"></mat-checkbox>
-                                    }
-                                }
-                                @if (!cellEditingTemplateRef && cellEditing[i +'_'+column.field]) {
-                                    @if (column.type == 'number') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="number" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'string') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="text" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'textarea') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}"></textarea>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'date') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'datepicker') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <input matInput [matDatepicker]="cellPicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                                                [ngModelOptions]="{standalone: true}">
-                                            <mat-datepicker-toggle matIconSuffix [for]="cellPicker"></mat-datepicker-toggle>
-                                            <mat-datepicker #cellPicker></mat-datepicker>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'selection') {
-                                        <mat-form-field appearance="outline" class="inline-editing-field">
-                                            <mat-select [value]="rowDataTemp['e'+i][column.field]"
-                                                [(ngModel)]="rowDataTemp['e'+i][column.field]">
-                                                @for (option of column.options; track option) {
-                                                    <mat-option [value]="option">{{option}}</mat-option>
-                                                }
-                                            </mat-select>
-                                        </mat-form-field>
-                                    }
-                                    @if (column.type == 'boolean') {
-                                        <mat-checkbox (click)="$event.stopPropagation()" color="primary" [(ngModel)]="row[column.field]"></mat-checkbox>
-                                    }
-                                }
-                            </div>
+                            <ng-container [ngTemplateOutlet]="editCellTpl"
+                                [ngTemplateOutletContext]="{row:row, column:column, index:i}"></ng-container>
                         }
                     </td>
                     @if (showFooterRow) {
