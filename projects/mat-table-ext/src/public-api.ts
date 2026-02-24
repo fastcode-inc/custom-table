@@ -4,6 +4,7 @@
 
 export * from './lib/mat-table-ext.module';
 export * from './lib/mat-table-ext.service';
+export * from './lib/table-export.service';
 export * from './lib/mat-table-ext.component';
 export * from './lib/components/column-pinning/column-pinning.component';
 export * from './lib/components/editing/editing.component';

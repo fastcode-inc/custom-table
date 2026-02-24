@@ -55,10 +55,9 @@ import {
   MTExExpandedDetailContext,
 } from '../lib/models/tableExtModels';
 import { MatTableExtService } from '../lib/mat-table-ext.service';
+import { TableExportService } from './table-export.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';
-import * as ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
 import { CommonModule } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -106,7 +105,7 @@ import { ResizeColumnDirective } from './directives/resize-column.directive';
     DragDropModule,
     ColumnPinningComponent,
     FilterColumnsComponentComponent,
-    ResizeColumnDirective
+    ResizeColumnDirective,
   ],
   animations: [
     trigger('detailExpand', [
@@ -114,12 +113,16 @@ import { ResizeColumnDirective } from './directives/resize-column.directive';
       state('expanded', style({ height: '*' })),
       transition(
         'expanded <=> collapsed',
-        animate('300ms cubic-bezier(0.4, 0.0, 0.2, 1)')
+        animate('300ms cubic-bezier(0.4, 0.0, 0.2, 1)'),
       ),
     ]),
   ],
 })
-export class MatTableExtComponent<T extends Record<string, unknown> = Record<string, unknown>> implements OnInit, OnChanges, AfterViewInit, OnDestroy {
+export class MatTableExtComponent<
+  T extends Record<string, unknown> = Record<string, unknown>,
+>
+  implements OnInit, OnChanges, AfterViewInit, OnDestroy
+{
   @ViewChild(MatMenuTrigger) menuTrigger!: MatMenuTrigger;
   @ViewChild('columnMenuTrigger') columnMenuTrigger!: MatMenuTrigger;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -130,7 +133,7 @@ export class MatTableExtComponent<T extends Record<string, unknown> = Record<str
 
   // Table inputs
   private _dataSource!: MatTableDataSource<T>;
-  @Input() 
+  @Input()
   set dataSource(value: MatTableDataSource<T>) {
     if (!value) {
       console.warn('MatTableExt: dataSource is required.');
@@ -163,11 +166,13 @@ export class MatTableExtComponent<T extends Record<string, unknown> = Record<str
   @Input()
   set pageSizeOptions(value: number[]) {
     if (!Array.isArray(value) || value.length === 0) {
-      console.warn('MatTableExt: pageSizeOptions must be a non-empty array. Using defaults [10, 50, 100].');
+      console.warn(
+        'MatTableExt: pageSizeOptions must be a non-empty array. Using defaults [10, 50, 100].',
+      );
       this._pageSizeOptions = [10, 50, 100];
       return;
     }
-    this._pageSizeOptions = value.filter(n => typeof n === 'number' && n > 0);
+    this._pageSizeOptions = value.filter((n) => typeof n === 'number' && n > 0);
   }
   get pageSizeOptions(): number[] {
     return this._pageSizeOptions;
@@ -195,7 +200,9 @@ export class MatTableExtComponent<T extends Record<string, unknown> = Record<str
   @Input() toolbarHeight: string = '50px';
   @Input() tableWidth: string = '100%';
   @Input() scrollbarH: boolean = false;
-  @Input() toolbarTemplate: TemplateRef<{$implicit: MatTableExtComponent<T>}> | undefined;
+  @Input() toolbarTemplate:
+    | TemplateRef<{ $implicit: MatTableExtComponent<T> }>
+    | undefined;
   @Input() columnHidable: boolean = false;
   @Input() columnPinnable: boolean = false;
   @Input() globalSearch: boolean = false;
@@ -205,14 +212,26 @@ export class MatTableExtComponent<T extends Record<string, unknown> = Record<str
   @Input() showFirstLastButtons: boolean = false;
   @Input() exportButtonEnable: boolean = false;
   @Input() printButtonEnable: boolean = false;
-  @Input() toolbarTemplateRef!: TemplateRef<{$implicit: MatTableExtComponent<T>}> | undefined;
+  @Input() toolbarTemplateRef!:
+    | TemplateRef<{ $implicit: MatTableExtComponent<T> }>
+    | undefined;
   @Input() headerTemplateRef!: TemplateRef<MTExHeaderContext<T>> | null;
   @Input() cellTemplateRef!: TemplateRef<MTExCellContext<T>> | undefined;
-  @Input() expansionTemplateRef!: TemplateRef<MTExExpandedDetailContext<T>> | undefined;
-  @Input() popupEditingTemplateRef!: TemplateRef<MTExCellEditingContext<T>> | undefined;
-  @Input() inlineEditingTemplateRef!: TemplateRef<MTExInlineEditingContext<T>> | undefined;
-  @Input() cellEditingTemplateRef!: TemplateRef<MTExCellEditingContext<T>> | undefined;
-  @Input() cellPopupEditingTemplateRef!: TemplateRef<MTExCellEditingContext<T>> | undefined;
+  @Input() expansionTemplateRef!:
+    | TemplateRef<MTExExpandedDetailContext<T>>
+    | undefined;
+  @Input() popupEditingTemplateRef!:
+    | TemplateRef<MTExCellEditingContext<T>>
+    | undefined;
+  @Input() inlineEditingTemplateRef!:
+    | TemplateRef<MTExInlineEditingContext<T>>
+    | undefined;
+  @Input() cellEditingTemplateRef!:
+    | TemplateRef<MTExCellEditingContext<T>>
+    | undefined;
+  @Input() cellPopupEditingTemplateRef!:
+    | TemplateRef<MTExCellEditingContext<T>>
+    | undefined;
   @Input() cellTemplateRefMap: CellTemplateRefMap<T> = {};
   @Input() tableClassName: string = '';
   @Input() columnGroups: MTExColumnGroup[] = [];
@@ -226,18 +245,26 @@ export class MatTableExtComponent<T extends Record<string, unknown> = Record<str
   @Input() pdfOrientation: 'portrait' | 'landscape' = 'portrait';
 
   // Table outputs
-  @Output() inlineChange: EventEmitter<RowChange<T>> = new EventEmitter<RowChange<T>>();
-  @Output() cellChange: EventEmitter<RowChange<T>> = new EventEmitter<RowChange<T>>();
-  @Output() popupChange: EventEmitter<RowChange<T>> = new EventEmitter<RowChange<T>>();
+  @Output() inlineChange: EventEmitter<RowChange<T>> = new EventEmitter<
+    RowChange<T>
+  >();
+  @Output() cellChange: EventEmitter<RowChange<T>> = new EventEmitter<
+    RowChange<T>
+  >();
+  @Output() popupChange: EventEmitter<RowChange<T>> = new EventEmitter<
+    RowChange<T>
+  >();
   @Output() rowDeleted: EventEmitter<T> = new EventEmitter<T>();
   @Output() scroll: EventEmitter<Event> = new EventEmitter<Event>();
   @Output() selectionChanged: EventEmitter<RowSelectionChange<T>> =
     new EventEmitter<RowSelectionChange<T>>();
   @Output() expansionChange: EventEmitter<ExpansionChange<T>> =
     new EventEmitter<ExpansionChange<T>>();
-  @Output() rowPinningChange: EventEmitter<{row: T, position: 'top' | 'bottom' | null}> = 
-    new EventEmitter<{row: T, position: 'top' | 'bottom' | null}>();
-  @Output() exportError = new EventEmitter<{type: string, error: string}>();
+  @Output() rowPinningChange: EventEmitter<{
+    row: T;
+    position: 'top' | 'bottom' | null;
+  }> = new EventEmitter<{ row: T; position: 'top' | 'bottom' | null }>();
+  @Output() exportError = new EventEmitter<{ type: string; error: string }>();
   tableID = new Date().getTime();
   private columnPinningOptions: MTExColumnPinOption[] = [];
   exportMenuCtrl: boolean = false;
@@ -306,15 +333,15 @@ export class MatTableExtComponent<T extends Record<string, unknown> = Record<str
     'columnGroups',
   ];
   resizeListenerAttached: boolean = false;
-  
 
   constructor(
     private dialog: MatDialog,
     private service: MatTableExtService<T>,
+    private exportService: TableExportService,
     private formBuilder: FormBuilder,
     private domSanitizer: DomSanitizer,
     private matIconRegistry: MatIconRegistry,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
   ) {
     this.addIconsToRegistry();
     if (this.dataSource) {
@@ -327,40 +354,40 @@ export class MatTableExtComponent<T extends Record<string, unknown> = Record<str
    */
 
   /**
- * Handle column pinning changes from ColumnPinningComponent
- * @param updatedColumns Updated columns array with new pinning states
- */
-updateColumns(updatedColumns: MTExColumn<T>[]) {
-  // Create a completely new columnsArray to trigger change detection
-  this.columnsArray = updatedColumns.map(col => ({ ...col }));
-  
-  // Update showHideColumnsArray to keep it in sync
-  this.showHideColumnsArray = [...this.columnsArray];
+   * Handle column pinning changes from ColumnPinningComponent
+   * @param updatedColumns Updated columns array with new pinning states
+   */
+  updateColumns(updatedColumns: MTExColumn<T>[]) {
+    // Create a completely new columnsArray to trigger change detection
+    this.columnsArray = updatedColumns.map((col) => ({ ...col }));
 
-  // Re-apply column configurations
-  this.setColumnsList(this.columnsArray);
-  
-  // Force complete table re-render by recreating the data source
-  if (this.dataSource) {
-    const currentData = [...this.dataSource.data];
-    this.dataSource = new MatTableDataSource(currentData);
-    this.pinnedTopDataSource = new MatTableDataSource(this.pinnedTopRows);
-    this.pinnedBtmDataSource = new MatTableDataSource(this.pinnedBottomRows);
-    this.reCal(); // Re-apply paginator, sort, and filter
-  }
-  
-  if (this.columnFilter) {
+    // Update showHideColumnsArray to keep it in sync
+    this.showHideColumnsArray = [...this.columnsArray];
+
+    // Re-apply column configurations
+    this.setColumnsList(this.columnsArray);
+
+    // Force complete table re-render by recreating the data source
+    if (this.dataSource) {
+      const currentData = [...this.dataSource.data];
+      this.dataSource = new MatTableDataSource(currentData);
+      this.pinnedTopDataSource = new MatTableDataSource(this.pinnedTopRows);
+      this.pinnedBtmDataSource = new MatTableDataSource(this.pinnedBottomRows);
+      this.reCal(); // Re-apply paginator, sort, and filter
+    }
+
+    if (this.columnFilter) {
       this.setColumnFilter(true);
+    }
+
+    // Force change detection
+    this.cdr.markForCheck();
+    // this.cdr.detectChanges();
+    // Re-sync column sizes in case column ordering/visibility changed
+    if (this.enableRowPinning) {
+      setTimeout(() => this.syncColumnSizesFromTop(), 80);
+    }
   }
-  
-  // Force change detection
-  this.cdr.markForCheck();
-  // this.cdr.detectChanges();
-  // Re-sync column sizes in case column ordering/visibility changed
-  if (this.enableRowPinning) {
-    setTimeout(() => this.syncColumnSizesFromTop(), 80);
-  }
-}
   ngOnChanges(changes: SimpleChanges) {
     this.validateInputs(changes);
     this.setPropertyValue(changes);
@@ -372,20 +399,43 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
       const value = change.currentValue;
 
       // Skip validation for properties already handled by setters
-      if (['dataSource', 'columns', 'pageSizeOptions'].includes(propName)) continue;
+      if (['dataSource', 'columns', 'pageSizeOptions'].includes(propName))
+        continue;
 
       // Validate boolean inputs
-      if (typeof this[propName as keyof this] === 'boolean' && value !== undefined && value !== null) {
+      if (
+        typeof this[propName as keyof this] === 'boolean' &&
+        value !== undefined &&
+        value !== null
+      ) {
         if (typeof value !== 'boolean') {
-          console.warn(`MatTableExt: Input '${propName}' expected boolean, got ${typeof value}. Coercing to boolean.`);
+          console.warn(
+            `MatTableExt: Input '${propName}' expected boolean, got ${typeof value}. Coercing to boolean.`,
+          );
           this[propName as keyof this] = !!value as any;
         }
       }
 
       // Validate string inputs
-      if (['toolbarTitle', 'tableHeight', 'toolbarHeight', 'tableWidth', 'tableClassName', 'topPinnedMaxHeight', 'bottomPinnedMaxHeight'].includes(propName)) {
-        if (value !== undefined && value !== null && typeof value !== 'string') {
-          console.warn(`MatTableExt: Input '${propName}' expected string, got ${typeof value}.`);
+      if (
+        [
+          'toolbarTitle',
+          'tableHeight',
+          'toolbarHeight',
+          'tableWidth',
+          'tableClassName',
+          'topPinnedMaxHeight',
+          'bottomPinnedMaxHeight',
+        ].includes(propName)
+      ) {
+        if (
+          value !== undefined &&
+          value !== null &&
+          typeof value !== 'string'
+        ) {
+          console.warn(
+            `MatTableExt: Input '${propName}' expected string, got ${typeof value}.`,
+          );
         }
       }
     }
@@ -395,13 +445,15 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
     if (this.dataSource) {
       this.dataSource.filterPredicate = this.createFilter();
     }
-    
-    
+
     // Initialize FormGroup if not already initialized
-    if (!this.hideShowMenuGroup || Object.keys(this.hideShowMenuGroup.controls).length === 0) {
+    if (
+      !this.hideShowMenuGroup ||
+      Object.keys(this.hideShowMenuGroup.controls).length === 0
+    ) {
       this.hideShowMenuGroup = this.formBuilder.group({});
     }
-    
+
     // Initialize pinned rows if function provided
     if (this.enableRowPinning) {
       this.initializePinnedRows();
@@ -414,7 +466,7 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
       this.dataSource.sort = this.sort;
       this.setSorting();
     }
-    
+
     // Calculate and set pinned row offsets
     this.updatePinnedRowOffsets();
     // Sync column sizes from top table to middle/bottom when pinning enabled
@@ -448,10 +500,10 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
 
     setTimeout(() => {
       const table = this.tableElement.nativeElement as HTMLElement;
-      
+
       // Calculate top offset (sticky header + group header + filter row)
       let topOffset = 0;
-      
+
       if (this.stickyHeader) {
         // Get all header rows that are sticky
         const headerRows = table.querySelectorAll('.mat-mdc-header-row');
@@ -459,62 +511,74 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
           topOffset += (header as HTMLElement).offsetHeight;
         });
       }
-      
+
       // Calculate bottom offset (sticky footer + paginator)
       let bottomOffset = 0;
-      
+
       if (this.stickyFooter) {
         const footerRow = table.querySelector('.mat-mdc-footer-row');
         if (footerRow) {
           bottomOffset += (footerRow as HTMLElement).offsetHeight;
         }
       }
-      
+
       // Set base offsets
       table.style.setProperty('--pinned-top-base-offset', `${topOffset}px`);
-      table.style.setProperty('--pinned-bottom-base-offset', `${bottomOffset}px`);
-      
+      table.style.setProperty(
+        '--pinned-bottom-base-offset',
+        `${bottomOffset}px`,
+      );
+
       // Calculate and set individual row offsets for stacked pinned rows
       this.updateStackedPinnedRowOffsets(table, topOffset, bottomOffset);
       // After offsets are updated, ensure column sizes are re-synced
       if (this.enableRowPinning) {
         setTimeout(() => this.syncColumnSizesFromTop(), 10);
       }
-      
     }, 100);
   }
 
   /**
    * @description Update offsets for each individual pinned row to stack them
    */
-  private updateStackedPinnedRowOffsets(table: HTMLElement, baseTopOffset: number, baseBottomOffset: number): void {
+  private updateStackedPinnedRowOffsets(
+    table: HTMLElement,
+    baseTopOffset: number,
+    baseBottomOffset: number,
+  ): void {
     // Use setTimeout to ensure DOM is fully rendered with pinned classes
     setTimeout(() => {
       // Handle top pinned rows - stack them from top to bottom
       const topPinnedRows = table.querySelectorAll('.pinned-top-row');
       let currentTopOffset = baseTopOffset;
-      
+
       topPinnedRows.forEach((row: Element, index: number) => {
         const htmlRow = row as HTMLElement;
-        htmlRow.style.setProperty('--pinned-row-top-offset', `${currentTopOffset}px`);
+        htmlRow.style.setProperty(
+          '--pinned-row-top-offset',
+          `${currentTopOffset}px`,
+        );
         htmlRow.style.top = `${currentTopOffset}px`;
-        
+
         // Add current row height to offset for next row
         if (index < topPinnedRows.length - 1) {
           currentTopOffset += htmlRow.offsetHeight;
         }
       });
-      
+
       // Handle bottom pinned rows - stack them from bottom to top
       const bottomPinnedRows = table.querySelectorAll('.pinned-bottom-row');
       let currentBottomOffset = baseBottomOffset;
-      
+
       // Process bottom rows in reverse order (from bottom to top)
       for (let i = bottomPinnedRows.length - 1; i >= 0; i--) {
         const htmlRow = bottomPinnedRows[i] as HTMLElement;
-        htmlRow.style.setProperty('--pinned-row-bottom-offset', `${currentBottomOffset}px`);
+        htmlRow.style.setProperty(
+          '--pinned-row-bottom-offset',
+          `${currentBottomOffset}px`,
+        );
         htmlRow.style.bottom = `${currentBottomOffset}px`;
-        
+
         // Add current row height to offset for next row (going upward)
         if (i > 0) {
           currentBottomOffset += htmlRow.offsetHeight;
@@ -543,40 +607,55 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
       const topId = `matTableExtTop${this.tableID}`;
       const bottomId = `matTableExtBtm${this.tableID}`;
       const topTable = document.getElementById(topId) as HTMLElement | null;
-      const middleTable = document.getElementById(`matTableExt${this.tableID}`) as HTMLElement | null;
-      const bottomTable = document.getElementById(bottomId) as HTMLElement | null;
+      const middleTable = document.getElementById(
+        `matTableExt${this.tableID}`,
+      ) as HTMLElement | null;
+      const bottomTable = document.getElementById(
+        bottomId,
+      ) as HTMLElement | null;
 
       if (!topTable) return;
 
       const headerRow = topTable.querySelector(
-        'tr.mat-mdc-header-row:not(.group-header-row), tr.mat-header-row:not(.group-header-row), thead tr:not(.group-header-row)'
+        'tr.mat-mdc-header-row:not(.group-header-row), tr.mat-header-row:not(.group-header-row), thead tr:not(.group-header-row)',
       ) as HTMLElement | null;
 
       if (!headerRow) return;
 
-      const headerCells = Array.from(headerRow.querySelectorAll('th, .mat-header-cell')) as HTMLElement[];
+      const headerCells = Array.from(
+        headerRow.querySelectorAll('th, .mat-header-cell'),
+      ) as HTMLElement[];
       if (!headerCells.length) return;
 
       const topTableWidth = topTable.getBoundingClientRect().width;
-      [middleTable, bottomTable].forEach(tbl => {
+      [middleTable, bottomTable].forEach((tbl) => {
         if (!tbl) return;
-        tbl.style.width = topTable.style.width && topTable.style.width !== '' ? topTable.style.width : `${topTableWidth}px`;
+        tbl.style.width =
+          topTable.style.width && topTable.style.width !== ''
+            ? topTable.style.width
+            : `${topTableWidth}px`;
       });
 
       // Use the header row height as the canonical row height to apply
-      const headerRowHeight = Math.round(headerRow.getBoundingClientRect().height);
+      const headerRowHeight = Math.round(
+        headerRow.getBoundingClientRect().height,
+      );
 
       headerCells.forEach((hc, index) => {
         const rect = hc.getBoundingClientRect();
         const w = Math.round(rect.width);
 
-        [middleTable, bottomTable].forEach(tbl => {
+        [middleTable, bottomTable].forEach((tbl) => {
           if (!tbl) return;
 
           // If a placeholder header exists in the target table, set its cell sizes
-          const placeholderHeader = tbl.querySelector('tr.mat-mdc-header-row, tr.mat-header-row') as HTMLElement | null;
+          const placeholderHeader = tbl.querySelector(
+            'tr.mat-mdc-header-row, tr.mat-header-row',
+          ) as HTMLElement | null;
           if (placeholderHeader) {
-            const phCells = placeholderHeader.querySelectorAll('th, .mat-header-cell');
+            const phCells = placeholderHeader.querySelectorAll(
+              'th, .mat-header-cell',
+            );
             if (phCells && phCells[index]) {
               const el = phCells[index] as HTMLElement;
               el.style.minWidth = `${w}px`;
@@ -589,7 +668,9 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
           }
 
           // Apply widths/heights directly to data cells (in case header placeholder is not present)
-          const dataRow = tbl.querySelector('tr.mat-mdc-row, tr.mat-row') as HTMLElement | null;
+          const dataRow = tbl.querySelector(
+            'tr.mat-mdc-row, tr.mat-row',
+          ) as HTMLElement | null;
           if (dataRow) {
             const dataCells = dataRow.querySelectorAll('td, .mat-cell');
             if (dataCells && dataCells[index]) {
@@ -624,60 +705,84 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
     if (!this.enableRowPinning) return;
 
     try {
-      const topTable = document.getElementById(`matTableExtTop${this.tableID}`) as HTMLElement | null;
+      const topTable = document.getElementById(
+        `matTableExtTop${this.tableID}`,
+      ) as HTMLElement | null;
       if (!topTable) return;
 
       // Capture original sizes from the top table header before modifying
       if (!this.originalSizesBeforeEdit) {
         const headerRow = topTable.querySelector(
-          'tr.mat-mdc-header-row:not(.group-header-row), tr.mat-header-row:not(.group-header-row)'
+          'tr.mat-mdc-header-row:not(.group-header-row), tr.mat-header-row:not(.group-header-row)',
         ) as HTMLElement | null;
 
         if (headerRow) {
-          const headerCells = Array.from(headerRow.querySelectorAll('th, .mat-header-cell')) as HTMLElement[];
-          const headerRowHeight = Math.round(headerRow.getBoundingClientRect().height);
-          const columnWidths = headerCells.map(cell => Math.round(cell.getBoundingClientRect().width));
-          
+          const headerCells = Array.from(
+            headerRow.querySelectorAll('th, .mat-header-cell'),
+          ) as HTMLElement[];
+          const headerRowHeight = Math.round(
+            headerRow.getBoundingClientRect().height,
+          );
+          const columnWidths = headerCells.map((cell) =>
+            Math.round(cell.getBoundingClientRect().width),
+          );
+
           this.originalSizesBeforeEdit = {
             columnWidths,
-            rowHeight: headerRowHeight
+            rowHeight: headerRowHeight,
           };
         }
       }
 
-      const middleTable = document.getElementById(`matTableExt${this.tableID}`) as HTMLElement | null;
-      const bottomTable = document.getElementById(`matTableExtBtm${this.tableID}`) as HTMLElement | null;
+      const middleTable = document.getElementById(
+        `matTableExt${this.tableID}`,
+      ) as HTMLElement | null;
+      const bottomTable = document.getElementById(
+        `matTableExtBtm${this.tableID}`,
+      ) as HTMLElement | null;
 
       if (!middleTable || !topTable) return;
 
       // Find the edited row in the middle table
-      const editedRow = middleTable.querySelector(`tr.mat-mdc-row:nth-child(${editedRowIndex + 1})`) as HTMLElement | null;
+      const editedRow = middleTable.querySelector(
+        `tr.mat-mdc-row:nth-child(${editedRowIndex + 1})`,
+      ) as HTMLElement | null;
       if (!editedRow) {
         // Fallback to normal sync if edited row not found
         this.syncColumnSizesFromTop();
         return;
       }
 
-      const editedCells = Array.from(editedRow.querySelectorAll('td, .mat-cell')) as HTMLElement[];
+      const editedCells = Array.from(
+        editedRow.querySelectorAll('td, .mat-cell'),
+      ) as HTMLElement[];
       if (!editedCells.length) return;
 
       // Get the height of the edited row
-      const editedRowHeight = Math.round(editedRow.getBoundingClientRect().height);
+      const editedRowHeight = Math.round(
+        editedRow.getBoundingClientRect().height,
+      );
 
       // Sync widths and heights from edited row to top and bottom tables
       // First, collect all widths in a single pass (layout read)
-      const cellWidths = editedCells.map(cell => Math.round(cell.getBoundingClientRect().width));
+      const cellWidths = editedCells.map((cell) =>
+        Math.round(cell.getBoundingClientRect().width),
+      );
 
       // Then, apply style changes in a separate pass (layout write)
       cellWidths.forEach((w, index) => {
-        [topTable, bottomTable].forEach(tbl => {
+        [topTable, bottomTable].forEach((tbl) => {
           if (!tbl) return;
 
           // Update header cells in top table
           if (tbl === topTable) {
-            const headerRow = tbl.querySelector('tr.mat-mdc-header-row:not(.group-header-row), tr.mat-header-row:not(.group-header-row)') as HTMLElement | null;
+            const headerRow = tbl.querySelector(
+              'tr.mat-mdc-header-row:not(.group-header-row), tr.mat-header-row:not(.group-header-row)',
+            ) as HTMLElement | null;
             if (headerRow) {
-              const headerCells = headerRow.querySelectorAll('th, .mat-header-cell');
+              const headerCells = headerRow.querySelectorAll(
+                'th, .mat-header-cell',
+              );
               if (headerCells && headerCells[index]) {
                 const hc = headerCells[index] as HTMLElement;
                 hc.style.minWidth = `${w}px`;
@@ -688,7 +793,9 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
           }
 
           // Update data cells in both tables
-          const dataRow = tbl.querySelector('tr.mat-mdc-row, tr.mat-row') as HTMLElement | null;
+          const dataRow = tbl.querySelector(
+            'tr.mat-mdc-row, tr.mat-row',
+          ) as HTMLElement | null;
           if (dataRow) {
             const dataCells = dataRow.querySelectorAll('td, .mat-cell');
             if (dataCells && dataCells[index]) {
@@ -719,24 +826,32 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
     if (!this.enableRowPinning || !this.originalSizesBeforeEdit) return;
 
     try {
-      const topTable = document.getElementById(`matTableExtTop${this.tableID}`) as HTMLElement | null;
-      const middleTable = document.getElementById(`matTableExt${this.tableID}`) as HTMLElement | null;
-      const bottomTable = document.getElementById(`matTableExtBtm${this.tableID}`) as HTMLElement | null;
+      const topTable = document.getElementById(
+        `matTableExtTop${this.tableID}`,
+      ) as HTMLElement | null;
+      const middleTable = document.getElementById(
+        `matTableExt${this.tableID}`,
+      ) as HTMLElement | null;
+      const bottomTable = document.getElementById(
+        `matTableExtBtm${this.tableID}`,
+      ) as HTMLElement | null;
 
       if (!topTable) return;
 
       const { columnWidths, rowHeight } = this.originalSizesBeforeEdit;
 
-      [topTable, middleTable, bottomTable].forEach(tbl => {
+      [topTable, middleTable, bottomTable].forEach((tbl) => {
         if (!tbl) return;
 
         // Restore header cells in top table
         if (tbl === topTable) {
           const headerRow = tbl.querySelector(
-            'tr.mat-mdc-header-row:not(.group-header-row), tr.mat-header-row:not(.group-header-row)'
+            'tr.mat-mdc-header-row:not(.group-header-row), tr.mat-header-row:not(.group-header-row)',
           ) as HTMLElement | null;
           if (headerRow) {
-            const headerCells = Array.from(headerRow.querySelectorAll('th, .mat-header-cell')) as HTMLElement[];
+            const headerCells = Array.from(
+              headerRow.querySelectorAll('th, .mat-header-cell'),
+            ) as HTMLElement[];
             headerCells.forEach((cell, index) => {
               if (columnWidths[index] !== undefined) {
                 const w = columnWidths[index];
@@ -752,9 +867,13 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
         }
 
         // Restore data cells
-        const dataRow = tbl.querySelector('tr.mat-mdc-row, tr.mat-row') as HTMLElement | null;
+        const dataRow = tbl.querySelector(
+          'tr.mat-mdc-row, tr.mat-row',
+        ) as HTMLElement | null;
         if (dataRow) {
-          const dataCells = Array.from(dataRow.querySelectorAll('td, .mat-cell')) as HTMLElement[];
+          const dataCells = Array.from(
+            dataRow.querySelectorAll('td, .mat-cell'),
+          ) as HTMLElement[];
           dataCells.forEach((cell, index) => {
             if (columnWidths[index] !== undefined) {
               const w = columnWidths[index];
@@ -784,7 +903,7 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
   }
 
   ngOnDestroy(): void {
-    if(this.resizeListenerAttached) {
+    if (this.resizeListenerAttached) {
       window.removeEventListener('resize', this.onWindowResizeBound);
     }
   }
@@ -840,7 +959,8 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
         this.initializePinnedRows();
       }
     },
-    rowSelection: (value: SimpleChange) => this.setRowSelection(value.currentValue),
+    rowSelection: (value: SimpleChange) =>
+      this.setRowSelection(value.currentValue),
     multiRowSelection: (value: SimpleChange) => {
       this.selection = new SelectionModel<T>(value.currentValue, []);
     },
@@ -854,7 +974,8 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
       // Recalculate pinned row offsets when sticky footer changes
       setTimeout(() => this.updatePinnedRowOffsets(), 100);
     },
-    columnFilter: (value: SimpleChange) => this.setColumnFilter(value.currentValue),
+    columnFilter: (value: SimpleChange) =>
+      this.setColumnFilter(value.currentValue),
     globalSearch: (value: SimpleChange) =>
       (this.dataSource.filterPredicate = this.createFilter()),
     expandRows: (value: SimpleChange) => {
@@ -946,61 +1067,91 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
   getDisplayedColumns(): string[] {
     if (this.columnGroups.length === 0) {
       // No groups, place select at start and other action columns at the end
-      const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
-      const visibleColumns = this.dynamicDisplayedColumns.filter((cd) => cd.show);
-      const dataColumns = visibleColumns.filter((cd) => !actionColumns.includes(cd.name)).map((cd) => cd.name);
+      const actionColumns = [
+        'select',
+        'edit',
+        'popup',
+        'delete',
+        'freeze',
+        'hide',
+        'pin',
+      ];
+      const visibleColumns = this.dynamicDisplayedColumns.filter(
+        (cd) => cd.show,
+      );
+      const dataColumns = visibleColumns
+        .filter((cd) => !actionColumns.includes(cd.name))
+        .map((cd) => cd.name);
       const selectCol = visibleColumns.find((cd) => cd.name === 'select');
-      const otherActionCols = visibleColumns.filter((cd) => actionColumns.includes(cd.name) && cd.name !== 'select').map((cd) => cd.name);
-      
+      const otherActionCols = visibleColumns
+        .filter((cd) => actionColumns.includes(cd.name) && cd.name !== 'select')
+        .map((cd) => cd.name);
+
       const result = [];
       if (selectCol) result.push('select');
       result.push(...dataColumns);
       result.push(...otherActionCols);
       return result;
     }
-    
+
     // When groups exist, reorder: select first, grouped columns, ungrouped columns, then other action columns
-    const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
+    const actionColumns = [
+      'select',
+      'edit',
+      'popup',
+      'delete',
+      'freeze',
+      'hide',
+      'pin',
+    ];
     const groupedFields = new Set<string>();
-    
+
     // Collect all fields that belong to groups
-    this.columnGroups.forEach(group => {
-      group.columns.forEach(colField => groupedFields.add(colField));
+    this.columnGroups.forEach((group) => {
+      group.columns.forEach((colField) => groupedFields.add(colField));
     });
-    
+
     const result: string[] = [];
     const visibleColumns = this.dynamicDisplayedColumns.filter((cd) => cd.show);
-    
+
     // Add select column first if visible
-    const selectCol = visibleColumns.find(c => c.name === 'select');
+    const selectCol = visibleColumns.find((c) => c.name === 'select');
     if (selectCol) {
       result.push('select');
     }
-    
+
     // Add grouped columns in the order they appear in groups
-    this.columnGroups.forEach(group => {
-      group.columns.forEach(colField => {
-        const col = visibleColumns.find(c => c.name === colField);
+    this.columnGroups.forEach((group) => {
+      group.columns.forEach((colField) => {
+        const col = visibleColumns.find((c) => c.name === colField);
         if (col && !result.includes(col.name)) {
           result.push(col.name);
         }
       });
     });
-    
+
     // Add ungrouped data columns
-    visibleColumns.forEach(col => {
-      if (!actionColumns.includes(col.name) && !groupedFields.has(col.name) && !result.includes(col.name)) {
+    visibleColumns.forEach((col) => {
+      if (
+        !actionColumns.includes(col.name) &&
+        !groupedFields.has(col.name) &&
+        !result.includes(col.name)
+      ) {
         result.push(col.name);
       }
     });
-    
+
     // Add other action columns at the end (excluding select which is already at start)
-    visibleColumns.forEach(col => {
-      if (actionColumns.includes(col.name) && col.name !== 'select' && !result.includes(col.name)) {
+    visibleColumns.forEach((col) => {
+      if (
+        actionColumns.includes(col.name) &&
+        col.name !== 'select' &&
+        !result.includes(col.name)
+      ) {
         result.push(col.name);
       }
     });
-    
+
     return result;
   }
   /**
@@ -1009,32 +1160,44 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
    */
   getGroupedColumns(): string[] {
     if (this.columnGroups.length === 0) return [];
-    
+
     const grouped: string[] = [];
     const groupedFields = new Set<string>();
-    const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
-    
+    const actionColumns = [
+      'select',
+      'edit',
+      'popup',
+      'delete',
+      'freeze',
+      'hide',
+      'pin',
+    ];
+
     // Collect all fields that belong to groups
-    this.columnGroups.forEach(group => {
-      group.columns.forEach(colField => groupedFields.add(colField));
+    this.columnGroups.forEach((group) => {
+      group.columns.forEach((colField) => groupedFields.add(colField));
     });
-    
+
     // Add group headers for groups with visible columns
-    this.columnGroups.forEach(group => {
-      const visibleColumnsInGroup = group.columns.filter(colField => {
-        const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === colField);
+    this.columnGroups.forEach((group) => {
+      const visibleColumnsInGroup = group.columns.filter((colField) => {
+        const displayCol = this.dynamicDisplayedColumns.find(
+          (dc) => dc.name === colField,
+        );
         return displayCol && displayCol.show;
       });
-      
+
       if (visibleColumnsInGroup.length > 0) {
         grouped.push('group-' + group.name);
       }
     });
-    
+
     // Add empty header placeholders for ungrouped columns at the end
-    this.columnsArray.forEach(col => {
+    this.columnsArray.forEach((col) => {
       if (!groupedFields.has(col.field) && !actionColumns.includes(col.field)) {
-        const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
+        const displayCol = this.dynamicDisplayedColumns.find(
+          (dc) => dc.name === col.field,
+        );
         if (displayCol && displayCol.show) {
           grouped.push('ungrouped-' + col.field);
         }
@@ -1042,14 +1205,24 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
     });
 
     // Add placeholders for visible action columns so group header row has cells to align with action columns
-    const actionPlaceholders = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
-    actionPlaceholders.forEach(act => {
-      const display = this.dynamicDisplayedColumns.find(dc => dc.name === act);
+    const actionPlaceholders = [
+      'select',
+      'edit',
+      'popup',
+      'delete',
+      'freeze',
+      'hide',
+      'pin',
+    ];
+    actionPlaceholders.forEach((act) => {
+      const display = this.dynamicDisplayedColumns.find(
+        (dc) => dc.name === act,
+      );
       if (display && display.show) {
         grouped.push('ungrouped-' + act);
       }
     });
-    
+
     return grouped;
   }
 
@@ -1059,24 +1232,34 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
    */
   getFilterColumns(): string[] {
     const filters: string[] = [];
-    const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
-    
+    const actionColumns = [
+      'select',
+      'edit',
+      'popup',
+      'delete',
+      'freeze',
+      'hide',
+      'pin',
+    ];
+
     // Get visible columns in display order
     const displayedCols = this.getDisplayedColumns();
-    
-    displayedCols.forEach(colName => {
+
+    displayedCols.forEach((colName) => {
       if (actionColumns.includes(colName)) {
         // Add filter placeholder for action column
         filters.push('filter-' + colName);
       } else {
         // Find the actual filter ID from headersFiltersIds
-        const filterCol = this.headersFiltersIds.find(id => id.startsWith(colName + '_'));
+        const filterCol = this.headersFiltersIds.find((id) =>
+          id.startsWith(colName + '_'),
+        );
         if (filterCol) {
           filters.push(filterCol);
         }
       }
     });
-    
+
     return this.columnFilter ? filters : [];
   }
   /**
@@ -1127,7 +1310,15 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
    */
   setColumnsList(columns: MTExColumn<T>[]) {
     this.columnsList = [];
-    this.displayedColumns = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
+    this.displayedColumns = [
+      'select',
+      'edit',
+      'popup',
+      'delete',
+      'freeze',
+      'hide',
+      'pin',
+    ];
     let columnsArray: DisplayColumn[] = [];
     columns.forEach((col) => {
       if (typeof col?.header == 'string') {
@@ -1136,12 +1327,14 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
         columnsArray.push({ filter: true, name: col?.field, show: !col.hide });
       }
     });
-    
+
     // Preserve the current state of action columns before resetting
-    const currentActionColumns = this.dynamicDisplayedColumns.filter(dc => 
-      ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'].includes(dc.name)
+    const currentActionColumns = this.dynamicDisplayedColumns.filter((dc) =>
+      ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'].includes(
+        dc.name,
+      ),
     );
-    
+
     // Create new action columns array, preserving existing states
     const newActionColumns = [
       { filter: false, name: 'select', show: false },
@@ -1151,11 +1344,13 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
       { filter: false, name: 'freeze', show: false },
       { filter: false, name: 'hide', show: false },
       { filter: false, name: 'pin', show: false },
-    ].map(actionCol => {
-      const existing = currentActionColumns.find(c => c.name === actionCol.name);
+    ].map((actionCol) => {
+      const existing = currentActionColumns.find(
+        (c) => c.name === actionCol.name,
+      );
       return existing ? { ...existing } : actionCol;
     });
-    
+
     this.dynamicDisplayedColumns = columnsArray.concat(newActionColumns);
     // After updating columns, ensure sizes match the top header (if pinning enabled)
     if (this.enableRowPinning) {
@@ -1168,7 +1363,9 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
    * @param value boolean value to set visibility of the column.
    */
   showHideColumn(name: string, value: boolean) {
-    const column = this.dynamicDisplayedColumns.filter((a) => a.name == name)[0];
+    const column = this.dynamicDisplayedColumns.filter(
+      (a) => a.name == name,
+    )[0];
     if (column) {
       column.show = value;
       if (this.enableRowPinning) {
@@ -1179,8 +1376,6 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
       this.setColumnFilter(true);
     }
   }
-
-
 
   /**
    * @description Toggle hide state for a specific row
@@ -1209,12 +1404,12 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
     if (this.hiddenRowIndices.includes(index)) {
       return true;
     }
-    
+
     // Check filter function if provided
     if (this.rowHidingFilterFn && this.dataSource?.data?.[index]) {
       return this.rowHidingFilterFn(this.dataSource.data[index], index);
     }
-    
+
     return false;
   }
 
@@ -1234,7 +1429,7 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
     event.stopPropagation();
     this.rowPinMenuPosition = {
       x: event.clientX + 'px',
-      y: event.clientY + 'px'
+      y: event.clientY + 'px',
     };
     this.rowPinMenuRow = row;
   }
@@ -1255,14 +1450,18 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
    * @param position 'top' or 'bottom'
    */
   pinRow(row: T, position: 'top' | 'bottom'): void {
-    console.log('pinRow called:', { row, position, enableRowPinning: this.enableRowPinning });
-    
+    console.log('pinRow called:', {
+      row,
+      position,
+      enableRowPinning: this.enableRowPinning,
+    });
+
     // Remove from other position if exists
     this.unpinRow(row);
-    
+
     // Mark the row with pinning metadata
     (row as Record<string, unknown>)['_pinnedPosition'] = position;
-    
+
     // Add to the selected position
     if (position === 'top') {
       if (!this.pinnedTopRows.includes(row)) {
@@ -1275,7 +1474,7 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
       }
       this.pinnedBtmDataSource = new MatTableDataSource(this.pinnedBottomRows);
     }
-    
+
     this.rowPinningChange.emit({ row, position });
     this.closeRowPinMenu();
     this.updateDataSourceForPinning();
@@ -1291,19 +1490,19 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
       this.pinnedTopRows.splice(topIndex, 1);
       this.pinnedTopDataSource = new MatTableDataSource(this.pinnedTopRows);
     }
-    
+
     const bottomIndex = this.pinnedBottomRows.indexOf(row);
     if (bottomIndex > -1) {
       this.pinnedBottomRows.splice(bottomIndex, 1);
       this.pinnedBtmDataSource = new MatTableDataSource(this.pinnedBottomRows);
     }
-    
+
     // Clear pinning metadata
     delete (row as Record<string, unknown>)['_pinnedPosition'];
-    
+
     // Update the data source to trigger re-render
     this.updateDataSourceForPinning();
-    
+
     this.rowPinningChange.emit({ row, position: null });
     this.closeRowPinMenu();
   }
@@ -1314,7 +1513,9 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
    * @returns true if pinned
    */
   isRowPinned(row: T): boolean {
-    return this.pinnedTopRows.includes(row) || this.pinnedBottomRows.includes(row);
+    return (
+      this.pinnedTopRows.includes(row) || this.pinnedBottomRows.includes(row)
+    );
   }
 
   /**
@@ -1334,8 +1535,10 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
    */
   getUnpinnedRows(): any[] {
     if (!this.dataSource?.data) return [];
-    return this.dataSource.data.filter(row => 
-      !this.pinnedTopRows.includes(row) && !this.pinnedBottomRows.includes(row)
+    return this.dataSource.data.filter(
+      (row) =>
+        !this.pinnedTopRows.includes(row) &&
+        !this.pinnedBottomRows.includes(row),
     );
   }
 
@@ -1346,38 +1549,38 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
     if (!this.enableRowPinning || !this.dataSource?.data) {
       return this.dataSource?.data || [];
     }
-    
+
     // Combine: pinnedTop + regular + pinnedBottom
     return [
       ...this.pinnedTopRows,
-      ...this.dataSource.data.filter(row => !this.isRowPinned(row)),
-      ...this.pinnedBottomRows
+      ...this.dataSource.data.filter((row) => !this.isRowPinned(row)),
+      ...this.pinnedBottomRows,
     ];
   }
 
   /**
    * @description Check if row is pinned to top (for CSS class binding)
    */
-  isRowPinnedTop=(row: any): boolean=> {
+  isRowPinnedTop = (row: any): boolean => {
     return this.pinnedTopRows.includes(row);
-  }
+  };
 
   /**
    * @description Check if row is pinned to bottom (for CSS class binding)
    */
   isRowPinnedBottom = (row: any): boolean => {
     return this.pinnedBottomRows.includes(row);
-  }
+  };
 
   /**
    * @description Initialize pinned rows based on function
    */
   initializePinnedRows(): void {
     if (!this.rowPinningFn || !this.dataSource?.data) return;
-    
+
     this.pinnedTopRows = [];
     this.pinnedBottomRows = [];
-    
+
     this.dataSource.data.forEach((row, index) => {
       const position = this.rowPinningFn!(row, index);
       if (position === 'top') {
@@ -1388,7 +1591,7 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
         this.pinnedBottomRows.push(row);
       }
     });
-    
+
     this.cdr.markForCheck();
   }
 
@@ -1398,12 +1601,12 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
   private updateDataSourceForPinning(): void {
     // Trigger change detection
     this.cdr.markForCheck();
-    
+
     // Force table to re-render rows
     if (this.table) {
       this.table.renderRows();
     }
-    
+
     // Update offsets for sticky positioning
     this.updatePinnedRowOffsets();
   }
@@ -1415,16 +1618,16 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
   updateSelectionColumnVisibility(value: boolean) {
     let columnName = 'select';
     let column = this.dynamicDisplayedColumns.filter(
-      (a) => a.name == columnName
+      (a) => a.name == columnName,
     )[0];
     let index = this.dynamicDisplayedColumns.findIndex(
-      (column: any) => column.name == columnName
+      (column: any) => column.name == columnName,
     );
     if (index > -1) {
       this.dynamicDisplayedColumns.splice(index, 1);
       this.dynamicDisplayedColumns.unshift(column);
       this.dynamicDisplayedColumns.filter(
-        (column) => column.name == columnName
+        (column) => column.name == columnName,
       )[0].show = value;
     }
   }
@@ -1444,7 +1647,7 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
       moveItemInArray(
         this.dynamicDisplayedColumns,
         event.previousIndex + adjustedValue,
-        event.currentIndex + adjustedValue
+        event.currentIndex + adjustedValue,
       );
       if (this.enableRowPinning) {
         setTimeout(() => this.syncColumnSizesFromTop(), 80);
@@ -1489,7 +1692,7 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
             .trim()
             .toLowerCase()
             .indexOf(
-              searchString[this.individualFilter].toString().toLowerCase()
+              searchString[this.individualFilter].toString().toLowerCase(),
             ) !== -1
         );
       }
@@ -1532,8 +1735,10 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
    */
   enableInlineEditing(row: any, index: number) {
     // Check if another row is currently in edit mode
-    const currentEditIndex = this.tableData.findIndex((r: any) => r['editable'] === true);
-    
+    const currentEditIndex = this.tableData.findIndex(
+      (r: any) => r['editable'] === true,
+    );
+
     if (currentEditIndex !== -1 && currentEditIndex !== index) {
       // Disable the previous row's edit mode
       (this.tableData[currentEditIndex] as any)['editable'] = false;
@@ -1544,22 +1749,27 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
         this.restoreOriginalSizes();
       }
     }
-    
+
     const rowData: any = {};
     rowData['e' + index] = { ...row };
     this.rowDataTemp = rowData;
-    
+
     setTimeout(() => {
       const wasEditable = (this.tableData[index] as any)['editable'];
-      (this.tableData[index] as any)['editable'] = !(this.tableData[index] as any)['editable'];
-      
+      (this.tableData[index] as any)['editable'] = !(
+        this.tableData[index] as any
+      )['editable'];
+
       // If row is now in edit mode, sync sizes from this edited row
       if ((this.tableData[index] as any)['editable'] && this.enableRowPinning) {
         // Wait for DOM to update with edit controls
         setTimeout(() => {
           this.syncColumnSizesFromEditedRow(index);
         }, 100);
-      } else if (!(this.tableData[index] as any)['editable'] && this.enableRowPinning) {
+      } else if (
+        !(this.tableData[index] as any)['editable'] &&
+        this.enableRowPinning
+      ) {
         // Row was disabled, restore original sizes
         this.restoreOriginalSizes();
       }
@@ -1596,30 +1806,30 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
     // If there's already an inline edit in progress, cancel it first
     if (this.currentRowIndex !== -1 && this.currentRowIndex !== index) {
       // Find and cancel the previous inline editing row
-      const previousEditableRow = this.tableData.find((r: any, i: number) => 
-        i === this.currentRowIndex && r['editable']
+      const previousEditableRow = this.tableData.find(
+        (r: any, i: number) => i === this.currentRowIndex && r['editable'],
       );
       if (previousEditableRow) {
         (previousEditableRow as any)['editable'] = false;
       }
       // Clear previous cell editing states
-      Object.keys(this.cellEditing).forEach(key => {
+      Object.keys(this.cellEditing).forEach((key) => {
         if (key.startsWith(this.currentRowIndex + '_')) {
           delete this.cellEditing[key];
         }
       });
       this.rowDataTemp['e' + this.currentRowIndex] = {} as T;
-      
+
       // Restore sizes when switching from previous cell editing
       if (this.enableRowPinning) {
         this.restoreOriginalSizes();
       }
     }
-    
+
     this.currentRow = { ...row } as T;
     this.currentRowIndex = index;
     this.rowDataTemp['e' + index] = { ...row } as T;
-    
+
     // Sync column sizes from the edited row when cell editing starts
     if (this.enableRowPinning) {
       setTimeout(() => {
@@ -1633,12 +1843,15 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
    * @param index index of the row where inline editing will be enabled.
    */
   cancelInlineEditing(row: MTExRow, index: number) {
-    (this.tableData.filter((a: any, i: number) => i == index)[0] as any)['editable'] =
-      !(this.tableData.filter((a: any, i: number) => i == index)[0] as any)['editable'];
+    (this.tableData.filter((a: any, i: number) => i == index)[0] as any)[
+      'editable'
+    ] = !(this.tableData.filter((a: any, i: number) => i == index)[0] as any)[
+      'editable'
+    ];
     this.dataSource = new MatTableDataSource(this.tableData);
     this.rowDataTemp['e' + index] = {} as T;
     this.service.selectedRow.next(null);
-    
+
     // Restore original sizes after canceling edit mode
     if (this.enableRowPinning) {
       this.restoreOriginalSizes();
@@ -1667,7 +1880,7 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
     };
     this.inlineChange.emit(data);
     (this.tableData[index] as any)['editable'] = false;
-    
+
     // Restore original sizes after saving edit mode
     if (this.enableRowPinning) {
       this.restoreOriginalSizes();
@@ -1696,7 +1909,7 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
       };
       this.currentRowIndex = -1;
       this.cellChange.emit(data);
-      
+
       // Restore original sizes after saving cell edits
       if (this.enableRowPinning) {
         this.restoreOriginalSizes();
@@ -1724,8 +1937,13 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
    */
   expandRow(row: MTExRow, expand: boolean, index: number) {
     if (this.expandRows) {
-      this.expansionChange.emit({ data: row as T, expanded: expand, index: index });
-      this.expandedElement = this.expandedElement === (row as T) ? null : (row as T);
+      this.expansionChange.emit({
+        data: row as T,
+        expanded: expand,
+        index: index,
+      });
+      this.expandedElement =
+        this.expandedElement === (row as T) ? null : (row as T);
     }
   }
   /**
@@ -1775,7 +1993,7 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
     dialogConfig.width = '400px';
     dialogConfig.height = 'auto';
     dialogConfig.maxWidth = '100%';
-    
+
     dialogConfig.data = {
       row: { ...row },
       column: column,
@@ -1783,7 +2001,7 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
       isCellEdit: true,
       templateRef: this.cellPopupEditingTemplateRef,
     };
-    
+
     this.dialog
       .open(EditingComponent, dialogConfig)
       .afterClosed()
@@ -1903,7 +2121,7 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
       this.showHideColumnsArray = this.columnsArray.filter(
         (col: MTExColumn<T>) => {
           return col.header!.toLowerCase().includes(value.toLowerCase());
-        }
+        },
       );
     } else {
       this.showHideColumnsArray = this.columnsArray;
@@ -1946,17 +2164,17 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
       this.selectionChanged.emit({ row: row, index: index, isSelected: false });
     }
   }
-/**
- * @description This method is used to display all hidden rows.
- */
+  /**
+   * @description This method is used to display all hidden rows.
+   */
   showHiddenRows() {
     this.hideRows = false;
     this.selection.clear();
     this.hiddenCtrl.clear();
   }
-/**
- * @description This method is used to hide all selected rows.
- */
+  /**
+   * @description This method is used to hide all selected rows.
+   */
   hideSelectedRows() {
     if (!this.selection.isEmpty()) {
       let values = [...this.selection.selected];
@@ -1970,9 +2188,9 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
       this.hideRows = true;
     }
   }
-/**
- * @description This method is used to recalculate the required values for table.
- */
+  /**
+   * @description This method is used to recalculate the required values for table.
+   */
   reCal() {
     if (this.showPaginator) {
       this.dataSource.paginator = this.paginator;
@@ -1992,164 +2210,123 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
         }
       }
       if (this.pinnedBtmDataSource) {
-      if (this.pinnedBtmDataSource.filterPredicate) {
-        this.pinnedBtmDataSource.filterPredicate = this.createFilter();
-      }
+        if (this.pinnedBtmDataSource.filterPredicate) {
+          this.pinnedBtmDataSource.filterPredicate = this.createFilter();
+        }
       }
     }
     this.cdr.markForCheck();
   }
-/**
- * @description This method is called in constructor method to add SVGs into icon registration.
- */
+  /**
+   * @description This method is called in constructor method to add SVGs into icon registration.
+   */
   addIconsToRegistry() {
-    let y = this.domSanitizer.bypassSecurityTrustResourceUrl(
-      `assets/pinRight.svg`
-    );
+    let y =
+      this.domSanitizer.bypassSecurityTrustResourceUrl(`assets/pinRight.svg`);
     let iconNames = ['pinLeft', 'pinRight', 'pinNone', 'pinned', 'pinIcon'];
     iconNames.forEach((icon) => {
       this.matIconRegistry.addSvgIcon(
         icon,
-        this.domSanitizer.bypassSecurityTrustResourceUrl(
-          `assets/${icon}.svg`
-        )
+        this.domSanitizer.bypassSecurityTrustResourceUrl(`assets/${icon}.svg`),
       );
     });
   }
-/**
- * @description This method is used to export table data.
- * @param type type of file to be exported.
- */
-  async exportTable(type: string) {
-    try {
-      const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
-      // Get visible columns in the correct order (grouped first, ungrouped at end)
-      let visibleColumns: MTExColumn[] = [];
+  /**
+   * @description Returns ordered visible columns, excluding action columns,
+   * respecting column groups (grouped columns first, ungrouped at end).
+   */
+  private getVisibleColumns(): MTExColumn[] {
+    const actionColumns = [
+      'select',
+      'edit',
+      'popup',
+      'delete',
+      'freeze',
+      'hide',
+      'pin',
+    ];
+    let visibleColumns: MTExColumn[] = [];
 
-      if (this.columnGroups.length > 0) {
-        const groupedFields = new Set<string>();
-        
-        // Collect all fields that belong to groups
-        this.columnGroups.forEach(group => {
-          group.columns.forEach(colField => groupedFields.add(colField));
-        });
+    if (this.columnGroups.length > 0) {
+      const groupedFields = new Set<string>();
+
+      this.columnGroups.forEach((group) => {
+        group.columns.forEach((colField) => groupedFields.add(colField));
+      });
 
       // Add grouped columns first (in group order)
-        this.columnGroups.forEach(group => {
-          group.columns.forEach(colField => {
-            const col = this.columnsArray.find(c => c.field === colField);
-            const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === colField);
-            if (col && displayCol && displayCol.show && !visibleColumns.includes(col as MTExColumn<MTExRowData>)) {
-              visibleColumns.push(col as MTExColumn<MTExRowData>);
-            }
-          });
-        });
-
-        // Add ungrouped columns at the end
-        this.columnsArray.forEach(col => {
-          const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
-          if (!groupedFields.has(col.field) && displayCol && displayCol.show && 
-              !actionColumns.includes(col.field) && !visibleColumns.includes(col as MTExColumn<MTExRowData>)) {
+      this.columnGroups.forEach((group) => {
+        group.columns.forEach((colField) => {
+          const col = this.columnsArray.find((c) => c.field === colField);
+          const displayCol = this.dynamicDisplayedColumns.find(
+            (dc) => dc.name === colField,
+          );
+          if (
+            col &&
+            displayCol &&
+            displayCol.show &&
+            !visibleColumns.includes(col as MTExColumn<MTExRowData>)
+          ) {
             visibleColumns.push(col as MTExColumn<MTExRowData>);
           }
         });
-      } else {
-        // No groups, use default order
-        visibleColumns = this.columnsArray.filter(col => {
-          const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
-          return displayCol && displayCol.show && !actionColumns.includes(col.field);
-        }) as MTExColumn<MTExRowData>[];
-      }
-
-      // Initialize ExcelJS Workbook and Worksheet
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet('Sheet1');
-      
-      // ExcelJS rows are 1-indexed
-      let currentRowIndex = 1; 
-
-      // Add group headers if they exist
-      if (this.columnGroups.length > 0) {
-        const groupRow: any[] = new Array(visibleColumns.length).fill('');
-        const columnIndexMap: { [key: string]: number } = {};
-        
-        visibleColumns.forEach((col, idx) => {
-          columnIndexMap[col.field] = idx + 1; // 1-indexed for ExcelJS columns
-        });
-
-        this.columnGroups.forEach(group => {
-          const groupCols = group.columns.filter(colField => 
-            visibleColumns.find(vc => vc.field === colField)
-          );
-          
-          if (groupCols.length > 0) {
-            const firstColIndex = columnIndexMap[groupCols[0]];
-            groupRow[firstColIndex - 1] = group.label;
-            
-            // Merge cells if group spans multiple columns
-            // Note: CSV formats don't natively support merged cells, but ExcelJS will just output the value in the first column
-            if (groupCols.length > 1) {
-              const lastColIndex = columnIndexMap[groupCols[groupCols.length - 1]];
-              worksheet.mergeCells(currentRowIndex, firstColIndex, currentRowIndex, lastColIndex);
-            }
-          }
-        });
-        
-        worksheet.addRow(groupRow);
-        currentRowIndex++;
-      }
-
-      // Add column headers
-      const headerRow = visibleColumns.map(col => col.header || col.field);
-      worksheet.addRow(headerRow);
-      currentRowIndex++;
-
-      // Add data rows (exclude hidden rows)
-      this.dataSource.data.forEach((row, index) => {
-        // Skip hidden rows
-        if (this.hiddenRowIndices.includes(index)) {
-          return;
-        }
-        const rowData = visibleColumns.map(col => {
-          const value = row[col.field];
-          if (value === null || value === undefined) return '';
-          if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-          if (value instanceof Date) return new Intl.DateTimeFormat('en-US').format(value);
-          return value;
-        });
-        
-        worksheet.addRow(rowData);
-        currentRowIndex++;
       });
 
-      // Write to buffer based on the requested file type
-      let buffer: any;
-      let blob: Blob;
+      // Add ungrouped columns at the end
+      this.columnsArray.forEach((col) => {
+        const displayCol = this.dynamicDisplayedColumns.find(
+          (dc) => dc.name === col.field,
+        );
+        if (
+          !groupedFields.has(col.field) &&
+          displayCol &&
+          displayCol.show &&
+          !actionColumns.includes(col.field) &&
+          !visibleColumns.includes(col as MTExColumn<MTExRowData>)
+        ) {
+          visibleColumns.push(col as MTExColumn<MTExRowData>);
+        }
+      });
+    } else {
+      visibleColumns = this.columnsArray.filter((col) => {
+        const displayCol = this.dynamicDisplayedColumns.find(
+          (dc) => dc.name === col.field,
+        );
+        return (
+          displayCol && displayCol.show && !actionColumns.includes(col.field)
+        );
+      }) as MTExColumn<MTExRowData>[];
+    }
 
-      if (type.toLowerCase() === 'csv') {
-        buffer = await workbook.csv.writeBuffer();
-        blob = new Blob([buffer], { type: 'text/csv;charset=utf-8;' });
-      } else {
-        // Default to xlsx
-        buffer = await workbook.xlsx.writeBuffer();
-        blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        // Enforce the xlsx extension just in case an invalid type was passed
-        type = 'xlsx'; 
-      }
+    return visibleColumns;
+  }
 
-      saveAs(blob, `tablesheets.${type}`);
+  /**
+   * @description This method is used to export table data.
+   * @param type type of file to be exported.
+   */
+  async exportTable(type: string) {
+    try {
+      const visibleColumns = this.getVisibleColumns();
 
+      await this.exportService.exportTable({
+        type: type.toLowerCase() === 'csv' ? 'csv' : 'xlsx',
+        fileName: 'tablesheets',
+        visibleColumns,
+        columnGroups: this.columnGroups,
+        data: this.dataSource.data as Record<string, unknown>[],
+        hiddenRowIndices: this.hiddenRowIndices,
+      });
     } catch (error) {
-      // Emit error event for parent component to handle
       this.exportError.emit({
         type,
-        error: error instanceof Error ? error.message : "Export failed"
+        error: error instanceof Error ? error.message : 'Export failed',
       });
     }
   }
-/**
- * @description This method is used to print the table with proper styling.
- */
+  /**
+   * @description This method is used to print the table with proper styling.
+   */
   printTable() {
     const printContent = document.getElementById('matTableExt' + this.tableID);
     if (!printContent) return;
@@ -2174,16 +2351,16 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
       }
     `);
     windowPrint.document.write('</style></head><body>');
-    
+
     // Clone the table
     const tableClone = printContent.cloneNode(true) as HTMLElement;
 
     // Remove any <script> tags to prevent code execution
-    tableClone.querySelectorAll('script').forEach(s => s.remove());
+    tableClone.querySelectorAll('script').forEach((s) => s.remove());
 
     // Remove all event handlers (e.g., onclick, onerror) from all elements
-    tableClone.querySelectorAll('*').forEach(el => {
-      Array.from(el.attributes).forEach(attr => {
+    tableClone.querySelectorAll('*').forEach((el) => {
+      Array.from(el.attributes).forEach((attr) => {
         if (attr.name.toLowerCase().startsWith('on')) {
           el.removeAttribute(attr.name);
         }
@@ -2203,9 +2380,9 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
     ];
 
     // Remove all matching action column elements
-    actionColumnSelectors.forEach(selector => {
+    actionColumnSelectors.forEach((selector) => {
       const elements = tableClone.querySelectorAll(selector);
-      elements.forEach(el => el.remove());
+      elements.forEach((el) => el.remove());
     });
 
     // Also remove cells by index for action columns
@@ -2219,17 +2396,17 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
         }
       });
     }
-    
+
     // Remove cells at action column indices from all rows
     const rows = tableClone.querySelectorAll('tr');
     rows.forEach((row, rowIndex) => {
       // Remove hidden rows (accounting for header rows)
-      const dataIndex = rowIndex - 1; 
+      const dataIndex = rowIndex - 1;
       if (dataIndex >= 0 && this.hiddenRowIndices.includes(dataIndex)) {
         row.remove();
         return;
       }
-      
+
       const cells = Array.from(row.querySelectorAll('th, td'));
       // Remove in reverse order to maintain correct indices
       for (let i = actionColumnIndices.length - 1; i >= 0; i--) {
@@ -2243,7 +2420,7 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
     windowPrint.document.write(tableClone.outerHTML);
     windowPrint.document.write('</body></html>');
     windowPrint.document.close();
-    
+
     setTimeout(() => {
       windowPrint.print();
       windowPrint.close();
@@ -2252,175 +2429,56 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
 
   async exportToPDF() {
     try {
-      // Correct jsPDF import
-      const JsPDF = (await import('jspdf')).default;
+      const visibleColumns = this.getVisibleColumns();
 
-      // Correct AutoTable import
-      const autoTableModule = await import('jspdf-autotable');
-      const autoTable = autoTableModule.autoTable || autoTableModule.default;
-
-      // Create PDF with user-specified orientation
-      const doc = new JsPDF({
-        orientation: this.pdfOrientation,
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const actionColumns = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
-
-      // Get visible columns in the correct order (grouped first, ungrouped at end)
-      let visibleColumns: MTExColumn<T>[] = [];
-      
-      if (this.columnGroups.length > 0) {
-        const groupedFields = new Set<string>();
-        
-        // Collect all fields that belong to groups
-        this.columnGroups.forEach(group => {
-          group.columns.forEach(colField => groupedFields.add(colField));
-        });
-        
-        // Add grouped columns first (in group order)
-        this.columnGroups.forEach(group => {
-          group.columns.forEach(colField => {
-            const col = this.columnsArray.find(c => c.field === colField);
-            const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === colField);
-            if (col && displayCol && displayCol.show && !visibleColumns.includes(col)) {
-              visibleColumns.push(col);
-            }
-          });
-        });
-        
-        // Add ungrouped columns at the end
-        this.columnsArray.forEach(col => {
-          const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
-          if (!groupedFields.has(col.field) && displayCol && displayCol.show && 
-              !actionColumns.includes(col.field) && !visibleColumns.includes(col)) {
-            visibleColumns.push(col);
-          }
-        });
-      } else {
-        // No groups, use default order
-        visibleColumns = this.columnsArray.filter(col => {
-          const displayCol = this.dynamicDisplayedColumns.find(dc => dc.name === col.field);
-          return displayCol && displayCol.show && !actionColumns.includes(col.field);
-        });
-      }
-
-      // Prepare group headers if column groups exist
-      let groupHeaders: any[] = [];
-      let columnIndexMap: { [key: string]: number } = {};
-      let groupColSpans: { [key: number]: number } = {};
-      
-      if (this.columnGroups.length > 0) {
-        // Build column index map
-        visibleColumns.forEach((col, idx) => {
-          columnIndexMap[col.field] = idx;
-        });
-        
-        // Create group header row
-        const groupRow: any[] = [];
-        let currentIndex = 0;
-        
-        this.columnGroups.forEach(group => {
-          const groupCols = group.columns.filter(colField => 
-            visibleColumns.find(vc => vc.field === colField)
-          );
-          
-          if (groupCols.length > 0) {
-            const firstColIndex = columnIndexMap[groupCols[0]];
-            
-            // Add the group header cell with content and colspan
-            groupRow.push({
-              content: group.label,
-              colSpan: groupCols.length,
-              styles: { halign: 'center' }
-            });
-            
-            groupColSpans[firstColIndex] = groupCols.length;
-            currentIndex = firstColIndex + groupCols.length;
-          }
-        });
-        
-        // Add empty cells for ungrouped columns
-        const groupedFields = new Set<string>();
-        this.columnGroups.forEach(group => {
-          group.columns.forEach(colField => groupedFields.add(colField));
-        });
-        
-        const ungroupedCount = visibleColumns.filter(col => 
-          !groupedFields.has(col.field)
-        ).length;
-        
-        for (let i = 0; i < ungroupedCount; i++) {
-          groupRow.push({
-            content: '',
-            styles: { halign: 'center' }
-          });
-        }
-        
-        groupHeaders = [groupRow];
-      }
-
-      const headers = visibleColumns.map(col => col.header || col.field);
-
-      const rows = this.dataSource.data
-        .map((row, index) => ({
-          row,
-          index
-        }))
-        .filter(({ index }) => !this.hiddenRowIndices.includes(index))
-        .map(({ row }) =>
-          visibleColumns.map(col => {
-            const value = row[col.field];
-          if (value === null || value === undefined) return '';
-          if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-          if (value instanceof Date)
-            return new Intl.DateTimeFormat('en-US').format(value);
-          return String(value);
-        })
-      );
-
-      let startY = 10;
-      if (this.toolbarTitle) {
-        doc.text(this.toolbarTitle, 14, 15);
-        startY = 20;
-      }
-
-      // Extract header styles from actual mat-table
+      // Extract header styles from actual mat-table (stays in component — needs DOM access)
       let headerStyles: any = {
-        fillColor: [245, 245, 245],  // Default Material table header background (#f5f5f5)
-        textColor: [0, 0, 0],        // Default Material table header text (black)
-        fontStyle: 'bold'
+        fillColor: [245, 245, 245],
+        textColor: [0, 0, 0],
+        fontStyle: 'bold',
       };
 
-      // If headerTemplateRef is defined, extract styles from the actual header cells
       if (this.headerTemplateRef) {
-        const headerCells = this.tableElement?.nativeElement?.querySelectorAll('.mat-mdc-header-cell');
+        const headerCells = this.tableElement?.nativeElement?.querySelectorAll(
+          '.mat-mdc-header-cell',
+        );
         if (headerCells && headerCells.length > 0) {
           const firstHeader = headerCells[0] as HTMLElement;
           const computedStyles = window.getComputedStyle(firstHeader);
-          
-          // Extract background color
+
           const bgColor = computedStyles.backgroundColor;
-          if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+          if (
+            bgColor &&
+            bgColor !== 'rgba(0, 0, 0, 0)' &&
+            bgColor !== 'transparent'
+          ) {
             const rgb = bgColor.match(/\d+/g);
             if (rgb && rgb.length >= 3) {
-              headerStyles.fillColor = [parseInt(rgb[0]), parseInt(rgb[1]), parseInt(rgb[2])];
+              headerStyles.fillColor = [
+                parseInt(rgb[0]),
+                parseInt(rgb[1]),
+                parseInt(rgb[2]),
+              ];
             }
           }
-          
-          // Extract text color
+
           const textColor = computedStyles.color;
           if (textColor) {
             const rgb = textColor.match(/\d+/g);
             if (rgb && rgb.length >= 3) {
-              headerStyles.textColor = [parseInt(rgb[0]), parseInt(rgb[1]), parseInt(rgb[2])];
+              headerStyles.textColor = [
+                parseInt(rgb[0]),
+                parseInt(rgb[1]),
+                parseInt(rgb[2]),
+              ];
             }
           }
-          
-          // Extract font weight
+
           const fontWeight = computedStyles.fontWeight;
-          if (fontWeight && (fontWeight === 'bold' || parseInt(fontWeight) >= 600)) {
+          if (
+            fontWeight &&
+            (fontWeight === 'bold' || parseInt(fontWeight) >= 600)
+          ) {
             headerStyles.fontStyle = 'bold';
           } else {
             headerStyles.fontStyle = 'normal';
@@ -2430,122 +2488,81 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
 
       // Extract group header styles if groups exist
       let groupHeaderStyles: any = null;
-      if (groupHeaders.length > 0) {
-        // Extract from group-header-cell elements
-        const groupHeaderCells = this.tableElement?.nativeElement?.querySelectorAll('.group-header-cell');
+      if (this.columnGroups.length > 0) {
+        const groupHeaderCells =
+          this.tableElement?.nativeElement?.querySelectorAll(
+            '.group-header-cell',
+          );
         if (groupHeaderCells && groupHeaderCells.length > 0) {
           const firstGroupHeader = groupHeaderCells[0] as HTMLElement;
           const computedStyles = window.getComputedStyle(firstGroupHeader);
-          
+
           groupHeaderStyles = {};
-          
-          // Extract background color
+
           const bgColor = computedStyles.backgroundColor;
-          if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+          if (
+            bgColor &&
+            bgColor !== 'rgba(0, 0, 0, 0)' &&
+            bgColor !== 'transparent'
+          ) {
             const rgb = bgColor.match(/\d+/g);
             if (rgb && rgb.length >= 3) {
-              groupHeaderStyles.fillColor = [parseInt(rgb[0]), parseInt(rgb[1]), parseInt(rgb[2])];
+              groupHeaderStyles.fillColor = [
+                parseInt(rgb[0]),
+                parseInt(rgb[1]),
+                parseInt(rgb[2]),
+              ];
             }
           } else {
-            // Default to same as header background
             groupHeaderStyles.fillColor = headerStyles.fillColor;
           }
-          
-          // Extract text color
+
           const textColor = computedStyles.color;
           if (textColor) {
             const rgb = textColor.match(/\d+/g);
             if (rgb && rgb.length >= 3) {
-              groupHeaderStyles.textColor = [parseInt(rgb[0]), parseInt(rgb[1]), parseInt(rgb[2])];
+              groupHeaderStyles.textColor = [
+                parseInt(rgb[0]),
+                parseInt(rgb[1]),
+                parseInt(rgb[2]),
+              ];
             }
           } else {
-            // Default to same as header text
             groupHeaderStyles.textColor = headerStyles.textColor;
           }
-          
-          // Extract font weight
+
           const fontWeight = computedStyles.fontWeight;
-          if (fontWeight && (fontWeight === 'bold' || parseInt(fontWeight) >= 600)) {
+          if (
+            fontWeight &&
+            (fontWeight === 'bold' || parseInt(fontWeight) >= 600)
+          ) {
             groupHeaderStyles.fontStyle = 'bold';
           } else {
             groupHeaderStyles.fontStyle = 'normal';
           }
         } else {
-          // No group header cells found, use same as regular headers
           groupHeaderStyles = { ...headerStyles };
         }
       }
 
-      // Build table config without default grid borders. We'll draw only
-      // bottom dividers manually in `didDrawCell` so there are no left/right borders.
-      const tableConfig: any = {
-        head: groupHeaders.length > 0 ? [...groupHeaders, headers] : [headers],
-        body: rows,
-        startY: startY,
-        // Use 'plain' so autowire doesn't draw full grid borders
-        theme: 'plain',
-        styles: {
-          fontSize: 9,
-          cellPadding: 3,
-          // ensure autTable doesn't draw default lines
-          lineWidth: 0
-        },
-        headStyles: headerStyles
-      };
-
-      // didParseCell: apply header/group header visual styles (background/text/font)
-      tableConfig.didParseCell = (data: any) => {
-        // Group header row styling (if present)
-        if (data.section === 'head' && groupHeaders.length > 0 && data.row.index === 0 && groupHeaderStyles) {
-          if (groupHeaderStyles.fillColor) data.cell.styles.fillColor = groupHeaderStyles.fillColor;
-          if (groupHeaderStyles.textColor) data.cell.styles.textColor = groupHeaderStyles.textColor;
-          if (groupHeaderStyles.fontStyle) data.cell.styles.fontStyle = groupHeaderStyles.fontStyle;
-          data.cell.styles.halign = 'center';
-        }
-
-        // Final header row (column labels) should use headerStyles
-        if (data.section === 'head' && data.row.index === (groupHeaders.length > 0 ? groupHeaders.length : 0)) {
-          if (headerStyles.fillColor) data.cell.styles.fillColor = headerStyles.fillColor;
-          if (headerStyles.textColor) data.cell.styles.textColor = headerStyles.textColor;
-          if (headerStyles.fontStyle) data.cell.styles.fontStyle = headerStyles.fontStyle;
-        }
-      };
-
-      // didDrawCell: draw only the bottom divider line for each cell
-      tableConfig.didDrawCell = (data: any) => {
-        try {
-          const cell = data.cell;
-          const docRef: any = doc;
-          // Determine stroke color and width for divider
-          const lineColor = [200, 200, 200];
-          const lineWidth = 0.5;
-
-          // Coordinates: draw a horizontal line across the bottom of the cell
-          const x1 = cell.x;
-          const x2 = cell.x + cell.width;
-          const y = cell.y + cell.height;
-
-          docRef.setDrawColor(lineColor[0], lineColor[1], lineColor[2]);
-          docRef.setLineWidth(lineWidth);
-          docRef.line(x1, y, x2, y);
-        } catch (err) {
-          // don't block export on draw errors
-        }
-      };
-
-      autoTable(doc, tableConfig);
-
-      doc.save(`${this.toolbarTitle || 'table-export'}.pdf`);
-
+      await this.exportService.exportToPDF({
+        fileName: this.toolbarTitle || 'table-export',
+        orientation: this.pdfOrientation,
+        title: this.toolbarTitle || undefined,
+        visibleColumns,
+        columnGroups: this.columnGroups,
+        data: this.dataSource.data as Record<string, unknown>[],
+        hiddenRowIndices: this.hiddenRowIndices,
+        headerStyles,
+        groupHeaderStyles,
+      });
     } catch (error) {
-      // Emit error event for parent component to handle
       this.exportError.emit({
         type: 'pdf',
-        error: error instanceof Error ? error.message : "Export failed"
+        error: error instanceof Error ? error.message : 'Export failed',
       });
     }
   }
-
 
   /**
    * @description This method is used to split name of filter row header to get index.
@@ -2555,11 +2572,11 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
   returnIndex(value: string): number {
     return Number(value.split('_')[1]);
   }
-/**
- * @description This method is used to manage column filtering, expanded data for exporting.
- * @param ws work sheet
- * @returns custom generated worksheet to be used in export.
- */
+  /**
+   * @description This method is used to manage column filtering, expanded data for exporting.
+   * @param ws work sheet
+   * @returns custom generated worksheet to be used in export.
+   */
   // writeSheetData(ws: XLSX.WorkSheet): XLSX.WorkSheet {
   //   let displayedColumns = this.getDisplayedColumns();
   //   var nMerges = this.getMergeIndex(ws['!merges'] || []);
@@ -2632,7 +2649,5 @@ updateColumns(updatedColumns: MTExColumn<T>[]) {
     });
     return arr;
   }
-
-  
 }
 

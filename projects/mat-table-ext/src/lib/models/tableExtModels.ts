@@ -235,3 +235,34 @@ export interface MTExPDFConfig {
   /** Orientation for PDF export */
   pdfOrientation?: 'portrait' | 'landscape';
 }
+
+/** Options for Excel/CSV export via TableExportService */
+export interface TableExportOptions {
+  type: 'xlsx' | 'csv';
+  fileName?: string;
+  visibleColumns: MTExColumn[];
+  columnGroups: MTExColumnGroup[];
+  data: Record<string, unknown>[];
+  hiddenRowIndices: number[];
+}
+
+/** Options for PDF export via TableExportService */
+export interface TablePdfExportOptions {
+  fileName?: string;
+  orientation: 'portrait' | 'landscape';
+  title?: string;
+  visibleColumns: MTExColumn[];
+  columnGroups: MTExColumnGroup[];
+  data: Record<string, unknown>[];
+  hiddenRowIndices: number[];
+  headerStyles?: {
+    fillColor: number[];
+    textColor: number[];
+    fontStyle: string;
+  };
+  groupHeaderStyles?: {
+    fillColor: number[];
+    textColor: number[];
+    fontStyle: string;
+  } | null;
+}
