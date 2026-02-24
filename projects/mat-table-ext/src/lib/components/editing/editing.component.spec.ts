@@ -1,18 +1,39 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MatTableExtService } from '../../mat-table-ext.service';
 
-import { PopupModalComponent } from './editing.component';
+import { EditingComponent } from './editing.component';
 
-describe('PopupModalComponent', () => {
-  let component: PopupModalComponent;
-  let fixture: ComponentFixture<PopupModalComponent>;
+describe('EditingComponent', () => {
+  let component: EditingComponent;
+  let fixture: ComponentFixture<EditingComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ PopupModalComponent ]
+      imports: [EditingComponent],
+      providers: [
+        {
+          provide: MAT_DIALOG_DATA,
+          useValue: {
+            row: {},
+            columns: [],
+          },
+        },
+        {
+          provide: MatDialogRef,
+          useValue: {
+            close: jasmine.createSpy('close'),
+          },
+        },
+        {
+          provide: MatTableExtService,
+          useValue: {},
+        },
+      ],
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(PopupModalComponent);
+    fixture = TestBed.createComponent(EditingComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

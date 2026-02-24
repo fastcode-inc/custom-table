@@ -77,6 +77,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { ColumnPinningComponent } from './components/column-pinning/column-pinning.component';
 import { FilterColumnsComponentComponent } from './components/filter-columns-component/filter-columns-component.component';
 import { ResizeColumnDirective } from './directives/resize-column.directive';
+import { TablePrintService } from './services/table-print.service';
 @Component({
   selector: 'mat-table-ext',
   templateUrl: 'mat-table-ext.component.html',
@@ -338,6 +339,7 @@ export class MatTableExtComponent<
     private dialog: MatDialog,
     private service: MatTableExtService<T>,
     private exportService: TableExportService,
+    private tablePrintService: TablePrintService,
     private formBuilder: FormBuilder,
     private domSanitizer: DomSanitizer,
     private matIconRegistry: MatIconRegistry,
@@ -2328,103 +2330,7 @@ export class MatTableExtComponent<
    * @description This method is used to print the table with proper styling.
    */
   printTable() {
-    const printContent = document.getElementById('matTableExt' + this.tableID);
-    if (!printContent) return;
-
-    const windowPrint = window.open('', '', 'width=900,height=650');
-    if (!windowPrint) return;
-
-    windowPrint.document.write('<html><head><title>Print Table</title>');
-    windowPrint.document.write('<style>');
-    windowPrint.document.write(`
-      table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
-      th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-      th { background-color: #f2f2f2; font-weight: bold; }
-      tr:nth-child(even) { background-color: #f9f9f9; }
-      .mat-sort-header-container { display: inline; }
-      .mat-sort-header-arrow, .mat-sort-header-indicator { display: none !important; }
-      button, .mat-icon { display: none !important; }
-      @media print {
-        .mat-mdc-table { page-break-inside: auto; }
-        tr { page-break-inside: avoid; page-break-after: auto; }
-        thead { display: table-header-group; }
-      }
-    `);
-    windowPrint.document.write('</style></head><body>');
-
-    // Clone the table
-    const tableClone = printContent.cloneNode(true) as HTMLElement;
-
-    // Remove any <script> tags to prevent code execution
-    tableClone.querySelectorAll('script').forEach((s) => s.remove());
-
-    // Remove all event handlers (e.g., onclick, onerror) from all elements
-    tableClone.querySelectorAll('*').forEach((el) => {
-      Array.from(el.attributes).forEach((attr) => {
-        if (attr.name.toLowerCase().startsWith('on')) {
-          el.removeAttribute(attr.name);
-        }
-      });
-    });
-
-    // Define action column class selectors
-    const actionColumnSelectors = [
-      'th.action-column-cells',
-      'td.inline-edit-column-cell',
-      '[matColumnDef="select"]',
-      '[matColumnDef="edit"]',
-      '[matColumnDef="popup"]',
-      '[matColumnDef="delete"]',
-      '[matColumnDef="freeze"]',
-      '[matColumnDef="hide"]',
-    ];
-
-    // Remove all matching action column elements
-    actionColumnSelectors.forEach((selector) => {
-      const elements = tableClone.querySelectorAll(selector);
-      elements.forEach((el) => el.remove());
-    });
-
-    // Also remove cells by index for action columns
-    const actionColumnIndices: number[] = [];
-    const headerRow = tableClone.querySelector('tr.mat-mdc-header-row');
-    if (headerRow) {
-      const headers = Array.from(headerRow.querySelectorAll('th'));
-      headers.forEach((th, index) => {
-        if (th.classList.contains('action-column-cells')) {
-          actionColumnIndices.push(index);
-        }
-      });
-    }
-
-    // Remove cells at action column indices from all rows
-    const rows = tableClone.querySelectorAll('tr');
-    rows.forEach((row, rowIndex) => {
-      // Remove hidden rows (accounting for header rows)
-      const dataIndex = rowIndex - 1;
-      if (dataIndex >= 0 && this.hiddenRowIndices.includes(dataIndex)) {
-        row.remove();
-        return;
-      }
-
-      const cells = Array.from(row.querySelectorAll('th, td'));
-      // Remove in reverse order to maintain correct indices
-      for (let i = actionColumnIndices.length - 1; i >= 0; i--) {
-        const index = actionColumnIndices[i];
-        if (cells[index]) {
-          cells[index].remove();
-        }
-      }
-    });
-
-    windowPrint.document.write(tableClone.outerHTML);
-    windowPrint.document.write('</body></html>');
-    windowPrint.document.close();
-
-    setTimeout(() => {
-      windowPrint.print();
-      windowPrint.close();
-    }, 250);
+    this.tablePrintService.printTable(this.tableID, this.hiddenRowIndices);
   }
 
   async exportToPDF() {
