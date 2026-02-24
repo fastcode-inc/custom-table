@@ -293,9 +293,9 @@
                             [checked]="selection.isSelected(row)" [aria-label]="checkboxLabel(row)">
                         </mat-checkbox>
                     </td>
-                    <ng-container *ngIf="showFooterRow">
+                    @if (showFooterRow) {
                         <td mat-footer-cell *matFooterCellDef></td>
-                    </ng-container>
+                    }
                 </ng-container>
                 <!--dynamic columns are being generated here-->
                 @for (column of columnsArray; track column.field + '_' + column.pinned; let i = $index) {
@@ -540,9 +540,9 @@
                             [checked]="selection.isSelected(row)" [aria-label]="checkboxLabel(row)">
                         </mat-checkbox>
                     </td>
-                    <ng-container *ngIf="showFooterRow">
+                    @if (showFooterRow) {
                         <td mat-footer-cell *matFooterCellDef></td>
-                    </ng-container>
+                    }
                 </ng-container>
                 <!--dynamic columns are being generated here-->
                 @for (column of columnsArray; track column.field + '_' + column.pinned; let i = $index) {
@@ -774,9 +774,9 @@
                                 [checked]="selection.isSelected(row)" [aria-label]="checkboxLabel(row)">
                             </mat-checkbox>
                         </td>
-                        <ng-container *ngIf="showFooterRow">
+                        @if (showFooterRow) {
                             <td mat-footer-cell *matFooterCellDef></td>
-                        </ng-container>
+                        }
                     </ng-container>
                     <!--dynamic columns are being generated here-->
                     @for (column of columnsArray; track column.field + '_' + column.pinned; let i = $index) {
@@ -1018,9 +1018,9 @@
                             [checked]="selection.isSelected(row)" [aria-label]="checkboxLabel(row)">
                         </mat-checkbox>
                     </td>
-                    <ng-container *ngIf="showFooterRow">
+                    @if (showFooterRow) {
                         <td mat-footer-cell *matFooterCellDef></td>
-                    </ng-container>
+                    }
                 </ng-container>
                 <!--dynamic columns are being generated here-->
                 @for (column of columnsArray; track column.field + '_' + column.pinned; let i = $index) {
@@ -1160,15 +1160,15 @@
                         </ng-container>
                     }
                     <!-- Empty header cells for ungrouped columns -->
-                    <ng-container *ngFor="let column of columnsArray">
+                    @for (column of columnsArray; track column.field) {
                         <ng-container [matColumnDef]="'ungrouped-' + column.field">
                             <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell">
                             </th>
                         </ng-container>
-                    </ng-container>
+                    }
                 }
                 <!-- Filter row columns for data columns -->
-                <ng-container *ngFor="let ids of headersFiltersIds; let i = index">
+                @for (ids of headersFiltersIds; track ids; let i = $index) {
                     <ng-container [matColumnDef]="ids" [sticky]="columnsArray[returnIndex(ids)].pinned === 'left'" [stickyEnd]="columnsArray[returnIndex(ids)].pinned === 'right'">
                         <th mat-header-cell *matHeaderCellDef  [style.minWidth]="columnsArray[returnIndex(ids)].width" [style.maxWidth]="columnsArray[returnIndex(ids)].maxWidth?columnsArray[returnIndex(ids)].maxWidth:columnsArray[returnIndex(ids)].width"
                         [style.minWidth]="columnsArray[returnIndex(ids)].minWidth" >
@@ -1178,7 +1178,7 @@
                             </div>
                         </th>
                     </ng-container>
-                </ng-container>
+                }
 
                 <!-- Empty filter cells for action columns -->
                 <ng-container [matColumnDef]="'filter-select'">
@@ -1203,9 +1203,9 @@
                     <th mat-header-cell *matHeaderCellDef class="filter-placeholder-cell"></th>
                 </ng-container>
 
-                <ng-container *ngIf="columnGroups.length > 0">
+                @if (columnGroups.length > 0) {
                     <tr mat-header-row *matHeaderRowDef="getGroupedColumns(); sticky: stickyHeader" class="mat-mdc-header-row group-header-row"></tr>
-                </ng-container>
+                }
                 <tr mat-header-row *matHeaderRowDef=" getDisplayedColumns(); sticky: stickyHeader" class="mat-mdc-header-row"></tr>
                 <tr style="height: 0px;" mat-header-row class="no-default-height" *matHeaderRowDef="getFilterColumns()">
                 </tr>
