@@ -103,14 +103,45 @@ table th:hover .resize-handle {
   position: relative;
 }
 
-.mat-mdc-table .mat-mdc-header-cell:not(:last-child) .resize-holder {
+.mat-mdc-table .mat-mdc-header-cell:not(:last-child) .resize-holder,
+.mat-mdc-table .mat-header-cell:not(:last-child) .resize-holder {
   cursor: col-resize;
-  width: 20px;
+  width: 14px;
   height: 100%;
   position: absolute;
-  right: -10px;
+  right: 0;
   top: 0;
-  z-index: 1;
+  z-index: 3;
+  display: block;
+  pointer-events: auto;
+}
+
+.mat-mdc-table .mat-mdc-header-cell:not(:last-child) .resize-holder:hover,
+.mat-mdc-table .mat-header-cell:not(:last-child) .resize-holder:hover {
+  background-color: var(--mat-table-resize-hover-bg, rgba(0, 0, 0, 0.08));
+}
+
+.mat-mdc-table .mat-mdc-header-cell:not(:last-child) .resize-holder::after,
+.mat-mdc-table .mat-header-cell:not(:last-child) .resize-holder::after {
+  content: '';
+  position: absolute;
+  top: 20%;
+  bottom: 20%;
+  right: 1px;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--mat-table-outline-color, rgba(0, 0, 0, 0.35));
+  opacity: 0;
+  transition: opacity 120ms ease-in-out;
+}
+
+.mat-mdc-table .mat-mdc-header-cell:not(:last-child):hover .resize-holder::after,
+.mat-mdc-table .mat-header-cell:not(:last-child):hover .resize-holder::after {
+  opacity: 1;
+}
+
+.mat-mdc-table.resizing .mat-mdc-header-cell .resize-holder::after {
+  opacity: 1;
 }
 
 .toolbar-container {

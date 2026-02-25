@@ -907,6 +907,28 @@
                                 </th>
                             </ng-container>
                         }
+                        <!-- Empty header cells for action columns to fill space in group header -->
+                        <ng-container [matColumnDef]="'ungrouped-select'">
+                            <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell"></th>
+                        </ng-container>
+                        <ng-container [matColumnDef]="'ungrouped-edit'">
+                            <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell"></th>
+                        </ng-container>
+                        <ng-container [matColumnDef]="'ungrouped-popup'">
+                            <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell"></th>
+                        </ng-container>
+                        <ng-container [matColumnDef]="'ungrouped-delete'">
+                            <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell"></th>
+                        </ng-container>
+                        <ng-container [matColumnDef]="'ungrouped-freeze'">
+                            <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell"></th>
+                        </ng-container>
+                        <ng-container [matColumnDef]="'ungrouped-hide'">
+                            <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell"></th>
+                        </ng-container>
+                        <ng-container [matColumnDef]="'ungrouped-pin'">
+                            <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell"></th>
+                        </ng-container>
                     }
                     <!-- Empty filter cells for action columns -->
                     <ng-container [matColumnDef]="'filter-select'">
@@ -1166,6 +1188,28 @@
                             </th>
                         </ng-container>
                     }
+                    <!-- Empty header cells for action columns to fill space in group header -->
+                    <ng-container [matColumnDef]="'ungrouped-select'">
+                        <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell"></th>
+                    </ng-container>
+                    <ng-container [matColumnDef]="'ungrouped-edit'">
+                        <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell"></th>
+                    </ng-container>
+                    <ng-container [matColumnDef]="'ungrouped-popup'">
+                        <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell"></th>
+                    </ng-container>
+                    <ng-container [matColumnDef]="'ungrouped-delete'">
+                        <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell"></th>
+                    </ng-container>
+                    <ng-container [matColumnDef]="'ungrouped-freeze'">
+                        <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell"></th>
+                    </ng-container>
+                    <ng-container [matColumnDef]="'ungrouped-hide'">
+                        <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell"></th>
+                    </ng-container>
+                    <ng-container [matColumnDef]="'ungrouped-pin'">
+                        <th mat-header-cell *matHeaderCellDef class="group-header-cell ungrouped-header-cell"></th>
+                    </ng-container>
                 }
                 <!-- Filter row columns for data columns -->
                 @for (ids of headersFiltersIds; track ids; let i = $index) {

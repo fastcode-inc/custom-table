@@ -13,6 +13,7 @@ import {
   ChangeDetectorRef,
   ElementRef,
   EventEmitter,
+  NgZone,
   Output,
 } from '@angular/core';
 import {
@@ -334,6 +335,9 @@ export class MatTableExtComponent<
     'columnGroups',
   ];
   resizeListenerAttached: boolean = false;
+  private resizeDebounceTimer: number | null = null;
+  private readonly resizeDebounceMs: number = 120;
+  private isViewInitialized: boolean = false;
 
   constructor(
     private dialog: MatDialog,
@@ -344,6 +348,7 @@ export class MatTableExtComponent<
     private domSanitizer: DomSanitizer,
     private matIconRegistry: MatIconRegistry,
     private cdr: ChangeDetectorRef,
+    private ngZone: NgZone,
   ) {
     this.addIconsToRegistry();
     if (this.dataSource) {
@@ -463,6 +468,8 @@ export class MatTableExtComponent<
   }
 
   ngAfterViewInit() {
+    this.isViewInitialized = true;
+
     if (this.dataSource) {
       this.dataSource.paginator = this.paginator;
       this.dataSource.sort = this.sort;
@@ -474,9 +481,30 @@ export class MatTableExtComponent<
     // Sync column sizes from top table to middle/bottom when pinning enabled
     if (this.enableRowPinning) {
       setTimeout(() => this.syncColumnSizesFromTop(), 150);
-      window.addEventListener('resize', this.onWindowResizeBound);
-      this.resizeListenerAttached = true;
+      this.attachResizeListener();
     }
+  }
+
+  private attachResizeListener(): void {
+    if (this.resizeListenerAttached || typeof window === 'undefined') return;
+
+    this.ngZone.runOutsideAngular(() => {
+      window.addEventListener('resize', this.onWindowResizeBound, {
+        passive: true,
+      });
+    });
+
+    this.resizeListenerAttached = true;
+  }
+
+  private detachResizeListener(): void {
+    if (!this.resizeListenerAttached || typeof window === 'undefined') return;
+
+    this.ngZone.runOutsideAngular(() => {
+      window.removeEventListener('resize', this.onWindowResizeBound);
+    });
+
+    this.resizeListenerAttached = false;
   }
 
   private setSorting() {
@@ -594,9 +622,25 @@ export class MatTableExtComponent<
   }
 
   private onWindowResizeBound = () => {
-    this.updatePinnedRowOffsets();
-    this.syncColumnSizesFromTop();
+    if (!this.enableRowPinning || typeof window === 'undefined') return;
+
+    if (this.resizeDebounceTimer !== null) {
+      window.clearTimeout(this.resizeDebounceTimer);
+    }
+
+    this.resizeDebounceTimer = window.setTimeout(() => {
+      this.updatePinnedRowOffsets();
+      this.syncColumnSizesFromTop();
+      this.resizeDebounceTimer = null;
+    }, this.resizeDebounceMs);
   };
+
+  private clearResizeDebounceTimer(): void {
+    if (this.resizeDebounceTimer === null) return;
+
+    window.clearTimeout(this.resizeDebounceTimer);
+    this.resizeDebounceTimer = null;
+  }
 
   /**
    * Copy header cell widths/heights from the top table and apply them to middle and bottom tables.
@@ -905,9 +949,8 @@ export class MatTableExtComponent<
   }
 
   ngOnDestroy(): void {
-    if (this.resizeListenerAttached) {
-      window.removeEventListener('resize', this.onWindowResizeBound);
-    }
+    this.detachResizeListener();
+    this.clearResizeDebounceTimer();
   }
   /**
    * @description checks and updates the the column's hide and show properties.
@@ -957,8 +1000,17 @@ export class MatTableExtComponent<
       this.showHideColumn('hide', value.currentValue),
     enableRowPinning: (value: SimpleChange) => {
       this.showHideColumn('pin', value.currentValue);
+
       if (value.currentValue) {
         this.initializePinnedRows();
+        if (this.isViewInitialized) {
+          this.attachResizeListener();
+          this.updatePinnedRowOffsets();
+          setTimeout(() => this.syncColumnSizesFromTop(), 80);
+        }
+      } else {
+        this.detachResizeListener();
+        this.clearResizeDebounceTimer();
       }
     },
     rowSelection: (value: SimpleChange) =>

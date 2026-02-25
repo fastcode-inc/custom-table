@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, TemplateRef, ViewChild } from '@angular/core';
+import { Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { CustomTableService } from './service/custom-table.service';
 import { MTExColumn, MTExColumnGroup } from '../../../mat-table-ext/src/lib/models/tableExtModels';
@@ -192,7 +192,7 @@ export var EXAMPLE_DATA: any[] = [
     MatDatepickerModule
   ]
 })
-export class AppComponent implements AfterViewInit {
+export class AppComponent implements OnInit {
   title = 'mat-table-ext-example';
   isLoading: boolean = false;
   public dataSource: any = new MatTableDataSource(EXAMPLE_DATA);
@@ -301,25 +301,21 @@ export class AppComponent implements AfterViewInit {
   constructor(public service: CustomTableService) {
     // this.loadPage(10);
   }
-  ngAfterViewInit(): void {
-    
-  this.columns=[
-    { header: 'Position', field: 'position', width: '100px', type: 'number', groupName: 'basic' },
-    { header: 'Name', field: 'name', width: '150px', type: 'string', groupName: 'basic' },
-    { header: 'Symbol', field: 'symbol', width: '100px', type: 'string', groupName: 'basic' },
-    { header: 'Weight', field: 'weight', width: '120px', type: 'number', groupName: 'measurements' },
-    { header: 'Cost', field: 'cost', width: '100px', type: 'number', groupName: 'measurements' },
-    { header: 'Gender', field: 'gender', width: '120px', type: 'selection', options: ['male', 'female'], groupName: 'personal' },
-    { header: 'Birth Date', field: 'birthDate', width: '180px', type: 'date', groupName: 'personal' },
-    { header: 'Status', field: 'status', width: '100px', type: 'boolean', groupName: 'personal' },
-    { header: 'Description', field: 'description', width: '250px', type: 'textarea', groupName: 'personal' },
-    { header: 'Email', field: 'email', width: '200px', type: 'string', groupName: 'contact' },
-    { header: 'Mobile', field: 'mobile', width: '150px', type: 'string', groupName: 'contact' },
-    { header: 'City', field: 'city', width: '150px', type: 'string', groupName: 'contact' },
-  ];
-  }
-
   ngOnInit(): void {
+    this.columns = [
+      { header: 'Position', field: 'position', width: '100px', type: 'number', groupName: 'basic' },
+      { header: 'Name', field: 'name', width: '150px', type: 'string', groupName: 'basic' },
+      { header: 'Symbol', field: 'symbol', width: '100px', type: 'string', groupName: 'basic' },
+      { header: 'Weight', field: 'weight', width: '120px', type: 'number', groupName: 'measurements' },
+      { header: 'Cost', field: 'cost', width: '100px', type: 'number', groupName: 'measurements' },
+      { header: 'Gender', field: 'gender', width: '120px', type: 'selection', options: ['male', 'female'], groupName: 'personal' },
+      { header: 'Birth Date', field: 'birthDate', width: '180px', type: 'date', groupName: 'personal' },
+      { header: 'Status', field: 'status', width: '100px', type: 'boolean', groupName: 'personal' },
+      { header: 'Description', field: 'description', width: '250px', type: 'textarea', groupName: 'personal' },
+      { header: 'Email', field: 'email', width: '200px', type: 'string', groupName: 'contact' },
+      { header: 'Mobile', field: 'mobile', width: '150px', type: 'string', groupName: 'contact' },
+      { header: 'City', field: 'city', width: '150px', type: 'string', groupName: 'contact' },
+    ];
   }
   
   showhidecolumn(op: string) {
