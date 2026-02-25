@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import * as ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
+import * as FileSaver from 'file-saver';
 import {
   MTExColumn,
   MTExColumnGroup,
   TableExportOptions,
   TablePdfExportOptions,
-} from './models/tableExtModels';
+} from '../models/tableExtModels';
 
 @Injectable({
   providedIn: 'root',
@@ -107,7 +107,7 @@ export class TableExportService {
       resolvedType = 'xlsx';
     }
 
-    saveAs(blob, `${fileName}.${resolvedType}`);
+    FileSaver.saveAs(blob, `${fileName}.${resolvedType}`);
   }
 
   /**

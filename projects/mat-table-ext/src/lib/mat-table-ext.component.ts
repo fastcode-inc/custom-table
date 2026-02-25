@@ -62,8 +62,8 @@ import {
   MTExCellEditingContext,
   MTExExpandedDetailContext,
 } from '../lib/models/tableExtModels';
-import { MatTableExtService } from '../lib/mat-table-ext.service';
-import { TableExportService } from './table-export.service';
+import { MatTableExtService } from './services/mat-table-ext.service';
+import { TableExportService } from './services/table-export.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
