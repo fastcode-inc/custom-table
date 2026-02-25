@@ -174,7 +174,7 @@
     <!-- Row Pin Menu -->
     <mat-menu #pinMenu="matMenu" (closed)="closeRowPinMenu()">
         @if (rowPinMenuRow) {
-            @if (!isRowPinned(rowPinMenuRow)) {
+            @if (!(rowPinMenuRow | isRowPinned:pinnedTopRows:pinnedBottomRows)) {
                 <button mat-menu-item (click)="pinRow(rowPinMenuRow, 'top')">
                     <mat-icon>vertical_align_top</mat-icon>
                     <span>Pin to Top</span>
@@ -184,7 +184,7 @@
                     <span>Pin to Bottom</span>
                 </button>
             }
-            @if (isRowPinned(rowPinMenuRow)) {
+            @if (rowPinMenuRow | isRowPinned:pinnedTopRows:pinnedBottomRows) {
                 <button mat-menu-item (click)="unpinRow(rowPinMenuRow)">
                     <mat-icon>close</mat-icon>
                     <span>Unpin Row</span>
@@ -300,10 +300,10 @@
                     </th>
                     <td mat-cell *matCellDef="let row;let i=dataIndex">
                         <button matIconButton (click)="toggleRowHide(i)" 
-                            [matTooltip]="isRowHidden(i) ? 'Unhide Row' : 'Hide Row'"
+                            [matTooltip]="(i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'Unhide Row' : 'Hide Row'"
                             matTooltipPosition="above">
-                            <mat-icon [color]="isRowHidden(i) ? 'primary' : ''" aria-hidden="false">
-                                {{ isRowHidden(i) ? 'visibility_off' : 'visibility' }}
+                            <mat-icon [color]="(i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'primary' : ''" aria-hidden="false">
+                                {{ (i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'visibility_off' : 'visibility' }}
                             </mat-icon>
                         </button>
                     </td>
@@ -318,10 +318,10 @@
                         <button matIconButton 
                             [matMenuTriggerFor]="pinMenu"
                             (click)="openRowPinMenu($event, row)"
-                            [matTooltip]="getRowPinPosition(row) ? 'Pinned ' + getRowPinPosition(row) : 'Pin Row'"
+                            [matTooltip]="(row | getRowPinPosition:pinnedTopRows:pinnedBottomRows) ? 'Pinned ' + (row | getRowPinPosition:pinnedTopRows:pinnedBottomRows) : 'Pin Row'"
                             matTooltipPosition="above">
-                            <mat-icon [color]="isRowPinned(row) ? 'primary' : ''" aria-hidden="false">
-                                {{ isRowPinned(row) ? 'push_pin' : 'push_pin' }}
+                            <mat-icon [color]="(row | isRowPinned:pinnedTopRows:pinnedBottomRows) ? 'primary' : ''" aria-hidden="false">
+                                {{ (row | isRowPinned:pinnedTopRows:pinnedBottomRows) ? 'push_pin' : 'push_pin' }}
                             </mat-icon>
                         </button>
                     </td>
@@ -433,11 +433,11 @@
                       'data-row':expandRows,
                       'stripedRows':(stripedRows &&  i % 2 == 1),
                       'hoverClass':rowHover, 
-                      'hidden':(hiddenCtrl.isSelected(row) && hideRows) || isRowHidden(i),
+                      'hidden':(hiddenCtrl.isSelected(row) && hideRows) || (i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource),
                       'example-expanded-row':expandedElement === row,
-                      'pinned-row': isRowPinned(row),
-                      'mat-row-sticky-top': isRowPinnedTop(row),
-                      'mat-row-sticky-bottom': isRowPinnedBottom(row)
+                      'pinned-row': (row | isRowPinned:pinnedTopRows:pinnedBottomRows),
+                      'mat-row-sticky-top': (row | isRowPinnedTop:pinnedTopRows),
+                      'mat-row-sticky-bottom': (row | isRowPinnedBottom:pinnedBottomRows)
                     }"
                     (click)="expandRow(row, row !== expandedElement,i)"
                     [attr.aria-selected]="selection.isSelected(row)"
@@ -447,7 +447,7 @@
                 @if (expandRows) {
                     <tr mat-row *matRowDef="let row; columns: ['expandedDetail']; let i=dataIndex"
                         class="example-detail-row"
-                        [ngClass]="{'hidden': isRowHidden(i)}">
+                        [ngClass]="{'hidden': (i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource)}">
                     </tr>
                 }
                 @if (showFooterRow) {
@@ -570,8 +570,8 @@
                         <button matIconButton (click)="toggleRowHide(i)" 
                             [matTooltip]="isRowHidden(i) ? 'Unhide Row' : 'Hide Row'"
                             matTooltipPosition="above">
-                            <mat-icon [color]="isRowHidden(i) ? 'primary' : ''" aria-hidden="false">
-                                {{ isRowHidden(i) ? 'visibility_off' : 'visibility' }}
+                            <mat-icon [color]="(i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'primary' : ''" aria-hidden="false">
+                                {{ (i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'visibility_off' : 'visibility' }}
                             </mat-icon>
                         </button>
                     </td>
@@ -586,10 +586,10 @@
                         <button matIconButton 
                             [matMenuTriggerFor]="pinMenu"
                             (click)="openRowPinMenu($event, row)"
-                            [matTooltip]="getRowPinPosition(row) ? 'Pinned ' + getRowPinPosition(row) : 'Pin Row'"
+                            [matTooltip]="(row | getRowPinPosition:pinnedTopRows:pinnedBottomRows) ? 'Pinned ' + (row | getRowPinPosition:pinnedTopRows:pinnedBottomRows) : 'Pin Row'"
                             matTooltipPosition="above">
-                            <mat-icon [color]="isRowPinned(row) ? 'primary' : ''" aria-hidden="false">
-                                {{ isRowPinned(row) ? 'push_pin' : 'push_pin' }}
+                            <mat-icon [color]="(row | isRowPinned:pinnedTopRows:pinnedBottomRows) ? 'primary' : ''" aria-hidden="false">
+                                {{ (row | isRowPinned:pinnedTopRows:pinnedBottomRows) ? 'push_pin' : 'push_pin' }}
                             </mat-icon>
                         </button>
                     </td>
@@ -795,8 +795,8 @@
                             <button matIconButton (click)="toggleRowHide(i)" 
                                 [matTooltip]="isRowHidden(i) ? 'Unhide Row' : 'Hide Row'"
                                 matTooltipPosition="above">
-                                <mat-icon [color]="isRowHidden(i) ? 'primary' : ''" aria-hidden="false">
-                                    {{ isRowHidden(i) ? 'visibility_off' : 'visibility' }}
+                                <mat-icon [color]="(i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'primary' : ''" aria-hidden="false">
+                                    {{ (i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'visibility_off' : 'visibility' }}
                                 </mat-icon>
                             </button>
                         </td>
@@ -811,10 +811,10 @@
                             <button matIconButton 
                                 [matMenuTriggerFor]="pinMenu"
                                 (click)="openRowPinMenu($event, row)"
-                                [matTooltip]="getRowPinPosition(row) ? 'Pinned ' + getRowPinPosition(row) : 'Pin Row'"
+                                [matTooltip]="(row | getRowPinPosition:pinnedTopRows:pinnedBottomRows) ? 'Pinned ' + (row | getRowPinPosition:pinnedTopRows:pinnedBottomRows) : 'Pin Row'"
                                 matTooltipPosition="above">
-                                <mat-icon [color]="isRowPinned(row) ? 'primary' : ''" aria-hidden="false">
-                                    {{ isRowPinned(row) ? 'push_pin' : 'push_pin' }}
+                                <mat-icon [color]="(row | isRowPinned:pinnedTopRows:pinnedBottomRows) ? 'primary' : ''" aria-hidden="false">
+                                    {{ (row | isRowPinned:pinnedTopRows:pinnedBottomRows) ? 'push_pin' : 'push_pin' }}
                                 </mat-icon>
                             </button>
                         </td>
@@ -1060,8 +1060,8 @@
                         <button matIconButton (click)="toggleRowHide(i)" 
                             [matTooltip]="isRowHidden(i) ? 'Unhide Row' : 'Hide Row'"
                             matTooltipPosition="above">
-                            <mat-icon [color]="isRowHidden(i) ? 'primary' : ''" aria-hidden="false">
-                                {{ isRowHidden(i) ? 'visibility_off' : 'visibility' }}
+                            <mat-icon [color]="(i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'primary' : ''" aria-hidden="false">
+                                {{ (i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'visibility_off' : 'visibility' }}
                             </mat-icon>
                         </button>
                     </td>
@@ -1076,10 +1076,10 @@
                         <button matIconButton 
                             [matMenuTriggerFor]="pinMenu"
                             (click)="openRowPinMenu($event, row)"
-                            [matTooltip]="getRowPinPosition(row) ? 'Pinned ' + getRowPinPosition(row) : 'Pin Row'"
+                            [matTooltip]="(row | getRowPinPosition:pinnedTopRows:pinnedBottomRows) ? 'Pinned ' + (row | getRowPinPosition:pinnedTopRows:pinnedBottomRows) : 'Pin Row'"
                             matTooltipPosition="above">
-                            <mat-icon [color]="isRowPinned(row) ? 'primary' : ''" aria-hidden="false">
-                                {{ isRowPinned(row) ? 'push_pin' : 'push_pin' }}
+                            <mat-icon [color]="(row | isRowPinned:pinnedTopRows:pinnedBottomRows) ? 'primary' : ''" aria-hidden="false">
+                                {{ (row | isRowPinned:pinnedTopRows:pinnedBottomRows) ? 'push_pin' : 'push_pin' }}
                             </mat-icon>
                         </button>
                     </td>

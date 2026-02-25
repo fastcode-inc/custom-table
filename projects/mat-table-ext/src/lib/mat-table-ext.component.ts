@@ -78,6 +78,11 @@ import { ColumnPinningComponent } from './components/column-pinning/column-pinni
 import { FilterColumnsComponentComponent } from './components/filter-columns-component/filter-columns-component.component';
 import { ResizeColumnDirective } from './directives/resize-column.directive';
 import { TableCellEditorComponent } from './components/table-cell-editor/table-cell-editor.component';
+import { IsRowHiddenPipe } from './pipes/is-row-hidden.pipe';
+import { IsRowPinnedPipe } from './pipes/is-row-pinned.pipe';
+import { IsRowPinnedTopPipe } from './pipes/is-row-pinned-top.pipe';
+import { IsRowPinnedBottomPipe } from './pipes/is-row-pinned-bottom.pipe';
+import { GetRowPinPositionPipe } from './pipes/get-row-pin-position.pipe';
 @Component({
   selector: 'mat-table-ext',
   templateUrl: 'mat-table-ext.component.html',
@@ -108,6 +113,11 @@ import { TableCellEditorComponent } from './components/table-cell-editor/table-c
     FilterColumnsComponentComponent,
     ResizeColumnDirective,
     TableCellEditorComponent,
+    IsRowHiddenPipe,
+    IsRowPinnedPipe,
+    IsRowPinnedTopPipe,
+    IsRowPinnedBottomPipe,
+    GetRowPinPositionPipe,
   ],
   animations: [
     trigger('detailExpand', [
@@ -279,13 +289,14 @@ export class MatTableExtComponent<
   private columnsList: string[] = [];
   columnsArray: MTExColumn<T>[] = [];
   protected headersFiltersIds: string[] = [];
+  columnIndexMap: Map<string, number> = new Map();
   protected columnsToDisplayWithExpand: string[] = [];
   selection = new SelectionModel<T>(false, []);
   hiddenCtrl = new SelectionModel<string>(true, []);
   tableData: T[] = [];
   private filterValues: Record<string, string | number | boolean> = {};
   pinnedTopRows: T[] = [];
-  private pinnedBottomRows: T[] = [];
+  pinnedBottomRows: T[] = [];
   private rowPinMenuPosition = { x: '0px', y: '0px' };
   rowPinMenuRow: T | null = null;
   globalFilter = '';
@@ -1045,15 +1056,19 @@ export class MatTableExtComponent<
   setColumnFilter(value: boolean) {
     if (value) {
       let array: string[] = [];
+      const indexMap = new Map<string, number>();
       this.columnsArray.forEach((column, i) => {
         if (
           this.dynamicDisplayedColumns.filter((a) => a.name == column?.field)[0]
             .show
         ) {
-          array.push(column?.field + '_' + i);
+          const id = column?.field + '_' + i;
+          array.push(id);
+          indexMap.set(id, i);
         }
       });
       this.headersFiltersIds = array;
+      this.columnIndexMap = indexMap;
       this.dataSource.filterPredicate = this.createFilter();
     } else {
       this.headersFiltersIds = [];
@@ -1467,12 +1482,12 @@ export class MatTableExtComponent<
     // Add to the selected position
     if (position === 'top') {
       if (!this.pinnedTopRows.includes(row)) {
-        this.pinnedTopRows.push(row);
+        this.pinnedTopRows = [...this.pinnedTopRows, row];
       }
       this.pinnedTopDataSource = new MatTableDataSource(this.pinnedTopRows);
     } else {
       if (!this.pinnedBottomRows.includes(row)) {
-        this.pinnedBottomRows.push(row);
+        this.pinnedBottomRows = [...this.pinnedBottomRows, row];
       }
       this.pinnedBtmDataSource = new MatTableDataSource(this.pinnedBottomRows);
     }
@@ -1489,13 +1504,15 @@ export class MatTableExtComponent<
   unpinRow(row: T): void {
     const topIndex = this.pinnedTopRows.indexOf(row);
     if (topIndex > -1) {
-      this.pinnedTopRows.splice(topIndex, 1);
+      this.pinnedTopRows = this.pinnedTopRows.filter((_, i) => i !== topIndex);
       this.pinnedTopDataSource = new MatTableDataSource(this.pinnedTopRows);
     }
 
     const bottomIndex = this.pinnedBottomRows.indexOf(row);
     if (bottomIndex > -1) {
-      this.pinnedBottomRows.splice(bottomIndex, 1);
+      this.pinnedBottomRows = this.pinnedBottomRows.filter(
+        (_, i) => i !== bottomIndex,
+      );
       this.pinnedBtmDataSource = new MatTableDataSource(this.pinnedBottomRows);
     }
 
@@ -1580,20 +1597,22 @@ export class MatTableExtComponent<
   initializePinnedRows(): void {
     if (!this.rowPinningFn || !this.dataSource?.data) return;
 
-    this.pinnedTopRows = [];
-    this.pinnedBottomRows = [];
+    const topRows: T[] = [];
+    const bottomRows: T[] = [];
 
     this.dataSource.data.forEach((row, index) => {
       const position = this.rowPinningFn!(row, index);
       if (position === 'top') {
         (row as Record<string, unknown>)['_pinnedPosition'] = 'top';
-        this.pinnedTopRows.push(row);
+        topRows.push(row);
       } else if (position === 'bottom') {
         (row as Record<string, unknown>)['_pinnedPosition'] = 'bottom';
-        this.pinnedBottomRows.push(row);
+        bottomRows.push(row);
       }
     });
 
+    this.pinnedTopRows = topRows;
+    this.pinnedBottomRows = bottomRows;
     this.cdr.markForCheck();
   }
 
