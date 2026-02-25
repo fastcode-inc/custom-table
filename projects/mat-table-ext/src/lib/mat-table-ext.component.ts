@@ -77,6 +77,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { ColumnPinningComponent } from './components/column-pinning/column-pinning.component';
 import { FilterColumnsComponentComponent } from './components/filter-columns-component/filter-columns-component.component';
 import { ResizeColumnDirective } from './directives/resize-column.directive';
+import { TableCellEditorComponent } from './components/table-cell-editor/table-cell-editor.component';
 @Component({
   selector: 'mat-table-ext',
   templateUrl: 'mat-table-ext.component.html',
@@ -106,6 +107,7 @@ import { ResizeColumnDirective } from './directives/resize-column.directive';
     ColumnPinningComponent,
     FilterColumnsComponentComponent,
     ResizeColumnDirective,
+    TableCellEditorComponent,
   ],
   animations: [
     trigger('detailExpand', [
@@ -2572,67 +2574,7 @@ export class MatTableExtComponent<
   returnIndex(value: string): number {
     return Number(value.split('_')[1]);
   }
-  /**
-   * @description This method is used to manage column filtering, expanded data for exporting.
-   * @param ws work sheet
-   * @returns custom generated worksheet to be used in export.
-   */
-  // writeSheetData(ws: XLSX.WorkSheet): XLSX.WorkSheet {
-  //   let displayedColumns = this.getDisplayedColumns();
-  //   var nMerges = this.getMergeIndex(ws['!merges'] || []);
-  //   var merges = ws['!merges'] || [];
-  //   let data: XLSX.WorkSheet = {
-  //     '!cols': [],
-  //     '!rows': [],
-  //     '!merges': nMerges,
-  //   };
-  //   var range = XLSX.utils.decode_range(ws['!ref'] || '');
-  //   let extracolumns = ['popup', 'delete', 'select', 'edit'];
-  //   let keys = Object.keys(ws);
-  //   let nKey = 'A';
-  //   keys.forEach((key, i) => {
-  //     if (ws[key]?.v && typeof ws[key]?.v === 'string') {
-  //       if (
-  //         !extracolumns.includes(ws[key].v.toLowerCase()) &&
-  //         displayedColumns.includes(ws[key].v.toLowerCase())
-  //       ) {
-  //         let lastRowIndex = range?.e?.r;
-  //         data[key] = ws[key];
-  //         let chr = key.charAt(0);
-  //         for (let j = 2; j <= lastRowIndex; j++) {
-  //           if (
-  //             ws[chr + (j + 1)] !== undefined &&
-  //             (typeof ws[chr + (j + 1)].v === 'string' ||
-  //               typeof ws[chr + (j + 1)].v === 'number')
-  //           ) {
-  //             data[nKey + j] = ws[chr + (j + 1)];
-  //           }
-  //         }
-  //         nKey = String.fromCharCode(nKey.charCodeAt(0) + 1);
-  //       }
-  //     }
-  //   });
-  //   if (this.rowSelection) {
-  //     let chr = 'A';
-  //     for (let i = 1; i < range.e.c + 1; i++) {
-  //       data[chr + 1] = data[String.fromCharCode(chr.charCodeAt(0) + 1) + 1];
-  //       chr = String.fromCharCode(chr.charCodeAt(0) + 1);
-  //       if (i == range.e.c) {
-  //         data[chr + 1] = undefined;
-  //       }
-  //     }
-  //   }
-  //   if (this.rowSelection && this.expandRows) {
-  //     merges.forEach((merge) => {
-  //       data['A' + merge.s.r] = ws['A' + (merge.s.r + 1)];
-  //     });
-  //   }
-  //   range.e.r--;
-  //   let nRef = XLSX.utils.encode_range(range);
-  //   data['!ref'] = nRef;
-  //   data['!fullref'] = nRef;
-  //   return data;
-  // }
+
   getMergeIndex(merges: any[]) {
     var arr: any[] = [];
     merges.forEach((element: any) => {

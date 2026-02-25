@@ -1,0 +1,76 @@
+<div (click)="$event.stopPropagation()">
+    <!-- Custom inline editing template -->
+    @if (inlineEditingTemplateRef && !cellEditing[cellEditingKey]) {
+        <ng-container [ngTemplateOutlet]="inlineEditingTemplateRef"
+            [ngTemplateOutletContext]="{$implicit:inlineEditingData, data:inlineEditingData, field:column.field, index:index}"></ng-container>
+    }
+
+    <!-- Custom cell editing template -->
+    @if (cellEditingTemplateRef && !(row['editable'])) {
+        <ng-container [ngTemplateOutlet]="cellEditingTemplateRef"
+            [ngTemplateOutletContext]="{$implicit:inlineEditingData, data:inlineEditingData, index:index}"></ng-container>
+    }
+
+    <!-- Built-in editing fields (row-level inline editing) -->
+    @if (!inlineEditingTemplateRef && (row['editable']) && editData) {
+        <ng-container [ngTemplateOutlet]="editingFieldsTpl"
+            [ngTemplateOutletContext]="{row:row, column:column, index:index}"></ng-container>
+    }
+
+    <!-- Built-in editing fields (cell-level editing) -->
+    @if (!cellEditingTemplateRef && cellEditing[cellEditingKey]) {
+        <ng-container [ngTemplateOutlet]="editingFieldsTpl"
+            [ngTemplateOutletContext]="{row:row, column:column, index:index}"></ng-container>
+    }
+</div>
+
+<!-- Editing fields type switch -->
+<ng-template #editingFieldsTpl let-row="row" let-column="column" let-i="index">
+    @switch (column.type) {
+        @case ('number') {
+            <mat-form-field appearance="outline" class="inline-editing-field">
+                <input matInput type="number" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                    [ngModelOptions]="{standalone: true}">
+            </mat-form-field>
+        }
+        @case ('string') {
+            <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
+                <input matInput type="text" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                    [ngModelOptions]="{standalone: true}">
+            </mat-form-field>
+        }
+        @case ('textarea') {
+            <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
+                <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                    [ngModelOptions]="{standalone: true}"></textarea>
+            </mat-form-field>
+        }
+        @case ('date') {
+            <mat-form-field appearance="outline" class="inline-editing-field">
+                <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                    [ngModelOptions]="{standalone: true}">
+            </mat-form-field>
+        }
+        @case ('datepicker') {
+            <mat-form-field appearance="outline" class="inline-editing-field">
+                <input matInput [matDatepicker]="cellEditorPicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
+                    [ngModelOptions]="{standalone: true}">
+                <mat-datepicker-toggle matIconSuffix [for]="cellEditorPicker"></mat-datepicker-toggle>
+                <mat-datepicker #cellEditorPicker></mat-datepicker>
+            </mat-form-field>
+        }
+        @case ('selection') {
+            <mat-form-field appearance="outline" class="inline-editing-field">
+                <mat-select [value]="rowDataTemp['e'+i][column.field]"
+                    [(ngModel)]="rowDataTemp['e'+i][column.field]">
+                    @for (option of column.options; track option) {
+                        <mat-option [value]="option">{{option}}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+        }
+        @case ('boolean') {
+            <mat-checkbox (click)="$event.stopPropagation()" color="primary" [(ngModel)]="row[column.field]"></mat-checkbox>
+        }
+    }
+</ng-template>
