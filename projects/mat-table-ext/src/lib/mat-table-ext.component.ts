@@ -292,7 +292,7 @@ export class MatTableExtComponent<
   columnIndexMap: Map<string, number> = new Map();
   protected columnsToDisplayWithExpand: string[] = [];
   selection = new SelectionModel<T>(false, []);
-  hiddenCtrl = new SelectionModel<string>(true, []);
+  hiddenCtrl = new SelectionModel<T>(true, []);
   tableData: T[] = [];
   private filterValues: Record<string, string | number | boolean> = {};
   pinnedTopRows: T[] = [];
@@ -1775,26 +1775,25 @@ export class MatTableExtComponent<
     rowData['e' + index] = { ...row };
     this.rowDataTemp = rowData;
 
-    setTimeout(() => {
-      const wasEditable = (this.tableData[index] as any)['editable'];
-      (this.tableData[index] as any)['editable'] = !(
-        this.tableData[index] as any
-      )['editable'];
+    // Toggle editable immediately (no setTimeout) for OnPush change detection
+    (this.tableData[index] as any)['editable'] = !(
+      this.tableData[index] as any
+    )['editable'];
+    this.cdr.markForCheck();
 
-      // If row is now in edit mode, sync sizes from this edited row
-      if ((this.tableData[index] as any)['editable'] && this.enableRowPinning) {
-        // Wait for DOM to update with edit controls
-        setTimeout(() => {
-          this.syncColumnSizesFromEditedRow(index);
-        }, 100);
-      } else if (
-        !(this.tableData[index] as any)['editable'] &&
-        this.enableRowPinning
-      ) {
-        // Row was disabled, restore original sizes
-        this.restoreOriginalSizes();
-      }
-    }, 0);
+    // If row is now in edit mode, sync sizes from this edited row
+    if ((this.tableData[index] as any)['editable'] && this.enableRowPinning) {
+      // Wait for DOM to update with edit controls
+      setTimeout(() => {
+        this.syncColumnSizesFromEditedRow(index);
+      }, 100);
+    } else if (
+      !(this.tableData[index] as any)['editable'] &&
+      this.enableRowPinning
+    ) {
+      // Row was disabled, restore original sizes
+      this.restoreOriginalSizes();
+    }
   }
   /**
    * @description This method will create and return data to inline editing template.
@@ -2200,13 +2199,13 @@ export class MatTableExtComponent<
     if (!this.selection.isEmpty()) {
       let values = [...this.selection.selected];
       values.forEach((value) => {
-        const rowId = JSON.stringify(value);
-        if (!this.hiddenCtrl.isSelected(rowId)) {
-          this.hiddenCtrl.toggle(rowId);
+        if (!this.hiddenCtrl.isSelected(value)) {
+          this.hiddenCtrl.toggle(value);
         }
       });
       this.selection.clear();
       this.hideRows = true;
+      this.cdr.markForCheck();
     }
   }
   /**

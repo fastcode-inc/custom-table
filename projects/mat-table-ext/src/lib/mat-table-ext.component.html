@@ -522,7 +522,7 @@
                 <ng-container matColumnDef="edit" stickyEnd="false">
                     <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
                         class="action-column-cells"> Edit </th>
-                    <td mat-cell *matCellDef="let row; let i = dataIndex" class="inline-edit-column-cell">
+                    <td mat-cell *matCellDef="let row; let i = dataIndex" class="inline-edit-column-cell" (click)="$event.stopPropagation()">
                         @if (!row.editable && !row.editmodal) {
                             <mat-icon class="edit-column-icons" aria-hidden="false"
                                 (click)="enableInlineEditing(row,i)" fontIcon="edit_note">
@@ -1012,7 +1012,7 @@
                 <ng-container matColumnDef="edit" stickyEnd="false">
                     <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
                         class="action-column-cells"> Edit </th>
-                    <td mat-cell *matCellDef="let row; let i = dataIndex" class="inline-edit-column-cell">
+                    <td mat-cell *matCellDef="let row; let i = dataIndex" class="inline-edit-column-cell" (click)="$event.stopPropagation()">
                         @if (!row.editable && !row.editmodal) {
                             <mat-icon class="edit-column-icons" aria-hidden="false"
                                 (click)="enableInlineEditing(row,i)" fontIcon="edit_note">
