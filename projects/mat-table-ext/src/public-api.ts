@@ -11,4 +11,5 @@ export * from './lib/components/editing/editing.component';
 export * from './lib/components/filter-columns-component/filter-columns-component.component';
 export * from './lib/directives/resize-column.directive';
 export * from './lib/services/table-print.service';
+export * from './lib/components/table-cell-editor/table-cell-editor.component';
 export * from './lib/models/tableExtModels';

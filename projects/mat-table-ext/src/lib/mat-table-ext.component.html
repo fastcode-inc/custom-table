@@ -29,76 +29,7 @@
         }
     </ng-template>
 
-    <!-- Shared: Editing form fields (type switch) -->
-    <ng-template #editingFieldsTpl let-row="row" let-column="column" let-i="index">
-        @if (column.type == 'number') {
-            <mat-form-field appearance="outline" class="inline-editing-field">
-                <input matInput type="number" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                    [ngModelOptions]="{standalone: true}">
-            </mat-form-field>
-        }
-        @if (column.type == 'string') {
-            <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
-                <input matInput type="text" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                    [ngModelOptions]="{standalone: true}">
-            </mat-form-field>
-        }
-        @if (column.type == 'textarea') {
-            <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
-                <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                    [ngModelOptions]="{standalone: true}"></textarea>
-            </mat-form-field>
-        }
-        @if (column.type == 'date') {
-            <mat-form-field appearance="outline" class="inline-editing-field">
-                <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                    [ngModelOptions]="{standalone: true}">
-            </mat-form-field>
-        }
-        @if (column.type == 'datepicker') {
-            <mat-form-field appearance="outline" class="inline-editing-field">
-                <input matInput [matDatepicker]="sharedPicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
-                    [ngModelOptions]="{standalone: true}">
-                <mat-datepicker-toggle matIconSuffix [for]="sharedPicker"></mat-datepicker-toggle>
-                <mat-datepicker #sharedPicker></mat-datepicker>
-            </mat-form-field>
-        }
-        @if (column.type == 'selection') {
-            <mat-form-field appearance="outline" class="inline-editing-field">
-                <mat-select [value]="rowDataTemp['e'+i][column.field]"
-                    [(ngModel)]="rowDataTemp['e'+i][column.field]">
-                    @for (option of column.options; track option) {
-                        <mat-option [value]="option">{{option}}</mat-option>
-                    }
-                </mat-select>
-            </mat-form-field>
-        }
-        @if (column.type == 'boolean') {
-            <mat-checkbox (click)="$event.stopPropagation()" color="primary" [(ngModel)]="row[column.field]"></mat-checkbox>
-        }
-    </ng-template>
 
-    <!-- Shared: Full editable cell content wrapper -->
-    <ng-template #editCellTpl let-row="row" let-column="column" let-i="index">
-        <div (click)="$event.stopPropagation()">
-            @if (inlineEditingTemplateRef && !cellEditing[i +'_'+column.field]) {
-                <ng-container [ngTemplateOutlet]="inlineEditingTemplateRef"
-                    [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), field:column.field, index:i}"></ng-container>
-            }
-            @if (cellEditingTemplateRef && !(row.editable)) {
-                <ng-container [ngTemplateOutlet]="cellEditingTemplateRef"
-                    [ngTemplateOutletContext]="{$implicit:getInlineEditingData(row,i,column), data:getInlineEditingData(row,i,column), index:i}"></ng-container>
-            }
-            @if (!inlineEditingTemplateRef && (row.editable) && rowDataTemp['e'+i]) {
-                <ng-container [ngTemplateOutlet]="editingFieldsTpl"
-                    [ngTemplateOutletContext]="{row:row, column:column, index:i}"></ng-container>
-            }
-            @if (!cellEditingTemplateRef && cellEditing[i +'_'+column.field]) {
-                <ng-container [ngTemplateOutlet]="editingFieldsTpl"
-                    [ngTemplateOutletContext]="{row:row, column:column, index:i}"></ng-container>
-            }
-        </div>
-    </ng-template>
 
     <!-- Shared: Header cell content -->
     <ng-template #headerCellContentTpl let-column="column">
@@ -243,7 +174,7 @@
     <!-- Row Pin Menu -->
     <mat-menu #pinMenu="matMenu" (closed)="closeRowPinMenu()">
         @if (rowPinMenuRow) {
-            @if (!isRowPinned(rowPinMenuRow)) {
+            @if (!(rowPinMenuRow | isRowPinned:pinnedTopRows:pinnedBottomRows)) {
                 <button mat-menu-item (click)="pinRow(rowPinMenuRow, 'top')">
                     <mat-icon>vertical_align_top</mat-icon>
                     <span>Pin to Top</span>
@@ -253,7 +184,7 @@
                     <span>Pin to Bottom</span>
                 </button>
             }
-            @if (isRowPinned(rowPinMenuRow)) {
+            @if (rowPinMenuRow | isRowPinned:pinnedTopRows:pinnedBottomRows) {
                 <button mat-menu-item (click)="unpinRow(rowPinMenuRow)">
                     <mat-icon>close</mat-icon>
                     <span>Unpin Row</span>
@@ -318,8 +249,14 @@
                             </div>
                         }
                         @if (row.editable || cellEditing[i +'_'+column.field]) {
-                            <ng-container [ngTemplateOutlet]="editCellTpl"
-                                [ngTemplateOutletContext]="{row:row, column:column, index:i}"></ng-container>
+                            <app-table-cell-editor
+                                [column]="column" [row]="row" [index]="i"
+                                [rowDataTemp]="rowDataTemp"
+                                [cellEditing]="cellEditing"
+                                [inlineEditingTemplateRef]="inlineEditingTemplateRef"
+                                [cellEditingTemplateRef]="cellEditingTemplateRef"
+                                [inlineEditingData]="getInlineEditingData(row,i,column)">
+                            </app-table-cell-editor>
                         }
                     </td>
                     @if (showFooterRow) {
@@ -363,10 +300,10 @@
                     </th>
                     <td mat-cell *matCellDef="let row;let i=dataIndex">
                         <button matIconButton (click)="toggleRowHide(i)" 
-                            [matTooltip]="isRowHidden(i) ? 'Unhide Row' : 'Hide Row'"
+                            [matTooltip]="(i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'Unhide Row' : 'Hide Row'"
                             matTooltipPosition="above">
-                            <mat-icon [color]="isRowHidden(i) ? 'primary' : ''" aria-hidden="false">
-                                {{ isRowHidden(i) ? 'visibility_off' : 'visibility' }}
+                            <mat-icon [color]="(i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'primary' : ''" aria-hidden="false">
+                                {{ (i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'visibility_off' : 'visibility' }}
                             </mat-icon>
                         </button>
                     </td>
@@ -381,10 +318,10 @@
                         <button matIconButton 
                             [matMenuTriggerFor]="pinMenu"
                             (click)="openRowPinMenu($event, row)"
-                            [matTooltip]="getRowPinPosition(row) ? 'Pinned ' + getRowPinPosition(row) : 'Pin Row'"
+                            [matTooltip]="(row | getRowPinPosition:pinnedTopRows:pinnedBottomRows) ? 'Pinned ' + (row | getRowPinPosition:pinnedTopRows:pinnedBottomRows) : 'Pin Row'"
                             matTooltipPosition="above">
-                            <mat-icon [color]="isRowPinned(row) ? 'primary' : ''" aria-hidden="false">
-                                {{ isRowPinned(row) ? 'push_pin' : 'push_pin' }}
+                            <mat-icon [color]="(row | isRowPinned:pinnedTopRows:pinnedBottomRows) ? 'primary' : ''" aria-hidden="false">
+                                {{ (row | isRowPinned:pinnedTopRows:pinnedBottomRows) ? 'push_pin' : 'push_pin' }}
                             </mat-icon>
                         </button>
                     </td>
@@ -496,11 +433,11 @@
                       'data-row':expandRows,
                       'stripedRows':(stripedRows &&  i % 2 == 1),
                       'hoverClass':rowHover, 
-                      'hidden':(hiddenCtrl.isSelected(row) && hideRows) || isRowHidden(i),
+                      'hidden':(hiddenCtrl.isSelected(row) && hideRows) || (i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource),
                       'example-expanded-row':expandedElement === row,
-                      'pinned-row': isRowPinned(row),
-                      'mat-row-sticky-top': isRowPinnedTop(row),
-                      'mat-row-sticky-bottom': isRowPinnedBottom(row)
+                      'pinned-row': (row | isRowPinned:pinnedTopRows:pinnedBottomRows),
+                      'mat-row-sticky-top': (row | isRowPinnedTop:pinnedTopRows),
+                      'mat-row-sticky-bottom': (row | isRowPinnedBottom:pinnedBottomRows)
                     }"
                     (click)="expandRow(row, row !== expandedElement,i)"
                     [attr.aria-selected]="selection.isSelected(row)"
@@ -510,7 +447,7 @@
                 @if (expandRows) {
                     <tr mat-row *matRowDef="let row; columns: ['expandedDetail']; let i=dataIndex"
                         class="example-detail-row"
-                        [ngClass]="{'hidden': isRowHidden(i)}">
+                        [ngClass]="{'hidden': (i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource)}">
                     </tr>
                 }
                 @if (showFooterRow) {
@@ -567,8 +504,14 @@
                             </div>
                         }
                         @if (row.editable || cellEditing[i +'_'+column.field]) {
-                            <ng-container [ngTemplateOutlet]="editCellTpl"
-                                [ngTemplateOutletContext]="{row:row, column:column, index:i}"></ng-container>
+                            <app-table-cell-editor
+                                [column]="column" [row]="row" [index]="i"
+                                [rowDataTemp]="rowDataTemp"
+                                [cellEditing]="cellEditing"
+                                [inlineEditingTemplateRef]="inlineEditingTemplateRef"
+                                [cellEditingTemplateRef]="cellEditingTemplateRef"
+                                [inlineEditingData]="getInlineEditingData(row,i,column)">
+                            </app-table-cell-editor>
                         }
                     </td>
                     @if (showFooterRow) {
@@ -579,7 +522,7 @@
                 <ng-container matColumnDef="edit" stickyEnd="false">
                     <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
                         class="action-column-cells"> Edit </th>
-                    <td mat-cell *matCellDef="let row; let i = dataIndex" class="inline-edit-column-cell">
+                    <td mat-cell *matCellDef="let row; let i = dataIndex" class="inline-edit-column-cell" (click)="$event.stopPropagation()">
                         @if (!row.editable && !row.editmodal) {
                             <mat-icon class="edit-column-icons" aria-hidden="false"
                                 (click)="enableInlineEditing(row,i)" fontIcon="edit_note">
@@ -627,8 +570,8 @@
                         <button matIconButton (click)="toggleRowHide(i)" 
                             [matTooltip]="isRowHidden(i) ? 'Unhide Row' : 'Hide Row'"
                             matTooltipPosition="above">
-                            <mat-icon [color]="isRowHidden(i) ? 'primary' : ''" aria-hidden="false">
-                                {{ isRowHidden(i) ? 'visibility_off' : 'visibility' }}
+                            <mat-icon [color]="(i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'primary' : ''" aria-hidden="false">
+                                {{ (i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'visibility_off' : 'visibility' }}
                             </mat-icon>
                         </button>
                     </td>
@@ -643,10 +586,10 @@
                         <button matIconButton 
                             [matMenuTriggerFor]="pinMenu"
                             (click)="openRowPinMenu($event, row)"
-                            [matTooltip]="getRowPinPosition(row) ? 'Pinned ' + getRowPinPosition(row) : 'Pin Row'"
+                            [matTooltip]="(row | getRowPinPosition:pinnedTopRows:pinnedBottomRows) ? 'Pinned ' + (row | getRowPinPosition:pinnedTopRows:pinnedBottomRows) : 'Pin Row'"
                             matTooltipPosition="above">
-                            <mat-icon [color]="isRowPinned(row) ? 'primary' : ''" aria-hidden="false">
-                                {{ isRowPinned(row) ? 'push_pin' : 'push_pin' }}
+                            <mat-icon [color]="(row | isRowPinned:pinnedTopRows:pinnedBottomRows) ? 'primary' : ''" aria-hidden="false">
+                                {{ (row | isRowPinned:pinnedTopRows:pinnedBottomRows) ? 'push_pin' : 'push_pin' }}
                             </mat-icon>
                         </button>
                     </td>
@@ -799,8 +742,14 @@
                                 </div>
                             }
                             @if (row.editable || cellEditing[i +'_'+column.field]) {
-                                <ng-container [ngTemplateOutlet]="editCellTpl"
-                                    [ngTemplateOutletContext]="{row:row, column:column, index:i}"></ng-container>
+                                <app-table-cell-editor
+                                    [column]="column" [row]="row" [index]="i"
+                                    [rowDataTemp]="rowDataTemp"
+                                    [cellEditing]="cellEditing"
+                                    [inlineEditingTemplateRef]="inlineEditingTemplateRef"
+                                    [cellEditingTemplateRef]="cellEditingTemplateRef"
+                                    [inlineEditingData]="getInlineEditingData(row,i,column)">
+                                </app-table-cell-editor>
                             }
                         </td>
                         @if (showFooterRow) {
@@ -846,8 +795,8 @@
                             <button matIconButton (click)="toggleRowHide(i)" 
                                 [matTooltip]="isRowHidden(i) ? 'Unhide Row' : 'Hide Row'"
                                 matTooltipPosition="above">
-                                <mat-icon [color]="isRowHidden(i) ? 'primary' : ''" aria-hidden="false">
-                                    {{ isRowHidden(i) ? 'visibility_off' : 'visibility' }}
+                                <mat-icon [color]="(i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'primary' : ''" aria-hidden="false">
+                                    {{ (i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'visibility_off' : 'visibility' }}
                                 </mat-icon>
                             </button>
                         </td>
@@ -862,10 +811,10 @@
                             <button matIconButton 
                                 [matMenuTriggerFor]="pinMenu"
                                 (click)="openRowPinMenu($event, row)"
-                                [matTooltip]="getRowPinPosition(row) ? 'Pinned ' + getRowPinPosition(row) : 'Pin Row'"
+                                [matTooltip]="(row | getRowPinPosition:pinnedTopRows:pinnedBottomRows) ? 'Pinned ' + (row | getRowPinPosition:pinnedTopRows:pinnedBottomRows) : 'Pin Row'"
                                 matTooltipPosition="above">
-                                <mat-icon [color]="isRowPinned(row) ? 'primary' : ''" aria-hidden="false">
-                                    {{ isRowPinned(row) ? 'push_pin' : 'push_pin' }}
+                                <mat-icon [color]="(row | isRowPinned:pinnedTopRows:pinnedBottomRows) ? 'primary' : ''" aria-hidden="false">
+                                    {{ (row | isRowPinned:pinnedTopRows:pinnedBottomRows) ? 'push_pin' : 'push_pin' }}
                                 </mat-icon>
                             </button>
                         </td>
@@ -1067,8 +1016,14 @@
                             </div>
                         }
                         @if (row.editable || cellEditing[i +'_'+column.field]) {
-                            <ng-container [ngTemplateOutlet]="editCellTpl"
-                                [ngTemplateOutletContext]="{row:row, column:column, index:i}"></ng-container>
+                            <app-table-cell-editor
+                                [column]="column" [row]="row" [index]="i"
+                                [rowDataTemp]="rowDataTemp"
+                                [cellEditing]="cellEditing"
+                                [inlineEditingTemplateRef]="inlineEditingTemplateRef"
+                                [cellEditingTemplateRef]="cellEditingTemplateRef"
+                                [inlineEditingData]="getInlineEditingData(row,i,column)">
+                            </app-table-cell-editor>
                         }
                     </td>
                     @if (showFooterRow) {
@@ -1079,7 +1034,7 @@
                 <ng-container matColumnDef="edit" stickyEnd="false">
                     <th mat-header-cell cdkDragLockAxis="x" cdkDrag [cdkDragDisabled]="true" *matHeaderCellDef
                         class="action-column-cells"> Edit </th>
-                    <td mat-cell *matCellDef="let row; let i = dataIndex" class="inline-edit-column-cell">
+                    <td mat-cell *matCellDef="let row; let i = dataIndex" class="inline-edit-column-cell" (click)="$event.stopPropagation()">
                         @if (!row.editable && !row.editmodal) {
                             <mat-icon class="edit-column-icons" aria-hidden="false"
                                 (click)="enableInlineEditing(row,i)" fontIcon="edit_note">
@@ -1127,8 +1082,8 @@
                         <button matIconButton (click)="toggleRowHide(i)" 
                             [matTooltip]="isRowHidden(i) ? 'Unhide Row' : 'Hide Row'"
                             matTooltipPosition="above">
-                            <mat-icon [color]="isRowHidden(i) ? 'primary' : ''" aria-hidden="false">
-                                {{ isRowHidden(i) ? 'visibility_off' : 'visibility' }}
+                            <mat-icon [color]="(i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'primary' : ''" aria-hidden="false">
+                                {{ (i | isRowHidden:hiddenRowIndices:rowHidingFilterFn:dataSource) ? 'visibility_off' : 'visibility' }}
                             </mat-icon>
                         </button>
                     </td>
@@ -1143,10 +1098,10 @@
                         <button matIconButton 
                             [matMenuTriggerFor]="pinMenu"
                             (click)="openRowPinMenu($event, row)"
-                            [matTooltip]="getRowPinPosition(row) ? 'Pinned ' + getRowPinPosition(row) : 'Pin Row'"
+                            [matTooltip]="(row | getRowPinPosition:pinnedTopRows:pinnedBottomRows) ? 'Pinned ' + (row | getRowPinPosition:pinnedTopRows:pinnedBottomRows) : 'Pin Row'"
                             matTooltipPosition="above">
-                            <mat-icon [color]="isRowPinned(row) ? 'primary' : ''" aria-hidden="false">
-                                {{ isRowPinned(row) ? 'push_pin' : 'push_pin' }}
+                            <mat-icon [color]="(row | isRowPinned:pinnedTopRows:pinnedBottomRows) ? 'primary' : ''" aria-hidden="false">
+                                {{ (row | isRowPinned:pinnedTopRows:pinnedBottomRows) ? 'push_pin' : 'push_pin' }}
                             </mat-icon>
                         </button>
                     </td>

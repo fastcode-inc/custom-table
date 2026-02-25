@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { HttpClientModule } from '@angular/common/http';
-import { MatTableModule } from '@angular/material/table'
+import { MatTableModule } from '@angular/material/table';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,6 +9,7 @@ import { ResizeColumnDirective } from '../lib/directives/resize-column.directive
 import { ColumnPinningComponent } from '../lib/components/column-pinning/column-pinning.component';
 import { EditingComponent } from '../lib/components/editing/editing.component';
 import { FilterColumnsComponentComponent } from '../lib/components/filter-columns-component/filter-columns-component.component';
+import { TableCellEditorComponent } from '../lib/components/table-cell-editor/table-cell-editor.component';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -54,7 +55,6 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatTreeModule } from '@angular/material/tree';
-
 
 @NgModule({
   declarations: [],
@@ -114,6 +114,7 @@ import { MatTreeModule } from '@angular/material/tree';
     ColumnPinningComponent,
     EditingComponent,
     FilterColumnsComponentComponent,
+    TableCellEditorComponent,
   ],
   exports: [
     MatTableExtComponent,
@@ -121,6 +122,7 @@ import { MatTreeModule } from '@angular/material/tree';
     ColumnPinningComponent,
     EditingComponent,
     FilterColumnsComponentComponent,
+    TableCellEditorComponent,
   ],
 })
-export class MatTableExtModule { }
+export class MatTableExtModule {}

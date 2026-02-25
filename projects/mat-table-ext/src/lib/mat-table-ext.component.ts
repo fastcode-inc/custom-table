@@ -8,6 +8,7 @@ import {
 import { SelectionModel } from '@angular/cdk/collections';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import {
+  AfterViewChecked,
   AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -28,7 +29,12 @@ import {
   ViewChild,
   ViewEncapsulation,
 } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+} from '@angular/forms';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { MatPaginator } from '@angular/material/paginator';
@@ -79,6 +85,12 @@ import { ColumnPinningComponent } from './components/column-pinning/column-pinni
 import { FilterColumnsComponentComponent } from './components/filter-columns-component/filter-columns-component.component';
 import { ResizeColumnDirective } from './directives/resize-column.directive';
 import { TablePrintService } from './services/table-print.service';
+import { TableCellEditorComponent } from './components/table-cell-editor/table-cell-editor.component';
+import { IsRowHiddenPipe } from './pipes/is-row-hidden.pipe';
+import { IsRowPinnedPipe } from './pipes/is-row-pinned.pipe';
+import { IsRowPinnedTopPipe } from './pipes/is-row-pinned-top.pipe';
+import { IsRowPinnedBottomPipe } from './pipes/is-row-pinned-bottom.pipe';
+import { GetRowPinPositionPipe } from './pipes/get-row-pin-position.pipe';
 @Component({
   selector: 'mat-table-ext',
   templateUrl: 'mat-table-ext.component.html',
@@ -108,6 +120,12 @@ import { TablePrintService } from './services/table-print.service';
     ColumnPinningComponent,
     FilterColumnsComponentComponent,
     ResizeColumnDirective,
+    TableCellEditorComponent,
+    IsRowHiddenPipe,
+    IsRowPinnedPipe,
+    IsRowPinnedTopPipe,
+    IsRowPinnedBottomPipe,
+    GetRowPinPositionPipe,
   ],
   animations: [
     trigger('detailExpand', [
@@ -123,7 +141,7 @@ import { TablePrintService } from './services/table-print.service';
 export class MatTableExtComponent<
   T extends Record<string, unknown> = Record<string, unknown>,
 >
-  implements OnInit, OnChanges, AfterViewInit, OnDestroy
+  implements OnInit, OnChanges, AfterViewInit, AfterViewChecked, OnDestroy
 {
   @ViewChild(MatMenuTrigger) menuTrigger!: MatMenuTrigger;
   @ViewChild('columnMenuTrigger') columnMenuTrigger!: MatMenuTrigger;
@@ -279,13 +297,14 @@ export class MatTableExtComponent<
   private columnsList: string[] = [];
   columnsArray: MTExColumn<T>[] = [];
   protected headersFiltersIds: string[] = [];
+  columnIndexMap: Map<string, number> = new Map();
   protected columnsToDisplayWithExpand: string[] = [];
   selection = new SelectionModel<T>(false, []);
-  hiddenCtrl = new SelectionModel<string>(true, []);
+  hiddenCtrl = new SelectionModel<T>(true, []);
   tableData: T[] = [];
   private filterValues: Record<string, string | number | boolean> = {};
   pinnedTopRows: T[] = [];
-  private pinnedBottomRows: T[] = [];
+  pinnedBottomRows: T[] = [];
   private rowPinMenuPosition = { x: '0px', y: '0px' };
   rowPinMenuRow: T | null = null;
   globalFilter = '';
@@ -338,6 +357,12 @@ export class MatTableExtComponent<
   private resizeDebounceTimer: number | null = null;
   private readonly resizeDebounceMs: number = 120;
   private isViewInitialized: boolean = false;
+
+  // Dirty flags for deterministic layout sync (replaces arbitrary setTimeout calls)
+  private columnSyncNeeded = false;
+  private offsetSyncNeeded = false;
+  private editedRowSyncIndex: number | null = null;
+  private loadingDismissNeeded = false;
 
   constructor(
     private dialog: MatDialog,
@@ -392,7 +417,7 @@ export class MatTableExtComponent<
     // this.cdr.detectChanges();
     // Re-sync column sizes in case column ordering/visibility changed
     if (this.enableRowPinning) {
-      setTimeout(() => this.syncColumnSizesFromTop(), 80);
+      this.requestColumnSync();
     }
   }
   ngOnChanges(changes: SimpleChanges) {
@@ -480,7 +505,7 @@ export class MatTableExtComponent<
     this.updatePinnedRowOffsets();
     // Sync column sizes from top table to middle/bottom when pinning enabled
     if (this.enableRowPinning) {
-      setTimeout(() => this.syncColumnSizesFromTop(), 150);
+      this.requestColumnSync();
       this.attachResizeListener();
     }
   }
@@ -507,6 +532,45 @@ export class MatTableExtComponent<
     this.resizeListenerAttached = false;
   }
 
+  ngAfterViewChecked(): void {
+    if (this.offsetSyncNeeded) {
+      this.offsetSyncNeeded = false;
+      this.performOffsetSync();
+    }
+    if (this.columnSyncNeeded) {
+      this.columnSyncNeeded = false;
+      this.syncColumnSizesFromTop();
+    }
+    if (this.editedRowSyncIndex !== null) {
+      const idx = this.editedRowSyncIndex;
+      this.editedRowSyncIndex = null;
+      this.syncColumnSizesFromEditedRow(idx);
+    }
+    if (this.loadingDismissNeeded) {
+      this.loadingDismissNeeded = false;
+      this.loadingIndicator = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  /** Set dirty flag to sync column sizes on the next change detection cycle. */
+  private requestColumnSync(): void {
+    this.columnSyncNeeded = true;
+    this.cdr.markForCheck();
+  }
+
+  /** Set dirty flag to recalculate pinned row offsets on the next change detection cycle. */
+  private requestOffsetSync(): void {
+    this.offsetSyncNeeded = true;
+    this.cdr.markForCheck();
+  }
+
+  /** Set dirty flag to sync sizes from the given edited row on the next change detection cycle. */
+  private requestEditedRowSync(index: number): void {
+    this.editedRowSyncIndex = index;
+    this.cdr.markForCheck();
+  }
+
   private setSorting() {
     if (this.enableRowPinning) {
       if (this.pinnedTopDataSource) {
@@ -523,102 +587,101 @@ export class MatTableExtComponent<
   }
 
   /**
-   * @description Calculate offsets for pinned rows based on sticky headers/footers
+   * @description Schedule offset recalculation via dirty flag.
    */
   private updatePinnedRowOffsets(): void {
     if (!this.tableElement?.nativeElement || !this.enableRowPinning) return;
-
-    setTimeout(() => {
-      const table = this.tableElement.nativeElement as HTMLElement;
-
-      // Calculate top offset (sticky header + group header + filter row)
-      let topOffset = 0;
-
-      if (this.stickyHeader) {
-        // Get all header rows that are sticky
-        const headerRows = table.querySelectorAll('.mat-mdc-header-row');
-        headerRows.forEach((header: Element) => {
-          topOffset += (header as HTMLElement).offsetHeight;
-        });
-      }
-
-      // Calculate bottom offset (sticky footer + paginator)
-      let bottomOffset = 0;
-
-      if (this.stickyFooter) {
-        const footerRow = table.querySelector('.mat-mdc-footer-row');
-        if (footerRow) {
-          bottomOffset += (footerRow as HTMLElement).offsetHeight;
-        }
-      }
-
-      // Set base offsets
-      table.style.setProperty('--pinned-top-base-offset', `${topOffset}px`);
-      table.style.setProperty(
-        '--pinned-bottom-base-offset',
-        `${bottomOffset}px`,
-      );
-
-      // Calculate and set individual row offsets for stacked pinned rows
-      this.updateStackedPinnedRowOffsets(table, topOffset, bottomOffset);
-      // After offsets are updated, ensure column sizes are re-synced
-      if (this.enableRowPinning) {
-        setTimeout(() => this.syncColumnSizesFromTop(), 10);
-      }
-    }, 100);
+    this.requestOffsetSync();
   }
 
   /**
-   * @description Update offsets for each individual pinned row to stack them
+   * @description Actually calculate offsets for pinned rows based on sticky headers/footers.
+   * Called from ngAfterViewChecked when offsetSyncNeeded is true.
+   */
+  private performOffsetSync(): void {
+    if (!this.tableElement?.nativeElement || !this.enableRowPinning) return;
+
+    const table = this.tableElement.nativeElement as HTMLElement;
+
+    // Calculate top offset (sticky header + group header + filter row)
+    let topOffset = 0;
+
+    if (this.stickyHeader) {
+      // Get all header rows that are sticky
+      const headerRows = table.querySelectorAll('.mat-mdc-header-row');
+      headerRows.forEach((header: Element) => {
+        topOffset += (header as HTMLElement).offsetHeight;
+      });
+    }
+
+    // Calculate bottom offset (sticky footer + paginator)
+    let bottomOffset = 0;
+
+    if (this.stickyFooter) {
+      const footerRow = table.querySelector('.mat-mdc-footer-row');
+      if (footerRow) {
+        bottomOffset += (footerRow as HTMLElement).offsetHeight;
+      }
+    }
+
+    // Set base offsets
+    table.style.setProperty('--pinned-top-base-offset', `${topOffset}px`);
+    table.style.setProperty('--pinned-bottom-base-offset', `${bottomOffset}px`);
+
+    // Calculate and set individual row offsets for stacked pinned rows
+    this.updateStackedPinnedRowOffsets(table, topOffset, bottomOffset);
+    // After offsets are updated, ensure column sizes are re-synced
+    if (this.enableRowPinning) {
+      this.columnSyncNeeded = true;
+    }
+  }
+
+  /**
+   * @description Update offsets for each individual pinned row to stack them.
+   * Called synchronously from performOffsetSync after the DOM has been updated.
    */
   private updateStackedPinnedRowOffsets(
     table: HTMLElement,
     baseTopOffset: number,
     baseBottomOffset: number,
   ): void {
-    // Use setTimeout to ensure DOM is fully rendered with pinned classes
-    setTimeout(() => {
-      // Handle top pinned rows - stack them from top to bottom
-      const topPinnedRows = table.querySelectorAll('.pinned-top-row');
-      let currentTopOffset = baseTopOffset;
+    // Handle top pinned rows - stack them from top to bottom
+    const topPinnedRows = table.querySelectorAll('.pinned-top-row');
+    let currentTopOffset = baseTopOffset;
 
-      topPinnedRows.forEach((row: Element, index: number) => {
-        const htmlRow = row as HTMLElement;
-        htmlRow.style.setProperty(
-          '--pinned-row-top-offset',
-          `${currentTopOffset}px`,
-        );
-        htmlRow.style.top = `${currentTopOffset}px`;
+    topPinnedRows.forEach((row: Element, index: number) => {
+      const htmlRow = row as HTMLElement;
+      htmlRow.style.setProperty(
+        '--pinned-row-top-offset',
+        `${currentTopOffset}px`,
+      );
+      htmlRow.style.top = `${currentTopOffset}px`;
 
-        // Add current row height to offset for next row
-        if (index < topPinnedRows.length - 1) {
-          currentTopOffset += htmlRow.offsetHeight;
-        }
-      });
-
-      // Handle bottom pinned rows - stack them from bottom to top
-      const bottomPinnedRows = table.querySelectorAll('.pinned-bottom-row');
-      let currentBottomOffset = baseBottomOffset;
-
-      // Process bottom rows in reverse order (from bottom to top)
-      for (let i = bottomPinnedRows.length - 1; i >= 0; i--) {
-        const htmlRow = bottomPinnedRows[i] as HTMLElement;
-        htmlRow.style.setProperty(
-          '--pinned-row-bottom-offset',
-          `${currentBottomOffset}px`,
-        );
-        htmlRow.style.bottom = `${currentBottomOffset}px`;
-
-        // Add current row height to offset for next row (going upward)
-        if (i > 0) {
-          currentBottomOffset += htmlRow.offsetHeight;
-        }
+      // Add current row height to offset for next row
+      if (index < topPinnedRows.length - 1) {
+        currentTopOffset += htmlRow.offsetHeight;
       }
-      // After stacking offsets are applied, re-sync column sizes to handle any layout changes
-      if (this.enableRowPinning) {
-        setTimeout(() => this.syncColumnSizesFromTop(), 60);
+    });
+
+    // Handle bottom pinned rows - stack them from bottom to top
+    const bottomPinnedRows = table.querySelectorAll('.pinned-bottom-row');
+    let currentBottomOffset = baseBottomOffset;
+
+    // Process bottom rows in reverse order (from bottom to top)
+    for (let i = bottomPinnedRows.length - 1; i >= 0; i--) {
+      const htmlRow = bottomPinnedRows[i] as HTMLElement;
+      htmlRow.style.setProperty(
+        '--pinned-row-bottom-offset',
+        `${currentBottomOffset}px`,
+      );
+      htmlRow.style.bottom = `${currentBottomOffset}px`;
+
+      // Add current row height to offset for next row (going upward)
+      if (i > 0) {
+        currentBottomOffset += htmlRow.offsetHeight;
       }
-    }, 50);
+    }
+    // Column sync will be handled by ngAfterViewChecked via the dirty flag
   }
 
   private onWindowResizeBound = () => {
@@ -972,7 +1035,7 @@ export class MatTableExtComponent<
     keys.forEach((property) => {
       if (this.inputPropertyKeys.includes(property)) {
         this.setPropertiesMap[property](changes[property]);
-        setTimeout(() => this.syncColumnSizesFromTop(), 80);
+        this.requestColumnSync();
       } else if (property == 'showToolbar') {
         if (changes['columns']) {
           this.setToolbarMenuControls(changes['columns'].currentValue);
@@ -1021,12 +1084,12 @@ export class MatTableExtComponent<
     stickyHeader: (value: SimpleChange) => {
       this.stickyHeader = value.currentValue;
       // Recalculate pinned row offsets when sticky header changes
-      setTimeout(() => this.updatePinnedRowOffsets(), 100);
+      this.updatePinnedRowOffsets();
     },
     stickyFooter: (value: SimpleChange) => {
       this.stickyFooter = value.currentValue;
       // Recalculate pinned row offsets when sticky footer changes
-      setTimeout(() => this.updatePinnedRowOffsets(), 100);
+      this.updatePinnedRowOffsets();
     },
     columnFilter: (value: SimpleChange) =>
       this.setColumnFilter(value.currentValue),
@@ -1048,9 +1111,8 @@ export class MatTableExtComponent<
         }
         this.expandedElement = null;
       }
-      setTimeout(() => {
-        this.loadingIndicator = false;
-      }, 200);
+      this.loadingDismissNeeded = true;
+      this.cdr.markForCheck();
     },
     sorting: (value: SimpleChange) => {
       this.dataSource.sort = this.sort;
@@ -1064,7 +1126,7 @@ export class MatTableExtComponent<
       this.cdr.markForCheck();
       // When group headers change, re-sync column sizes for pinned tables
       if (this.enableRowPinning) {
-        setTimeout(() => this.syncColumnSizesFromTop(), 80);
+        this.requestColumnSync();
       }
     },
   };
@@ -1097,22 +1159,26 @@ export class MatTableExtComponent<
   setColumnFilter(value: boolean) {
     if (value) {
       let array: string[] = [];
+      const indexMap = new Map<string, number>();
       this.columnsArray.forEach((column, i) => {
         if (
           this.dynamicDisplayedColumns.filter((a) => a.name == column?.field)[0]
             .show
         ) {
-          array.push(column?.field + '_' + i);
+          const id = column?.field + '_' + i;
+          array.push(id);
+          indexMap.set(id, i);
         }
       });
       this.headersFiltersIds = array;
+      this.columnIndexMap = indexMap;
       this.dataSource.filterPredicate = this.createFilter();
     } else {
       this.headersFiltersIds = [];
       this.dataSource.filter = '';
     }
     this.toggleFilters = value;
-    setTimeout(() => this.syncColumnSizesFromTop(), 150);
+    this.requestColumnSync();
   }
   /**
    * @description This method returns the list of visible column names.
@@ -1408,7 +1474,7 @@ export class MatTableExtComponent<
     this.dynamicDisplayedColumns = columnsArray.concat(newActionColumns);
     // After updating columns, ensure sizes match the top header (if pinning enabled)
     if (this.enableRowPinning) {
-      setTimeout(() => this.syncColumnSizesFromTop(), 80);
+      this.requestColumnSync();
     }
   }
   /**
@@ -1519,12 +1585,12 @@ export class MatTableExtComponent<
     // Add to the selected position
     if (position === 'top') {
       if (!this.pinnedTopRows.includes(row)) {
-        this.pinnedTopRows.push(row);
+        this.pinnedTopRows = [...this.pinnedTopRows, row];
       }
       this.pinnedTopDataSource = new MatTableDataSource(this.pinnedTopRows);
     } else {
       if (!this.pinnedBottomRows.includes(row)) {
-        this.pinnedBottomRows.push(row);
+        this.pinnedBottomRows = [...this.pinnedBottomRows, row];
       }
       this.pinnedBtmDataSource = new MatTableDataSource(this.pinnedBottomRows);
     }
@@ -1541,13 +1607,15 @@ export class MatTableExtComponent<
   unpinRow(row: T): void {
     const topIndex = this.pinnedTopRows.indexOf(row);
     if (topIndex > -1) {
-      this.pinnedTopRows.splice(topIndex, 1);
+      this.pinnedTopRows = this.pinnedTopRows.filter((_, i) => i !== topIndex);
       this.pinnedTopDataSource = new MatTableDataSource(this.pinnedTopRows);
     }
 
     const bottomIndex = this.pinnedBottomRows.indexOf(row);
     if (bottomIndex > -1) {
-      this.pinnedBottomRows.splice(bottomIndex, 1);
+      this.pinnedBottomRows = this.pinnedBottomRows.filter(
+        (_, i) => i !== bottomIndex,
+      );
       this.pinnedBtmDataSource = new MatTableDataSource(this.pinnedBottomRows);
     }
 
@@ -1632,20 +1700,22 @@ export class MatTableExtComponent<
   initializePinnedRows(): void {
     if (!this.rowPinningFn || !this.dataSource?.data) return;
 
-    this.pinnedTopRows = [];
-    this.pinnedBottomRows = [];
+    const topRows: T[] = [];
+    const bottomRows: T[] = [];
 
     this.dataSource.data.forEach((row, index) => {
       const position = this.rowPinningFn!(row, index);
       if (position === 'top') {
         (row as Record<string, unknown>)['_pinnedPosition'] = 'top';
-        this.pinnedTopRows.push(row);
+        topRows.push(row);
       } else if (position === 'bottom') {
         (row as Record<string, unknown>)['_pinnedPosition'] = 'bottom';
-        this.pinnedBottomRows.push(row);
+        bottomRows.push(row);
       }
     });
 
+    this.pinnedTopRows = topRows;
+    this.pinnedBottomRows = bottomRows;
     this.cdr.markForCheck();
   }
 
@@ -1704,7 +1774,7 @@ export class MatTableExtComponent<
         event.currentIndex + adjustedValue,
       );
       if (this.enableRowPinning) {
-        setTimeout(() => this.syncColumnSizesFromTop(), 80);
+        this.requestColumnSync();
       }
     }
   }
@@ -1779,7 +1849,7 @@ export class MatTableExtComponent<
     }
     this.dataSource.filter = JSON.stringify(this.filterValues);
     if (this.enableRowPinning) {
-      setTimeout(() => this.syncColumnSizesFromTop(), 80);
+      this.requestColumnSync();
     }
   }
   /**
@@ -1808,26 +1878,23 @@ export class MatTableExtComponent<
     rowData['e' + index] = { ...row };
     this.rowDataTemp = rowData;
 
-    setTimeout(() => {
-      const wasEditable = (this.tableData[index] as any)['editable'];
-      (this.tableData[index] as any)['editable'] = !(
-        this.tableData[index] as any
-      )['editable'];
+    // Toggle editable immediately (no setTimeout) for OnPush change detection
+    (this.tableData[index] as any)['editable'] = !(
+      this.tableData[index] as any
+    )['editable'];
+    this.cdr.markForCheck();
 
-      // If row is now in edit mode, sync sizes from this edited row
-      if ((this.tableData[index] as any)['editable'] && this.enableRowPinning) {
-        // Wait for DOM to update with edit controls
-        setTimeout(() => {
-          this.syncColumnSizesFromEditedRow(index);
-        }, 100);
-      } else if (
-        !(this.tableData[index] as any)['editable'] &&
-        this.enableRowPinning
-      ) {
-        // Row was disabled, restore original sizes
-        this.restoreOriginalSizes();
-      }
-    }, 0);
+    // If row is now in edit mode, sync sizes from this edited row
+    if ((this.tableData[index] as any)['editable'] && this.enableRowPinning) {
+      // Sync sizes on next CD cycle when DOM has edit controls
+      this.requestEditedRowSync(index);
+    } else if (
+      !(this.tableData[index] as any)['editable'] &&
+      this.enableRowPinning
+    ) {
+      // Row was disabled, restore original sizes
+      this.restoreOriginalSizes();
+    }
   }
   /**
    * @description This method will create and return data to inline editing template.
@@ -1886,9 +1953,7 @@ export class MatTableExtComponent<
 
     // Sync column sizes from the edited row when cell editing starts
     if (this.enableRowPinning) {
-      setTimeout(() => {
-        this.syncColumnSizesFromEditedRow(index);
-      }, 50);
+      this.requestEditedRowSync(index);
     }
   }
   /**
@@ -2030,7 +2095,7 @@ export class MatTableExtComponent<
           };
           this.popupChange.emit(dataChange);
           if (this.enableRowPinning) {
-            setTimeout(() => this.syncColumnSizesFromTop(), 80);
+            this.requestColumnSync();
           }
         }
       });
@@ -2069,7 +2134,7 @@ export class MatTableExtComponent<
           };
           this.cellChange.emit(dataChange);
           if (this.enableRowPinning) {
-            setTimeout(() => this.syncColumnSizesFromTop(), 80);
+            this.requestColumnSync();
           }
         }
       });
@@ -2233,13 +2298,13 @@ export class MatTableExtComponent<
     if (!this.selection.isEmpty()) {
       let values = [...this.selection.selected];
       values.forEach((value) => {
-        const rowId = JSON.stringify(value);
-        if (!this.hiddenCtrl.isSelected(rowId)) {
-          this.hiddenCtrl.toggle(rowId);
+        if (!this.hiddenCtrl.isSelected(value)) {
+          this.hiddenCtrl.toggle(value);
         }
       });
       this.selection.clear();
       this.hideRows = true;
+      this.cdr.markForCheck();
     }
   }
   /**
@@ -2530,67 +2595,7 @@ export class MatTableExtComponent<
   returnIndex(value: string): number {
     return Number(value.split('_')[1]);
   }
-  /**
-   * @description This method is used to manage column filtering, expanded data for exporting.
-   * @param ws work sheet
-   * @returns custom generated worksheet to be used in export.
-   */
-  // writeSheetData(ws: XLSX.WorkSheet): XLSX.WorkSheet {
-  //   let displayedColumns = this.getDisplayedColumns();
-  //   var nMerges = this.getMergeIndex(ws['!merges'] || []);
-  //   var merges = ws['!merges'] || [];
-  //   let data: XLSX.WorkSheet = {
-  //     '!cols': [],
-  //     '!rows': [],
-  //     '!merges': nMerges,
-  //   };
-  //   var range = XLSX.utils.decode_range(ws['!ref'] || '');
-  //   let extracolumns = ['popup', 'delete', 'select', 'edit'];
-  //   let keys = Object.keys(ws);
-  //   let nKey = 'A';
-  //   keys.forEach((key, i) => {
-  //     if (ws[key]?.v && typeof ws[key]?.v === 'string') {
-  //       if (
-  //         !extracolumns.includes(ws[key].v.toLowerCase()) &&
-  //         displayedColumns.includes(ws[key].v.toLowerCase())
-  //       ) {
-  //         let lastRowIndex = range?.e?.r;
-  //         data[key] = ws[key];
-  //         let chr = key.charAt(0);
-  //         for (let j = 2; j <= lastRowIndex; j++) {
-  //           if (
-  //             ws[chr + (j + 1)] !== undefined &&
-  //             (typeof ws[chr + (j + 1)].v === 'string' ||
-  //               typeof ws[chr + (j + 1)].v === 'number')
-  //           ) {
-  //             data[nKey + j] = ws[chr + (j + 1)];
-  //           }
-  //         }
-  //         nKey = String.fromCharCode(nKey.charCodeAt(0) + 1);
-  //       }
-  //     }
-  //   });
-  //   if (this.rowSelection) {
-  //     let chr = 'A';
-  //     for (let i = 1; i < range.e.c + 1; i++) {
-  //       data[chr + 1] = data[String.fromCharCode(chr.charCodeAt(0) + 1) + 1];
-  //       chr = String.fromCharCode(chr.charCodeAt(0) + 1);
-  //       if (i == range.e.c) {
-  //         data[chr + 1] = undefined;
-  //       }
-  //     }
-  //   }
-  //   if (this.rowSelection && this.expandRows) {
-  //     merges.forEach((merge) => {
-  //       data['A' + merge.s.r] = ws['A' + (merge.s.r + 1)];
-  //     });
-  //   }
-  //   range.e.r--;
-  //   let nRef = XLSX.utils.encode_range(range);
-  //   data['!ref'] = nRef;
-  //   data['!fullref'] = nRef;
-  //   return data;
-  // }
+
   getMergeIndex(merges: any[]) {
     var arr: any[] = [];
     merges.forEach((element: any) => {
