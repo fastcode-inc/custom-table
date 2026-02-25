@@ -18,6 +18,7 @@ import {
   Output,
 } from '@angular/core';
 import {
+  booleanAttribute,
   Component,
   Input,
   OnChanges,
@@ -198,40 +199,40 @@ export class MatTableExtComponent<
     return this._pageSizeOptions;
   }
 
-  @Input() columnResizable: boolean = false;
-  @Input() stripedRows: boolean = false;
-  @Input() rowHover: boolean = false;
-  @Input() inlineRowEditing: boolean = false;
-  @Input() inCellEditing: boolean = false;
-  @Input() cellPopupEditing: boolean = false;
-  @Input() popupRowEditing: boolean = false;
-  @Input() enableDelete: boolean = false;
-  @Input() rowSelection: boolean = false;
-  @Input() multiRowSelection: boolean = false;
-  @Input() stickyFooter: boolean = false;
-  @Input() stickyHeader: boolean = false;
-  @Input() showFooterRow: boolean = false;
-  @Input() columnFilter: boolean = false;
-  @Input() loadingIndicator: boolean = false;
-  @Input() sorting: boolean = false;
-  @Input() showToolbar: boolean = false;
+  @Input({ transform: booleanAttribute }) columnResizable: boolean = false;
+  @Input({ transform: booleanAttribute }) stripedRows: boolean = false;
+  @Input({ transform: booleanAttribute }) rowHover: boolean = false;
+  @Input({ transform: booleanAttribute }) inlineRowEditing: boolean = false;
+  @Input({ transform: booleanAttribute }) inCellEditing: boolean = false;
+  @Input({ transform: booleanAttribute }) cellPopupEditing: boolean = false;
+  @Input({ transform: booleanAttribute }) popupRowEditing: boolean = false;
+  @Input({ transform: booleanAttribute }) enableDelete: boolean = false;
+  @Input({ transform: booleanAttribute }) rowSelection: boolean = false;
+  @Input({ transform: booleanAttribute }) multiRowSelection: boolean = false;
+  @Input({ transform: booleanAttribute }) stickyFooter: boolean = false;
+  @Input({ transform: booleanAttribute }) stickyHeader: boolean = false;
+  @Input({ transform: booleanAttribute }) showFooterRow: boolean = false;
+  @Input({ transform: booleanAttribute }) columnFilter: boolean = false;
+  @Input({ transform: booleanAttribute }) loadingIndicator: boolean = false;
+  @Input({ transform: booleanAttribute }) sorting: boolean = false;
+  @Input({ transform: booleanAttribute }) showToolbar: boolean = false;
   @Input() toolbarTitle: string = '';
   @Input() tableHeight: string = '';
   @Input() toolbarHeight: string = '50px';
   @Input() tableWidth: string = '100%';
-  @Input() scrollbarH: boolean = false;
+  @Input({ transform: booleanAttribute }) scrollbarH: boolean = false;
   @Input() toolbarTemplate:
     | TemplateRef<{ $implicit: MatTableExtComponent<T> }>
     | undefined;
-  @Input() columnHidable: boolean = false;
-  @Input() columnPinnable: boolean = false;
-  @Input() globalSearch: boolean = false;
-  @Input() expandRows: boolean = false;
-  @Input() dndColumns: boolean = false;
-  @Input() showPaginator: boolean = true;
-  @Input() showFirstLastButtons: boolean = false;
-  @Input() exportButtonEnable: boolean = false;
-  @Input() printButtonEnable: boolean = false;
+  @Input({ transform: booleanAttribute }) columnHidable: boolean = false;
+  @Input({ transform: booleanAttribute }) columnPinnable: boolean = false;
+  @Input({ transform: booleanAttribute }) globalSearch: boolean = false;
+  @Input({ transform: booleanAttribute }) expandRows: boolean = false;
+  @Input({ transform: booleanAttribute }) dndColumns: boolean = false;
+  @Input({ transform: booleanAttribute }) showPaginator: boolean = true;
+  @Input({ transform: booleanAttribute }) showFirstLastButtons: boolean = false;
+  @Input({ transform: booleanAttribute }) exportButtonEnable: boolean = false;
+  @Input({ transform: booleanAttribute }) printButtonEnable: boolean = false;
   @Input() toolbarTemplateRef!:
     | TemplateRef<{ $implicit: MatTableExtComponent<T> }>
     | undefined;
@@ -256,8 +257,8 @@ export class MatTableExtComponent<
   @Input() tableClassName: string = '';
   @Input() columnGroups: MTExColumnGroup[] = [];
   @Input() hiddenRowIndices: number[] = [];
-  @Input() enableRowHiding: boolean = false;
-  @Input() enableRowPinning: boolean = false;
+  @Input({ transform: booleanAttribute }) enableRowHiding: boolean = false;
+  @Input({ transform: booleanAttribute }) enableRowPinning: boolean = false;
   @Input() topPinnedMaxHeight: string = ''; // Max height for top pinned table (e.g., '200px', '20vh')
   @Input() bottomPinnedMaxHeight: string = ''; // Max height for bottom pinned table (e.g., '200px', '20vh')
   @Input() rowPinningFn?: (row: T, index: number) => 'top' | 'bottom' | null;
@@ -433,20 +434,6 @@ export class MatTableExtComponent<
       // Skip validation for properties already handled by setters
       if (['dataSource', 'columns', 'pageSizeOptions'].includes(propName))
         continue;
-
-      // Validate boolean inputs
-      if (
-        typeof this[propName as keyof this] === 'boolean' &&
-        value !== undefined &&
-        value !== null
-      ) {
-        if (typeof value !== 'boolean') {
-          console.warn(
-            `MatTableExt: Input '${propName}' expected boolean, got ${typeof value}. Coercing to boolean.`,
-          );
-          this[propName as keyof this] = !!value as any;
-        }
-      }
 
       // Validate string inputs
       if (

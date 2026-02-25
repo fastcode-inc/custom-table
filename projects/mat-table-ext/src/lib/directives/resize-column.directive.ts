@@ -1,4 +1,4 @@
-import { Directive, OnInit, Renderer2, Input, ElementRef, OnChanges, OnDestroy, inject } from "@angular/core";
+import { Directive, OnInit, Renderer2, Input, ElementRef, OnChanges, OnDestroy, inject, booleanAttribute } from "@angular/core";
 
 @Directive({
     selector: "[columnsResizable]",
@@ -7,16 +7,8 @@ import { Directive, OnInit, Renderer2, Input, ElementRef, OnChanges, OnDestroy, 
 export class ResizeColumnDirective implements OnInit, OnChanges, OnDestroy {
     private readonly renderer = inject(Renderer2);
     private readonly elementRef = inject(ElementRef<HTMLElement>);
-    
-    private columnsResizable$: boolean = false;
-    
-    @Input() set columnsResizable(val: boolean) {
-        this.columnsResizable$ = val;
-    }
-    
-    get columnsResizable(): boolean {
-        return this.columnsResizable$;
-    }
+
+    @Input({ transform: booleanAttribute }) columnsResizable: boolean = false;
     
     @Input() index!: number;
     
@@ -50,7 +42,7 @@ export class ResizeColumnDirective implements OnInit, OnChanges, OnDestroy {
     }
     
     private setupResizing(): void {
-        if (this.columnsResizable$) {
+        if (this.columnsResizable) {
             this.initializeResizer();
         } else {
             this.cleanup();
@@ -126,7 +118,7 @@ export class ResizeColumnDirective implements OnInit, OnChanges, OnDestroy {
     }
     
     private readonly onMouseDown = (event: MouseEvent): void => {
-        if (!this.columnsResizable$ || !this.table) {
+        if (!this.columnsResizable || !this.table) {
             return;
         }
 
