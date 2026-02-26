@@ -14,9 +14,11 @@ import {
   ChangeDetectorRef,
   ElementRef,
   EventEmitter,
+  NgZone,
   Output,
 } from '@angular/core';
 import {
+  booleanAttribute,
   Component,
   Input,
   OnChanges,
@@ -60,8 +62,8 @@ import {
   MTExCellEditingContext,
   MTExExpandedDetailContext,
 } from '../lib/models/tableExtModels';
-import { MatTableExtService } from '../lib/mat-table-ext.service';
-import { TableExportService } from './table-export.service';
+import { MatTableExtService } from './services/mat-table-ext.service';
+import { TableExportService } from './services/table-export.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';
 import { CommonModule } from '@angular/common';
@@ -83,6 +85,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { ColumnPinningComponent } from './components/column-pinning/column-pinning.component';
 import { FilterColumnsComponentComponent } from './components/filter-columns-component/filter-columns-component.component';
 import { ResizeColumnDirective } from './directives/resize-column.directive';
+import { TablePrintService } from './services/table-print.service';
 import { TableCellEditorComponent } from './components/table-cell-editor/table-cell-editor.component';
 import { IsRowHiddenPipe } from './pipes/is-row-hidden.pipe';
 import { IsRowPinnedPipe } from './pipes/is-row-pinned.pipe';
@@ -301,7 +304,7 @@ export class MatTableExtComponent<
   @Input() tableHeight: string = '';
   @Input() toolbarHeight: string = '50px';
   @Input() tableWidth: string = '100%';
-  @Input() scrollbarH: boolean = false;
+  @Input({ transform: booleanAttribute }) scrollbarH: boolean = false;
   @Input() toolbarTemplate:
     | TemplateRef<{ $implicit: MatTableExtComponent<T> }>
     | undefined;
@@ -324,7 +327,6 @@ export class MatTableExtComponent<
   set expandRows(value: boolean) {
     this._expandRows = value;
     this.loadingIndicator = true;
-    this.dataSource = new MatTableDataSource(this.tableData);
     if (value) {
       if (!this.displayedColumns.includes('expand')) {
         this.displayedColumns.push('expand');
@@ -358,7 +360,7 @@ export class MatTableExtComponent<
     | TemplateRef<MTExExpandedDetailContext<T>>
     | undefined;
   @Input() popupEditingTemplateRef!:
-    | TemplateRef<MTExCellEditingContext<T>>
+  | TemplateRef<MTExCellEditingContext<T>>
     | undefined;
   @Input() inlineEditingTemplateRef!:
     | TemplateRef<MTExInlineEditingContext<T>>
@@ -420,6 +422,25 @@ export class MatTableExtComponent<
   @Input() rowPinningFn?: (row: T, index: number) => 'top' | 'bottom' | null;
   @Input() rowHidingFilterFn?: (row: T, index: number) => boolean;
   @Input() pdfOrientation: 'portrait' | 'landscape' = 'portrait';
+  private inputPropertyKeys: string[] = [
+    'dataSource',
+    'columns',
+    'inlineRowEditing',
+    'popupRowEditing',
+    'enableDelete',
+    'enableRowFreezing',
+    'enableRowHiding',
+    'enableRowPinning',
+    'rowSelection',
+    'multiRowSelection',
+    'stickyHeader',
+    'stickyFooter',
+    'columnFilter',
+    'globalSearch',
+    'expandRows',
+    'sorting',
+    'columnGroups',
+  ];
 
   // Table outputs
   @Output() inlineChange: EventEmitter<RowChange<T>> = new EventEmitter<
@@ -486,6 +507,9 @@ export class MatTableExtComponent<
     { filter: false, name: 'expand', show: false },
   ];
   resizeListenerAttached: boolean = false;
+  private resizeDebounceTimer: number | null = null;
+  private readonly resizeDebounceMs: number = 120;
+  private isViewInitialized: boolean = false;
 
   // Dirty flags for deterministic layout sync (replaces arbitrary setTimeout calls)
   private columnSyncNeeded = false;
@@ -497,10 +521,12 @@ export class MatTableExtComponent<
     private dialog: MatDialog,
     private service: MatTableExtService<T>,
     private exportService: TableExportService,
+    private tablePrintService: TablePrintService,
     private formBuilder: FormBuilder,
     private domSanitizer: DomSanitizer,
     private matIconRegistry: MatIconRegistry,
     private cdr: ChangeDetectorRef,
+    private ngZone: NgZone,
   ) {
     this.addIconsToRegistry();
     if (this.dataSource) {
@@ -579,20 +605,6 @@ export class MatTableExtComponent<
       if (['dataSource', 'columns', 'pageSizeOptions'].includes(propName))
         continue;
 
-      // Validate boolean inputs
-      if (
-        typeof this[propName as keyof this] === 'boolean' &&
-        value !== undefined &&
-        value !== null
-      ) {
-        if (typeof value !== 'boolean') {
-          console.warn(
-            `MatTableExt: Input '${propName}' expected boolean, got ${typeof value}. Coercing to boolean.`,
-          );
-          this[propName as keyof this] = !!value as any;
-        }
-      }
-
       // Validate string inputs
       if (
         [
@@ -638,6 +650,8 @@ export class MatTableExtComponent<
   }
 
   ngAfterViewInit() {
+    this.isViewInitialized = true;
+
     if (this.dataSource) {
       this.dataSource.paginator = this.paginator;
       this.dataSource.sort = this.sort;
@@ -649,9 +663,30 @@ export class MatTableExtComponent<
     // Sync column sizes from top table to middle/bottom when pinning enabled
     if (this.enableRowPinning) {
       this.requestColumnSync();
-      window.addEventListener('resize', this.onWindowResizeBound);
-      this.resizeListenerAttached = true;
+      this.attachResizeListener();
     }
+  }
+
+  private attachResizeListener(): void {
+    if (this.resizeListenerAttached || typeof window === 'undefined') return;
+
+    this.ngZone.runOutsideAngular(() => {
+      window.addEventListener('resize', this.onWindowResizeBound, {
+        passive: true,
+      });
+    });
+
+    this.resizeListenerAttached = true;
+  }
+
+  private detachResizeListener(): void {
+    if (!this.resizeListenerAttached || typeof window === 'undefined') return;
+
+    this.ngZone.runOutsideAngular(() => {
+      window.removeEventListener('resize', this.onWindowResizeBound);
+    });
+
+    this.resizeListenerAttached = false;
   }
 
   ngAfterViewChecked(): void {
@@ -807,9 +842,25 @@ export class MatTableExtComponent<
   }
 
   private onWindowResizeBound = () => {
-    this.updatePinnedRowOffsets();
-    this.syncColumnSizesFromTop();
+    if (!this.enableRowPinning || typeof window === 'undefined') return;
+
+    if (this.resizeDebounceTimer !== null) {
+      window.clearTimeout(this.resizeDebounceTimer);
+    }
+
+    this.resizeDebounceTimer = window.setTimeout(() => {
+      this.updatePinnedRowOffsets();
+      this.syncColumnSizesFromTop();
+      this.resizeDebounceTimer = null;
+    }, this.resizeDebounceMs);
   };
+
+  private clearResizeDebounceTimer(): void {
+    if (this.resizeDebounceTimer === null) return;
+
+    window.clearTimeout(this.resizeDebounceTimer);
+    this.resizeDebounceTimer = null;
+  }
 
   /**
    * Copy header cell widths/heights from the top table and apply them to middle and bottom tables.
@@ -1118,9 +1169,8 @@ export class MatTableExtComponent<
   }
 
   ngOnDestroy(): void {
-    if (this.resizeListenerAttached) {
-      window.removeEventListener('resize', this.onWindowResizeBound);
-    }
+    this.detachResizeListener();
+    this.clearResizeDebounceTimer();
   }
   /**
    * @description checks and updates the the column's hide and show properties.
@@ -1133,6 +1183,110 @@ export class MatTableExtComponent<
       this.updateColumnsHideShow(this.hideShowMenuGroup.value);
     }
   }
+  /**
+   * @description set the properties of the table.
+   * @param changes changes captured each time user changes property value.
+   */
+  setPropertyValue(changes: SimpleChanges) {
+    let keys = Object.keys(changes);
+    keys.forEach((property) => {
+      if (this.inputPropertyKeys.includes(property)) {
+        this.setPropertiesMap[property](changes[property]);
+        this.requestColumnSync();
+      } else if (property == 'showToolbar') {
+        if (changes['columns']) {
+          this.setToolbarMenuControls(changes['columns'].currentValue);
+        } else {
+          this.setToolbarMenuControls(this.columnsArray);
+        }
+      }
+    });
+  }
+  /**
+   * @description This mapping is used to set and update changesin the table.
+   */
+  setPropertiesMap: Record<string, (value: SimpleChange) => void> = {
+    dataSource: (value: SimpleChange) => this.setTableDataSource(value),
+    columns: (value: SimpleChange) => this.setColumnsData(value.currentValue),
+    inlineRowEditing: (value: SimpleChange) =>
+      this.showHideColumn('edit', value.currentValue),
+    popupRowEditing: (value: SimpleChange) =>
+      this.showHideColumn('popup', value.currentValue),
+    enableDelete: (value: SimpleChange) =>
+      this.showHideColumn('delete', value.currentValue),
+    enableRowFreezing: (value: SimpleChange) =>
+      this.showHideColumn('freeze', value.currentValue),
+    enableRowHiding: (value: SimpleChange) =>
+      this.showHideColumn('hide', value.currentValue),
+    enableRowPinning: (value: SimpleChange) => {
+      this.showHideColumn('pin', value.currentValue);
+
+      if (value.currentValue) {
+        this.initializePinnedRows();
+        if (this.isViewInitialized) {
+          this.attachResizeListener();
+          this.updatePinnedRowOffsets();
+          setTimeout(() => this.syncColumnSizesFromTop(), 80);
+        }
+      } else {
+        this.detachResizeListener();
+        this.clearResizeDebounceTimer();
+      }
+    },
+    rowSelection: (value: SimpleChange) =>
+      this.setRowSelection(value.currentValue),
+    multiRowSelection: (value: SimpleChange) => {
+      this.selection = new SelectionModel<T>(value.currentValue, []);
+    },
+    stickyHeader: (value: SimpleChange) => {
+      this.stickyHeader = value.currentValue;
+      // Recalculate pinned row offsets when sticky header changes
+      this.updatePinnedRowOffsets();
+    },
+    stickyFooter: (value: SimpleChange) => {
+      this.stickyFooter = value.currentValue;
+      // Recalculate pinned row offsets when sticky footer changes
+      this.updatePinnedRowOffsets();
+    },
+    columnFilter: (value: SimpleChange) =>
+      this.setColumnFilter(value.currentValue),
+    globalSearch: (value: SimpleChange) =>
+      (this.dataSource.filterPredicate = this.createFilter()),
+    expandRows: (value: SimpleChange) => {
+      this.loadingIndicator = true;
+      this.dataSource = new MatTableDataSource(this.tableData);
+      if (value.currentValue == true) {
+        if (!this.displayedColumns.includes('expand')) {
+          this.displayedColumns.push('expand');
+          this.columnsToDisplayWithExpand = [...this.displayedColumns];
+        }
+      } else {
+        this.columnsToDisplayWithExpand = [...this.displayedColumns];
+        if (this.displayedColumns.includes('expand')) {
+          let index = this.displayedColumns.indexOf('expand');
+          this.displayedColumns.splice(index, 1);
+        }
+        this.expandedElement = null;
+      }
+      this.loadingDismissNeeded = true;
+      this.cdr.markForCheck();
+    },
+    sorting: (value: SimpleChange) => {
+      this.dataSource.sort = this.sort;
+      if (this.enableRowPinning) {
+        this.pinnedTopDataSource.sort = this.sort;
+        this.pinnedBtmDataSource.sort = this.sort;
+      }
+    },
+    columnGroups: (value: SimpleChange) => {
+      this.columnGroups = value.currentValue || [];
+      this.cdr.markForCheck();
+      // When group headers change, re-sync column sizes for pinned tables
+      if (this.enableRowPinning) {
+        this.requestColumnSync();
+      }
+    },
+  };
   /**
    * @description used set data source for table.
    * @param value data source value from user.
@@ -2352,103 +2506,7 @@ export class MatTableExtComponent<
    * @description This method is used to print the table with proper styling.
    */
   printTable() {
-    const printContent = document.getElementById('matTableExt' + this.tableID);
-    if (!printContent) return;
-
-    const windowPrint = window.open('', '', 'width=900,height=650');
-    if (!windowPrint) return;
-
-    windowPrint.document.write('<html><head><title>Print Table</title>');
-    windowPrint.document.write('<style>');
-    windowPrint.document.write(`
-      table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; }
-      th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-      th { background-color: #f2f2f2; font-weight: bold; }
-      tr:nth-child(even) { background-color: #f9f9f9; }
-      .mat-sort-header-container { display: inline; }
-      .mat-sort-header-arrow, .mat-sort-header-indicator { display: none !important; }
-      button, .mat-icon { display: none !important; }
-      @media print {
-        .mat-mdc-table { page-break-inside: auto; }
-        tr { page-break-inside: avoid; page-break-after: auto; }
-        thead { display: table-header-group; }
-      }
-    `);
-    windowPrint.document.write('</style></head><body>');
-
-    // Clone the table
-    const tableClone = printContent.cloneNode(true) as HTMLElement;
-
-    // Remove any <script> tags to prevent code execution
-    tableClone.querySelectorAll('script').forEach((s) => s.remove());
-
-    // Remove all event handlers (e.g., onclick, onerror) from all elements
-    tableClone.querySelectorAll('*').forEach((el) => {
-      Array.from(el.attributes).forEach((attr) => {
-        if (attr.name.toLowerCase().startsWith('on')) {
-          el.removeAttribute(attr.name);
-        }
-      });
-    });
-
-    // Define action column class selectors
-    const actionColumnSelectors = [
-      'th.action-column-cells',
-      'td.inline-edit-column-cell',
-      '[matColumnDef="select"]',
-      '[matColumnDef="edit"]',
-      '[matColumnDef="popup"]',
-      '[matColumnDef="delete"]',
-      '[matColumnDef="freeze"]',
-      '[matColumnDef="hide"]',
-    ];
-
-    // Remove all matching action column elements
-    actionColumnSelectors.forEach((selector) => {
-      const elements = tableClone.querySelectorAll(selector);
-      elements.forEach((el) => el.remove());
-    });
-
-    // Also remove cells by index for action columns
-    const actionColumnIndices: number[] = [];
-    const headerRow = tableClone.querySelector('tr.mat-mdc-header-row');
-    if (headerRow) {
-      const headers = Array.from(headerRow.querySelectorAll('th'));
-      headers.forEach((th, index) => {
-        if (th.classList.contains('action-column-cells')) {
-          actionColumnIndices.push(index);
-        }
-      });
-    }
-
-    // Remove cells at action column indices from all rows
-    const rows = tableClone.querySelectorAll('tr');
-    rows.forEach((row, rowIndex) => {
-      // Remove hidden rows (accounting for header rows)
-      const dataIndex = rowIndex - 1;
-      if (dataIndex >= 0 && this.hiddenRowIndices.includes(dataIndex)) {
-        row.remove();
-        return;
-      }
-
-      const cells = Array.from(row.querySelectorAll('th, td'));
-      // Remove in reverse order to maintain correct indices
-      for (let i = actionColumnIndices.length - 1; i >= 0; i--) {
-        const index = actionColumnIndices[i];
-        if (cells[index]) {
-          cells[index].remove();
-        }
-      }
-    });
-
-    windowPrint.document.write(tableClone.outerHTML);
-    windowPrint.document.write('</body></html>');
-    windowPrint.document.close();
-
-    setTimeout(() => {
-      windowPrint.print();
-      windowPrint.close();
-    }, 250);
+    this.tablePrintService.printTable(this.tableID, this.hiddenRowIndices);
   }
 
   async exportToPDF() {
