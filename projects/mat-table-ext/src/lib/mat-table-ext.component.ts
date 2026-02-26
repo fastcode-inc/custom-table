@@ -89,6 +89,10 @@ import { IsRowPinnedPipe } from './pipes/is-row-pinned.pipe';
 import { IsRowPinnedTopPipe } from './pipes/is-row-pinned-top.pipe';
 import { IsRowPinnedBottomPipe } from './pipes/is-row-pinned-bottom.pipe';
 import { GetRowPinPositionPipe } from './pipes/get-row-pin-position.pipe';
+
+/** Column names reserved for built-in action columns (select, edit, popup, etc.). */
+const ACTION_COLUMNS: readonly string[] = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
+
 @Component({
   selector: 'mat-table-ext',
   templateUrl: 'mat-table-ext.component.html',
@@ -199,19 +203,99 @@ export class MatTableExtComponent<
   @Input() columnResizable: boolean = false;
   @Input() stripedRows: boolean = false;
   @Input() rowHover: boolean = false;
-  @Input() inlineRowEditing: boolean = false;
+
+  private _inlineRowEditing = false;
+  @Input()
+  set inlineRowEditing(value: boolean) {
+    this._inlineRowEditing = value;
+    this.showHideColumn('edit', value);
+    this.requestColumnSync();
+  }
+  get inlineRowEditing(): boolean { return this._inlineRowEditing; }
+
   @Input() inCellEditing: boolean = false;
   @Input() cellPopupEditing: boolean = false;
-  @Input() popupRowEditing: boolean = false;
-  @Input() enableDelete: boolean = false;
-  @Input() rowSelection: boolean = false;
-  @Input() multiRowSelection: boolean = false;
-  @Input() stickyFooter: boolean = false;
-  @Input() stickyHeader: boolean = false;
+
+  private _popupRowEditing = false;
+  @Input()
+  set popupRowEditing(value: boolean) {
+    this._popupRowEditing = value;
+    this.showHideColumn('popup', value);
+    this.requestColumnSync();
+  }
+  get popupRowEditing(): boolean { return this._popupRowEditing; }
+
+  private _enableDelete = false;
+  @Input()
+  set enableDelete(value: boolean) {
+    this._enableDelete = value;
+    this.showHideColumn('delete', value);
+    this.requestColumnSync();
+  }
+  get enableDelete(): boolean { return this._enableDelete; }
+
+  private _rowSelection = false;
+  @Input()
+  set rowSelection(value: boolean) {
+    this._rowSelection = value;
+    this.setRowSelection(value);
+    this.requestColumnSync();
+  }
+  get rowSelection(): boolean { return this._rowSelection; }
+
+  private _multiRowSelection = false;
+  @Input()
+  set multiRowSelection(value: boolean) {
+    this._multiRowSelection = value;
+    this.selection = new SelectionModel<T>(value, []);
+    this.requestColumnSync();
+  }
+  get multiRowSelection(): boolean { return this._multiRowSelection; }
+
+  private _stickyFooter = false;
+  @Input()
+  set stickyFooter(value: boolean) {
+    this._stickyFooter = value;
+    this.updatePinnedRowOffsets();
+  }
+  get stickyFooter(): boolean { return this._stickyFooter; }
+
+  private _stickyHeader = false;
+  @Input()
+  set stickyHeader(value: boolean) {
+    this._stickyHeader = value;
+    this.updatePinnedRowOffsets();
+  }
+  get stickyHeader(): boolean { return this._stickyHeader; }
+
   @Input() showFooterRow: boolean = false;
-  @Input() columnFilter: boolean = false;
+
+  private _columnFilter = false;
+  @Input()
+  set columnFilter(value: boolean) {
+    this._columnFilter = value;
+    this.setColumnFilter(value);
+    this.requestColumnSync();
+  }
+  get columnFilter(): boolean { return this._columnFilter; }
+
   @Input() loadingIndicator: boolean = false;
-  @Input() sorting: boolean = false;
+
+  private _sorting = false;
+  @Input()
+  set sorting(value: boolean) {
+    this._sorting = value;
+    if (this.dataSource) {
+      this.dataSource.sort = this.sort;
+    }
+    if (this.enableRowPinning) {
+      this.pinnedTopDataSource.sort = this.sort;
+      this.pinnedBtmDataSource.sort = this.sort;
+    }
+    this.requestColumnSync();
+  }
+  get sorting(): boolean { return this._sorting; }
+
   @Input() showToolbar: boolean = false;
   @Input() toolbarTitle: string = '';
   @Input() tableHeight: string = '';
@@ -223,8 +307,43 @@ export class MatTableExtComponent<
     | undefined;
   @Input() columnHidable: boolean = false;
   @Input() columnPinnable: boolean = false;
-  @Input() globalSearch: boolean = false;
-  @Input() expandRows: boolean = false;
+
+  private _globalSearch = false;
+  @Input()
+  set globalSearch(value: boolean) {
+    this._globalSearch = value;
+    if (this.dataSource) {
+      this.dataSource.filterPredicate = this.createFilter();
+    }
+    this.requestColumnSync();
+  }
+  get globalSearch(): boolean { return this._globalSearch; }
+
+  private _expandRows = false;
+  @Input()
+  set expandRows(value: boolean) {
+    this._expandRows = value;
+    this.loadingIndicator = true;
+    this.dataSource = new MatTableDataSource(this.tableData);
+    if (value) {
+      if (!this.displayedColumns.includes('expand')) {
+        this.displayedColumns.push('expand');
+        this.columnsToDisplayWithExpand = [...this.displayedColumns];
+      }
+    } else {
+      this.columnsToDisplayWithExpand = [...this.displayedColumns];
+      if (this.displayedColumns.includes('expand')) {
+        const idx = this.displayedColumns.indexOf('expand');
+        this.displayedColumns.splice(idx, 1);
+      }
+      this.expandedElement = null;
+    }
+    this.loadingDismissNeeded = true;
+    this.cdr.markForCheck();
+    this.requestColumnSync();
+  }
+  get expandRows(): boolean { return this._expandRows; }
+
   @Input() dndColumns: boolean = false;
   @Input() showPaginator: boolean = true;
   @Input() showFirstLastButtons: boolean = false;
@@ -252,12 +371,52 @@ export class MatTableExtComponent<
     | undefined;
   @Input() cellTemplateRefMap: CellTemplateRefMap<T> = {};
   @Input() tableClassName: string = '';
-  @Input() columnGroups: MTExColumnGroup[] = [];
+
+  private _columnGroups: MTExColumnGroup[] = [];
+  @Input()
+  set columnGroups(value: MTExColumnGroup[]) {
+    this._columnGroups = value || [];
+    this.cdr.markForCheck();
+    if (this.enableRowPinning) {
+      this.requestColumnSync();
+    }
+  }
+  get columnGroups(): MTExColumnGroup[] { return this._columnGroups; }
+
   @Input() hiddenRowIndices: number[] = [];
-  @Input() enableRowHiding: boolean = false;
-  @Input() enableRowPinning: boolean = false;
-  @Input() topPinnedMaxHeight: string = ''; // Max height for top pinned table (e.g., '200px', '20vh')
-  @Input() bottomPinnedMaxHeight: string = ''; // Max height for bottom pinned table (e.g., '200px', '20vh')
+
+  private _enableRowHiding = false;
+  @Input()
+  set enableRowHiding(value: boolean) {
+    this._enableRowHiding = value;
+    this.showHideColumn('hide', value);
+    this.requestColumnSync();
+  }
+  get enableRowHiding(): boolean { return this._enableRowHiding; }
+
+  private _enableRowPinning = false;
+  @Input()
+  set enableRowPinning(value: boolean) {
+    this._enableRowPinning = value;
+    this.showHideColumn('pin', value);
+    if (value) {
+      this.initializePinnedRows();
+    }
+    this.requestColumnSync();
+  }
+  get enableRowPinning(): boolean { return this._enableRowPinning; }
+
+  private _enableRowFreezing = false;
+  @Input()
+  set enableRowFreezing(value: boolean) {
+    this._enableRowFreezing = value;
+    this.showHideColumn('freeze', value);
+    this.requestColumnSync();
+  }
+  get enableRowFreezing(): boolean { return this._enableRowFreezing; }
+
+  @Input() topPinnedMaxHeight: string = '';
+  @Input() bottomPinnedMaxHeight: string = '';
   @Input() rowPinningFn?: (row: T, index: number) => 'top' | 'bottom' | null;
   @Input() rowHidingFilterFn?: (row: T, index: number) => boolean;
   @Input() pdfOrientation: 'portrait' | 'landscape' = 'portrait';
@@ -323,33 +482,8 @@ export class MatTableExtComponent<
   menuX: number = 0;
   menuY: number = 0;
   private dynamicDisplayedColumns: any[] = [
-    { filter: false, name: 'select', show: false },
-    { filter: false, name: 'edit', show: false },
-    { filter: false, name: 'popup', show: false },
-    { filter: false, name: 'delete', show: false },
-    { filter: false, name: 'freeze', show: false },
-    { filter: false, name: 'hide', show: false },
-    { filter: false, name: 'pin', show: false },
+    ...ACTION_COLUMNS.map(name => ({ filter: false, name, show: false })),
     { filter: false, name: 'expand', show: false },
-  ];
-  private inputPropertyKeys: string[] = [
-    'dataSource',
-    'columns',
-    'inlineRowEditing',
-    'popupRowEditing',
-    'enableDelete',
-    'enableRowFreezing',
-    'enableRowHiding',
-    'enableRowPinning',
-    'rowSelection',
-    'multiRowSelection',
-    'stickyHeader',
-    'stickyFooter',
-    'columnFilter',
-    'globalSearch',
-    'expandRows',
-    'sorting',
-    'columnGroups',
   ];
   resizeListenerAttached: boolean = false;
 
@@ -415,7 +549,25 @@ export class MatTableExtComponent<
   }
   ngOnChanges(changes: SimpleChanges) {
     this.validateInputs(changes);
-    this.setPropertyValue(changes);
+
+    // dataSource and columns setters only validate/store — setup logic runs here
+    if (changes['dataSource']) {
+      this.setTableDataSource(changes['dataSource']);
+      this.requestColumnSync();
+    }
+    if (changes['columns']) {
+      this.setColumnsData(changes['columns'].currentValue);
+      this.requestColumnSync();
+    }
+
+    // Handle showToolbar change
+    if (changes['showToolbar']) {
+      if (changes['columns']) {
+        this.setToolbarMenuControls(changes['columns'].currentValue);
+      } else {
+        this.setToolbarMenuControls(this.columnsArray);
+      }
+    }
   }
 
   private validateInputs(changes: SimpleChanges) {
@@ -982,101 +1134,6 @@ export class MatTableExtComponent<
     }
   }
   /**
-   * @description set the properties of the table.
-   * @param changes changes captured each time user changes property value.
-   */
-  setPropertyValue(changes: SimpleChanges) {
-    let keys = Object.keys(changes);
-    keys.forEach((property) => {
-      if (this.inputPropertyKeys.includes(property)) {
-        this.setPropertiesMap[property](changes[property]);
-        this.requestColumnSync();
-      } else if (property == 'showToolbar') {
-        if (changes['columns']) {
-          this.setToolbarMenuControls(changes['columns'].currentValue);
-        } else {
-          this.setToolbarMenuControls(this.columnsArray);
-        }
-      }
-    });
-  }
-  /**
-   * @description This mapping is used to set and update changesin the table.
-   */
-  setPropertiesMap: Record<string, (value: SimpleChange) => void> = {
-    dataSource: (value: SimpleChange) => this.setTableDataSource(value),
-    columns: (value: SimpleChange) => this.setColumnsData(value.currentValue),
-    inlineRowEditing: (value: SimpleChange) =>
-      this.showHideColumn('edit', value.currentValue),
-    popupRowEditing: (value: SimpleChange) =>
-      this.showHideColumn('popup', value.currentValue),
-    enableDelete: (value: SimpleChange) =>
-      this.showHideColumn('delete', value.currentValue),
-    enableRowFreezing: (value: SimpleChange) =>
-      this.showHideColumn('freeze', value.currentValue),
-    enableRowHiding: (value: SimpleChange) =>
-      this.showHideColumn('hide', value.currentValue),
-    enableRowPinning: (value: SimpleChange) => {
-      this.showHideColumn('pin', value.currentValue);
-      if (value.currentValue) {
-        this.initializePinnedRows();
-      }
-    },
-    rowSelection: (value: SimpleChange) =>
-      this.setRowSelection(value.currentValue),
-    multiRowSelection: (value: SimpleChange) => {
-      this.selection = new SelectionModel<T>(value.currentValue, []);
-    },
-    stickyHeader: (value: SimpleChange) => {
-      this.stickyHeader = value.currentValue;
-      // Recalculate pinned row offsets when sticky header changes
-      this.updatePinnedRowOffsets();
-    },
-    stickyFooter: (value: SimpleChange) => {
-      this.stickyFooter = value.currentValue;
-      // Recalculate pinned row offsets when sticky footer changes
-      this.updatePinnedRowOffsets();
-    },
-    columnFilter: (value: SimpleChange) =>
-      this.setColumnFilter(value.currentValue),
-    globalSearch: (value: SimpleChange) =>
-      (this.dataSource.filterPredicate = this.createFilter()),
-    expandRows: (value: SimpleChange) => {
-      this.loadingIndicator = true;
-      this.dataSource = new MatTableDataSource(this.tableData);
-      if (value.currentValue == true) {
-        if (!this.displayedColumns.includes('expand')) {
-          this.displayedColumns.push('expand');
-          this.columnsToDisplayWithExpand = [...this.displayedColumns];
-        }
-      } else {
-        this.columnsToDisplayWithExpand = [...this.displayedColumns];
-        if (this.displayedColumns.includes('expand')) {
-          let index = this.displayedColumns.indexOf('expand');
-          this.displayedColumns.splice(index, 1);
-        }
-        this.expandedElement = null;
-      }
-      this.loadingDismissNeeded = true;
-      this.cdr.markForCheck();
-    },
-    sorting: (value: SimpleChange) => {
-      this.dataSource.sort = this.sort;
-      if (this.enableRowPinning) {
-        this.pinnedTopDataSource.sort = this.sort;
-        this.pinnedBtmDataSource.sort = this.sort;
-      }
-    },
-    columnGroups: (value: SimpleChange) => {
-      this.columnGroups = value.currentValue || [];
-      this.cdr.markForCheck();
-      // When group headers change, re-sync column sizes for pinned tables
-      if (this.enableRowPinning) {
-        this.requestColumnSync();
-      }
-    },
-  };
-  /**
    * @description used set data source for table.
    * @param value data source value from user.
    */
@@ -1126,70 +1183,64 @@ export class MatTableExtComponent<
     this.toggleFilters = value;
     this.requestColumnSync();
   }
+  // ─── Column helper functions ─────────────────────────────────────
+
+  /** Get all grouped field names as a Set. */
+  private getGroupedFieldSet(): Set<string> {
+    const fields = new Set<string>();
+    this.columnGroups.forEach(g => g.columns.forEach(f => fields.add(f)));
+    return fields;
+  }
+
+  /** Get visible DisplayColumns (where show === true). */
+  private getVisibleDisplayColumns(): any[] {
+    return this.dynamicDisplayedColumns.filter(dc => dc.show);
+  }
+
+  /** From visible columns, extract data-column names (non-action). */
+  private getVisibleDataColumnNames(visible: any[]): string[] {
+    return visible
+      .filter(dc => !ACTION_COLUMNS.includes(dc.name))
+      .map(dc => dc.name);
+  }
+
+  /** From visible columns, extract visible action column names (excluding 'select'). */
+  private getVisibleActionColumnNames(visible: any[]): string[] {
+    return visible
+      .filter(dc => ACTION_COLUMNS.includes(dc.name) && dc.name !== 'select')
+      .map(dc => dc.name);
+  }
+
   /**
    * @description This method returns the list of visible column names.
    * @returns list of visible column names.
    */
   getDisplayedColumns(): string[] {
-    if (this.columnGroups.length === 0) {
-      // No groups, place select at start and other action columns at the end
-      const actionColumns = [
-        'select',
-        'edit',
-        'popup',
-        'delete',
-        'freeze',
-        'hide',
-        'pin',
-      ];
-      const visibleColumns = this.dynamicDisplayedColumns.filter(
-        (cd) => cd.show,
-      );
-      const dataColumns = visibleColumns
-        .filter((cd) => !actionColumns.includes(cd.name))
-        .map((cd) => cd.name);
-      const selectCol = visibleColumns.find((cd) => cd.name === 'select');
-      const otherActionCols = visibleColumns
-        .filter((cd) => actionColumns.includes(cd.name) && cd.name !== 'select')
-        .map((cd) => cd.name);
+    const visible = this.getVisibleDisplayColumns();
 
-      const result = [];
+    if (this.columnGroups.length === 0) {
+      // No groups: select first, data columns, then other action columns
+      const result: string[] = [];
+      const selectCol = visible.find(cd => cd.name === 'select');
       if (selectCol) result.push('select');
-      result.push(...dataColumns);
-      result.push(...otherActionCols);
+      result.push(...this.getVisibleDataColumnNames(visible));
+      result.push(...this.getVisibleActionColumnNames(visible));
       return result;
     }
 
-    // When groups exist, reorder: select first, grouped columns, ungrouped columns, then other action columns
-    const actionColumns = [
-      'select',
-      'edit',
-      'popup',
-      'delete',
-      'freeze',
-      'hide',
-      'pin',
-    ];
-    const groupedFields = new Set<string>();
-
-    // Collect all fields that belong to groups
-    this.columnGroups.forEach((group) => {
-      group.columns.forEach((colField) => groupedFields.add(colField));
-    });
-
+    // When groups exist: select first, grouped columns, ungrouped columns, then action columns
+    const groupedFields = this.getGroupedFieldSet();
     const result: string[] = [];
-    const visibleColumns = this.dynamicDisplayedColumns.filter((cd) => cd.show);
 
     // Add select column first if visible
-    const selectCol = visibleColumns.find((c) => c.name === 'select');
-    if (selectCol) {
+    if (visible.find(c => c.name === 'select')) {
       result.push('select');
     }
 
-    // Add grouped columns in the order they appear in groups
-    this.columnGroups.forEach((group) => {
-      group.columns.forEach((colField) => {
-        const col = visibleColumns.find((c) => c.name === colField);
+    // Add grouped columns in group order
+    this.columnGroups.forEach(group => {
+      group.columns.forEach(colField => {
+        const col = visible.find(c => c.name === colField);
         if (col && !result.includes(col.name)) {
           result.push(col.name);
         }
@@ -1197,9 +1248,9 @@ export class MatTableExtComponent<
     });
 
     // Add ungrouped data columns
-    visibleColumns.forEach((col) => {
+    visible.forEach(col => {
       if (
-        !actionColumns.includes(col.name) &&
+        !ACTION_COLUMNS.includes(col.name) &&
         !groupedFields.has(col.name) &&
         !result.includes(col.name)
       ) {
@@ -1207,16 +1258,8 @@ export class MatTableExtComponent<
       }
     });
 
-    // Add other action columns at the end (excluding select which is already at start)
-    visibleColumns.forEach((col) => {
-      if (
-        actionColumns.includes(col.name) &&
-        col.name !== 'select' &&
-        !result.includes(col.name)
-      ) {
-        result.push(col.name);
-      }
-    });
+    // Add other action columns at the end
+    result.push(...this.getVisibleActionColumnNames(visible).filter(n => !result.includes(n)));
 
     return result;
   }
@@ -1228,63 +1271,33 @@ export class MatTableExtComponent<
     if (this.columnGroups.length === 0) return [];
 
     const grouped: string[] = [];
-    const groupedFields = new Set<string>();
-    const actionColumns = [
-      'select',
-      'edit',
-      'popup',
-      'delete',
-      'freeze',
-      'hide',
-      'pin',
-    ];
-
-    // Collect all fields that belong to groups
-    this.columnGroups.forEach((group) => {
-      group.columns.forEach((colField) => groupedFields.add(colField));
-    });
+    const groupedFields = this.getGroupedFieldSet();
 
     // Add group headers for groups with visible columns
     this.columnGroups.forEach((group) => {
-      const visibleColumnsInGroup = group.columns.filter((colField) => {
-        const displayCol = this.dynamicDisplayedColumns.find(
-          (dc) => dc.name === colField,
-        );
-        return displayCol && displayCol.show;
+      const hasVisible = group.columns.some((colField) => {
+        const dc = this.dynamicDisplayedColumns.find(d => d.name === colField);
+        return dc && dc.show;
       });
-
-      if (visibleColumnsInGroup.length > 0) {
+      if (hasVisible) {
         grouped.push('group-' + group.name);
       }
     });
 
-    // Add empty header placeholders for ungrouped columns at the end
+    // Add empty header placeholders for ungrouped columns
     this.columnsArray.forEach((col) => {
-      if (!groupedFields.has(col.field) && !actionColumns.includes(col.field)) {
-        const displayCol = this.dynamicDisplayedColumns.find(
-          (dc) => dc.name === col.field,
-        );
-        if (displayCol && displayCol.show) {
+      if (!groupedFields.has(col.field) && !ACTION_COLUMNS.includes(col.field)) {
+        const dc = this.dynamicDisplayedColumns.find(d => d.name === col.field);
+        if (dc && dc.show) {
           grouped.push('ungrouped-' + col.field);
         }
       }
     });
 
-    // Add placeholders for visible action columns so group header row has cells to align with action columns
-    const actionPlaceholders = [
-      'select',
-      'edit',
-      'popup',
-      'delete',
-      'freeze',
-      'hide',
-      'pin',
-    ];
-    actionPlaceholders.forEach((act) => {
-      const display = this.dynamicDisplayedColumns.find(
-        (dc) => dc.name === act,
-      );
-      if (display && display.show) {
+    // Add placeholders for visible action columns
+    ACTION_COLUMNS.forEach((act) => {
+      const dc = this.dynamicDisplayedColumns.find(d => d.name === act);
+      if (dc && dc.show) {
         grouped.push('ungrouped-' + act);
       }
     });
@@ -1298,15 +1311,7 @@ export class MatTableExtComponent<
    */
   getFilterColumns(): string[] {
     const filters: string[] = [];
-    const actionColumns = [
-      'select',
-      'edit',
-      'popup',
-      'delete',
-      'freeze',
-      'hide',
-      'pin',
-    ];
+    const actionColumns = ACTION_COLUMNS;
 
     // Get visible columns in display order
     const displayedCols = this.getDisplayedColumns();
@@ -1376,15 +1381,7 @@ export class MatTableExtComponent<
    */
   setColumnsList(columns: MTExColumn<T>[]) {
     this.columnsList = [];
-    this.displayedColumns = [
-      'select',
-      'edit',
-      'popup',
-      'delete',
-      'freeze',
-      'hide',
-      'pin',
-    ];
+    this.displayedColumns = [...ACTION_COLUMNS];
     let columnsArray: DisplayColumn[] = [];
     columns.forEach((col) => {
       if (typeof col?.header == 'string') {
@@ -1396,21 +1393,11 @@ export class MatTableExtComponent<
 
     // Preserve the current state of action columns before resetting
     const currentActionColumns = this.dynamicDisplayedColumns.filter((dc) =>
-      ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'].includes(
-        dc.name,
-      ),
+      ACTION_COLUMNS.includes(dc.name),
     );
 
     // Create new action columns array, preserving existing states
-    const newActionColumns = [
-      { filter: false, name: 'select', show: false },
-      { filter: false, name: 'edit', show: false },
-      { filter: false, name: 'popup', show: false },
-      { filter: false, name: 'delete', show: false },
-      { filter: false, name: 'freeze', show: false },
-      { filter: false, name: 'hide', show: false },
-      { filter: false, name: 'pin', show: false },
-    ].map((actionCol) => {
+    const newActionColumns = ACTION_COLUMNS.map(name => ({ filter: false, name, show: false })).map((actionCol) => {
       const existing = currentActionColumns.find(
         (c) => c.name === actionCol.name,
       );
@@ -2301,37 +2288,16 @@ export class MatTableExtComponent<
    * respecting column groups (grouped columns first, ungrouped at end).
    */
   private getVisibleColumns(): MTExColumn[] {
-    const actionColumns = [
-      'select',
-      'edit',
-      'popup',
-      'delete',
-      'freeze',
-      'hide',
-      'pin',
-    ];
+    const groupedFields = this.getGroupedFieldSet();
     let visibleColumns: MTExColumn[] = [];
 
     if (this.columnGroups.length > 0) {
-      const groupedFields = new Set<string>();
-
-      this.columnGroups.forEach((group) => {
-        group.columns.forEach((colField) => groupedFields.add(colField));
-      });
-
       // Add grouped columns first (in group order)
       this.columnGroups.forEach((group) => {
         group.columns.forEach((colField) => {
           const col = this.columnsArray.find((c) => c.field === colField);
-          const displayCol = this.dynamicDisplayedColumns.find(
-            (dc) => dc.name === colField,
-          );
-          if (
-            col &&
-            displayCol &&
-            displayCol.show &&
-            !visibleColumns.includes(col as MTExColumn<MTExRowData>)
-          ) {
+          const dc = this.dynamicDisplayedColumns.find(d => d.name === colField);
+          if (col && dc && dc.show && !visibleColumns.includes(col as MTExColumn<MTExRowData>)) {
             visibleColumns.push(col as MTExColumn<MTExRowData>);
           }
         });
@@ -2339,14 +2305,11 @@ export class MatTableExtComponent<
 
       // Add ungrouped columns at the end
       this.columnsArray.forEach((col) => {
-        const displayCol = this.dynamicDisplayedColumns.find(
-          (dc) => dc.name === col.field,
-        );
+        const dc = this.dynamicDisplayedColumns.find(d => d.name === col.field);
         if (
           !groupedFields.has(col.field) &&
-          displayCol &&
-          displayCol.show &&
-          !actionColumns.includes(col.field) &&
+          dc && dc.show &&
+          !ACTION_COLUMNS.includes(col.field) &&
           !visibleColumns.includes(col as MTExColumn<MTExRowData>)
         ) {
           visibleColumns.push(col as MTExColumn<MTExRowData>);
@@ -2354,12 +2317,8 @@ export class MatTableExtComponent<
       });
     } else {
       visibleColumns = this.columnsArray.filter((col) => {
-        const displayCol = this.dynamicDisplayedColumns.find(
-          (dc) => dc.name === col.field,
-        );
-        return (
-          displayCol && displayCol.show && !actionColumns.includes(col.field)
-        );
+        const dc = this.dynamicDisplayedColumns.find(d => d.name === col.field);
+        return dc && dc.show && !ACTION_COLUMNS.includes(col.field);
       }) as MTExColumn<MTExRowData>[];
     }
 
