@@ -28,31 +28,31 @@
 <ng-template #editingFieldsTpl let-row="row" let-column="column" let-i="index">
     @switch (column.type) {
         @case ('number') {
-            <mat-form-field appearance="outline" class="inline-editing-field">
+            <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
                 <input matInput type="number" [(ngModel)]="rowDataTemp['e'+i][column.field]"
                     [ngModelOptions]="{standalone: true}">
             </mat-form-field>
         }
         @case ('string') {
-            <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
+            <mat-form-field subscriptSizing="dynamic" style="width: 100%;" appearance="outline" class="inline-editing-field">
                 <input matInput type="text" [(ngModel)]="rowDataTemp['e'+i][column.field]"
                     [ngModelOptions]="{standalone: true}">
             </mat-form-field>
         }
         @case ('textarea') {
-            <mat-form-field style="width: 100%;" appearance="outline" class="inline-editing-field">
+            <mat-form-field subscriptSizing="dynamic" style="width: 100%;" appearance="outline" class="inline-editing-field">
                 <textarea matInput rows="3" [(ngModel)]="rowDataTemp['e'+i][column.field]"
                     [ngModelOptions]="{standalone: true}"></textarea>
             </mat-form-field>
         }
         @case ('date') {
-            <mat-form-field appearance="outline" class="inline-editing-field">
+            <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
                 <input matInput type="date" [(ngModel)]="rowDataTemp['e'+i][column.field]"
                     [ngModelOptions]="{standalone: true}">
             </mat-form-field>
         }
         @case ('datepicker') {
-            <mat-form-field appearance="outline" class="inline-editing-field">
+            <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
                 <input matInput [matDatepicker]="cellEditorPicker" [(ngModel)]="rowDataTemp['e'+i][column.field]"
                     [ngModelOptions]="{standalone: true}">
                 <mat-datepicker-toggle matIconSuffix [for]="cellEditorPicker"></mat-datepicker-toggle>
@@ -60,7 +60,7 @@
             </mat-form-field>
         }
         @case ('selection') {
-            <mat-form-field appearance="outline" class="inline-editing-field">
+            <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
                 <mat-select [value]="rowDataTemp['e'+i][column.field]"
                     [(ngModel)]="rowDataTemp['e'+i][column.field]">
                     @for (option of column.options; track option) {

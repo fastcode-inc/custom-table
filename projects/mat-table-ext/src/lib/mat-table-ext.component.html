@@ -63,7 +63,7 @@
     <!-- ==================== END SHARED TEMPLATES ==================== -->
 
     @if (globalSearch) {
-        <mat-form-field class="global-search-field" appearance="fill">
+        <mat-form-field subscriptSizing="dynamic" class="global-search-field" appearance="fill">
             <mat-label>Search</mat-label>
             <input matInput [ngModel]="globalFilter" (ngModelChange)="applyGlobalFilter($event)" placeholder="Ex. Mia"
                 #input>
@@ -139,7 +139,7 @@
             <div class="toolbar-menu-container" [formGroup]="hideShowMenuGroup"
                 (click)="$event.stopPropagation()">
                 <h4 class="column-headers">Visible Columns</h4>
-                <mat-form-field appearance="fill" style="width: -webkit-fill-available;">
+                <mat-form-field subscriptSizing="dynamic" appearance="fill" style="width: -webkit-fill-available;">
                     <mat-label>Filter Columns</mat-label>
                     <input matInput [(ngModel)]="showHideFilter" (ngModelChange)="filterColumns($event)"
                         [ngModelOptions]="{standalone: true}">
@@ -158,7 +158,7 @@
             <div class="toolbar-menu-container" (click)="$event.stopPropagation()">
                 <h4 class="column-headers">Pin Columns</h4>
                 <form class="example-form">
-                    <mat-form-field appearance="fill" style="width: -webkit-fill-available;">
+                    <mat-form-field subscriptSizing="dynamic" appearance="fill" style="width: -webkit-fill-available;">
                         <mat-label>Filter Columns</mat-label>
                         <input matInput [(ngModel)]="showHideFilter" (ngModelChange)="filterColumns($event)"
                             [ngModelOptions]="{standalone: true}">

@@ -3,7 +3,7 @@
         <div mat-dialog-title class="dialog-title-container">
             <h4 style="margin: 0;">{{ isCellEdit ? 'Edit Cell' : 'Edit Row' }}</h4>
             <span class="example-spacer"></span>
-            <button style="margin-right: -10px;" mat-icon-button aria-label="Example icon button with a vertical three dot icon">
+            <button style="margin-right: -10px;" mat-icon-button aria-label="Close edit dialog">
                 <mat-icon mat-dialog-close style="cursor: pointer;" fxFlex="5">close</mat-icon>
             </button>
         </div>
@@ -13,7 +13,7 @@
                 <div style="display: flex; flex-direction: column;">
                     <!-- Number Type -->
                     @if (types[cellField] == 'number') {
-                        <mat-form-field appearance="outline" class="inline-editing-field">
+                        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
                             <mat-label>{{cellColumn.header || cellField | titlecase}}</mat-label>
                             <input matInput type="number" [(ngModel)]="cellValue" [ngModelOptions]="{standalone: true}">
                         </mat-form-field>
@@ -21,7 +21,7 @@
             
                     <!-- String Type -->
                     @if (types[cellField] == 'string') {
-                        <mat-form-field appearance="outline" class="inline-editing-field">
+                        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
                             <mat-label>{{cellColumn.header || cellField | titlecase}}</mat-label>
                             <input matInput type="text" [(ngModel)]="cellValue" [ngModelOptions]="{standalone: true}">
                         </mat-form-field>
@@ -29,14 +29,14 @@
                     
                     <!-- Textarea Type -->
                     @if (types[cellField] == 'textarea') {
-                        <mat-form-field appearance="outline" class="inline-editing-field">
+                        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
                             <mat-label>{{cellColumn.header || cellField | titlecase}}</mat-label>
                             <textarea matInput rows="6" [(ngModel)]="cellValue" [ngModelOptions]="{standalone: true}"></textarea>
                         </mat-form-field>
                     }
                     
                     @if (types[cellField] == 'date') {
-                        <mat-form-field appearance="outline" class="inline-editing-field">
+                        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
                             <mat-label>{{cellColumn.header || cellField | titlecase}}</mat-label>
                             <input matInput type="text" [(ngModel)]="cellValue" [ngModelOptions]="{standalone: true}">
                         </mat-form-field>
@@ -44,7 +44,7 @@
                     
                     <!-- Datepicker Type -->
                     @if (types[cellField] == 'datepicker') {
-                        <mat-form-field appearance="outline" class="inline-editing-field">
+                        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
                             <mat-label>{{cellColumn.header || cellField | titlecase}}</mat-label>
                             <input matInput [matDatepicker]="cellPopupPicker" [(ngModel)]="cellValue" [ngModelOptions]="{standalone: true}">
                             <mat-datepicker-toggle matIconSuffix [for]="cellPopupPicker"></mat-datepicker-toggle>
@@ -54,7 +54,7 @@
                     
                     <!-- Selection Type -->
                     @if (types[cellField] == 'selection') {
-                        <mat-form-field appearance="outline" class="inline-editing-field">
+                        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
                             <mat-label>{{cellColumn.header || cellField | titlecase}}</mat-label>
                             <mat-select [(ngModel)]="cellValue">
                                 @for (option of cellColumn.options; track option) {
@@ -81,7 +81,7 @@
                                   @for (key of keys; track key) {
                     <!-- Number Type -->
                     @if (types[key] == 'number') {
-                        <mat-form-field appearance="outline" class="inline-editing-field">
+                        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
                             <mat-label>{{key | titlecase}}</mat-label>
                             <input matInput type="number" [(ngModel)]="dialogData['row'][key]" [ngModelOptions]="{standalone: true}">
                         </mat-form-field>
@@ -89,27 +89,27 @@
             
                     <!-- String Type -->
                     @if (types[key] == 'string') {
-                        <mat-form-field appearance="outline" class="inline-editing-field">
+                        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
                             <mat-label>{{key | titlecase}}</mat-label>
                             <input matInput type="text" [(ngModel)]="dialogData['row'][key]" [ngModelOptions]="{standalone: true}">
                         </mat-form-field>
                     }
                     <!-- Textarea Type -->
                     @if (types[key] == 'textarea') {
-                        <mat-form-field appearance="outline" class="inline-editing-field">
+                        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
                             <mat-label>{{key | titlecase}}</mat-label>
                             <textarea matInput rows="4" [(ngModel)]="dialogData['row'][key]" [ngModelOptions]="{standalone: true}"></textarea>
                         </mat-form-field>
                     }
                     @if (types[key] == 'date') {
-                        <mat-form-field appearance="outline" class="inline-editing-field">
+                        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
                             <mat-label>{{key | titlecase}}</mat-label>
                             <input matInput type="text" [(ngModel)]="dialogData['row'][key]" [ngModelOptions]="{standalone: true}">
                         </mat-form-field>
                     }
                     <!-- Datepicker Type -->
                     @if (types[key] == 'datepicker') {
-                        <mat-form-field appearance="outline" class="inline-editing-field">
+                        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
                             <mat-label>{{key | titlecase}}</mat-label>
                             <input matInput [matDatepicker]="popupPicker" [(ngModel)]="dialogData['row'][key]" [ngModelOptions]="{standalone: true}">
                             <mat-datepicker-toggle matIconSuffix [for]="popupPicker"></mat-datepicker-toggle>
@@ -118,7 +118,7 @@
                     }
                     <!-- Selection Type -->
                     @if (types[key] == 'selection') {
-                        <mat-form-field appearance="outline" class="inline-editing-field">
+                        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
                             <mat-label>{{key | titlecase}}</mat-label>
                             <mat-select [ngModel]="getSelectionValue(key)" (ngModelChange)="setSelectionValue(key, $event)">
                                 @for (option of getSelectionOptions(key); track option) {

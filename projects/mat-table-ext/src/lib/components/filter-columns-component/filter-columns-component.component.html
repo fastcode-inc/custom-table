@@ -2,29 +2,29 @@
 @if (obj) {
     <!-- Number Type -->
     @if (obj.type == 'number') {
-        <mat-form-field appearance="outline" class="inline-editing-field" >
+        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field" >
             <input matInput type="number" [formControl]="numberCtrl">
         </mat-form-field>
     }
     
     <!-- String Type -->
     @if (obj.type == 'string') {
-        <mat-form-field appearance="outline" class="inline-editing-field">
+        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
             <input matInput type="text" [formControl]="stringCtrl">
         </mat-form-field>
     }
     @if (obj.type == 'textarea') {
-        <mat-form-field appearance="outline" class="inline-editing-field">
+        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
             <textarea matInput rows="3" [formControl]="textareaCtrl"></textarea>
         </mat-form-field>
     }
     @if (obj.type == 'date') {
-        <mat-form-field appearance="outline" class="inline-editing-field">
+        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
             <input matInput type="date" [formControl]="dateCtrl">
         </mat-form-field>
     }
         @if (obj.type == 'datepicker') {
-        <mat-form-field appearance="outline" class="inline-editing-field">
+        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
             <input matInput [matDatepicker]="cellPicker" [formControl]="dateCtrl">
             <mat-datepicker-toggle matIconSuffix [for]="cellPicker"></mat-datepicker-toggle>
             <mat-datepicker #cellPicker></mat-datepicker>
@@ -32,7 +32,7 @@
         }
     <!-- Selection Type -->
     @if (obj.type == 'selection') {
-        <mat-form-field appearance="outline" class="inline-editing-field">
+        <mat-form-field subscriptSizing="dynamic" appearance="outline" class="inline-editing-field">
             <mat-select [value]="" [formControl]="selectionCtrl">
                 @for (option of obj.options; track option) {
                     <mat-option [value]="option">{{option}}</mat-option>
