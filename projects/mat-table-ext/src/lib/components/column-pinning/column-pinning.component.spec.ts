@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatIconRegistry } from '@angular/material/icon';
 import { of } from 'rxjs';
+import { MTExColumn } from '../../models/tableExtModels';
 
 import { ColumnPinningComponent } from './column-pinning.component';
 
@@ -8,10 +9,10 @@ describe('ColumnPinningComponent', () => {
   let component: ColumnPinningComponent;
   let fixture: ComponentFixture<ColumnPinningComponent>;
 
-  const createColumns = () => [
+  const createColumns = (): MTExColumn[] => [
     { field: 'name', header: 'Name' },
     { field: 'age', header: 'Age', pinned: 'left' as const },
-  ];
+  ].map((col) => ({ ...col, type: 'string' }));
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -30,7 +31,7 @@ describe('ColumnPinningComponent', () => {
 
     fixture = TestBed.createComponent(ColumnPinningComponent);
     component = fixture.componentInstance;
-    component.columns = createColumns() as any;
+    component.columns = createColumns();
     fixture.detectChanges();
   });
 
@@ -43,39 +44,39 @@ describe('ColumnPinningComponent', () => {
   });
 
   it('should set column pin value for matching column only', () => {
-    component.setColumnPinValue(component.columns[0] as any, 'right');
+    component.setColumnPinValue(component.columns[0], 'right');
 
-    expect((component.columns[0] as any).pinned).toBe('right');
-    expect((component.columns[1] as any).pinned).toBe('left');
+    expect(component.columns[0].pinned).toBe('right');
+    expect(component.columns[1].pinned).toBe('left');
   });
 
   it('should cycle pin value from left to right and emit changed columns', () => {
     const emitSpy = spyOn(component.columnsChanged, 'emit');
-    (component.columns[0] as any).pinned = 'left';
+    component.columns[0].pinned = 'left';
 
-    component.changeValue(component.columns[0] as any);
+    component.changeValue(component.columns[0]);
 
-    expect((component.columns[0] as any).pinned).toBe('right');
+    expect(component.columns[0].pinned).toBe('right');
     expect(emitSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should cycle pin value from right to none (undefined) and emit', () => {
     const emitSpy = spyOn(component.columnsChanged, 'emit');
-    (component.columns[0] as any).pinned = 'right';
+    component.columns[0].pinned = 'right';
 
-    component.changeValue(component.columns[0] as any);
+    component.changeValue(component.columns[0]);
 
-    expect((component.columns[0] as any).pinned).toBeUndefined();
+    expect(component.columns[0].pinned).toBeUndefined();
     expect(emitSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should set pin value to left when currently unpinned', () => {
     const emitSpy = spyOn(component.columnsChanged, 'emit');
-    (component.columns[0] as any).pinned = undefined;
+    component.columns[0].pinned = undefined;
 
-    component.changeValue(component.columns[0] as any);
+    component.changeValue(component.columns[0]);
 
-    expect((component.columns[0] as any).pinned).toBe('left');
+    expect((component.columns[0] as MTExColumn).pinned).toBe('left');
     expect(emitSpy).toHaveBeenCalledTimes(1);
   });
 });

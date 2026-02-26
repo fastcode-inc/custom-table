@@ -8,6 +8,53 @@ import {
   TablePdfExportOptions,
 } from '../models/tableExtModels';
 
+type PdfHeaderStyles = NonNullable<TablePdfExportOptions['headerStyles']>;
+type GroupHeaderStyles = TablePdfExportOptions['groupHeaderStyles'];
+
+interface GroupHeaderCell {
+  content: string;
+  colSpan?: number;
+  styles: { halign: 'center' };
+}
+
+interface AutoTableCellData {
+  section: string;
+  row: { index: number };
+  cell: {
+    styles: {
+      fillColor?: number[];
+      textColor?: number[];
+      fontStyle?: string;
+      halign?: string;
+    };
+    x: number;
+    width: number;
+    y: number;
+    height: number;
+  };
+}
+
+interface PdfTableConfig {
+  head: Array<GroupHeaderCell[] | string[]>;
+  body: string[][];
+  startY: number;
+  theme: 'plain';
+  styles: {
+    fontSize: number;
+    cellPadding: number;
+    lineWidth: number;
+  };
+  headStyles: PdfHeaderStyles;
+  didParseCell?: (cellData: AutoTableCellData) => void;
+  didDrawCell?: (cellData: AutoTableCellData) => void;
+}
+
+interface PdfLineDrawer {
+  setDrawColor: (red: number, green: number, blue: number) => void;
+  setLineWidth: (width: number) => void;
+  line: (x1: number, y1: number, x2: number, y2: number) => void;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -33,7 +80,7 @@ export class TableExportService {
 
     // Add group headers if they exist
     if (columnGroups.length > 0) {
-      const groupRow: any[] = new Array(visibleColumns.length).fill('');
+      const groupRow: string[] = new Array(visibleColumns.length).fill('');
       const columnIndexMap: { [key: string]: number } = {};
 
       visibleColumns.forEach((col, idx) => {
@@ -91,7 +138,7 @@ export class TableExportService {
     });
 
     // Write to buffer based on the requested file type
-    let buffer: any;
+    let buffer: BlobPart;
     let blob: Blob;
     let resolvedType = type;
 
@@ -140,14 +187,14 @@ export class TableExportService {
     });
 
     // Default header styles
-    const headerStyles: any = inputHeaderStyles ?? {
+    const headerStyles: PdfHeaderStyles = inputHeaderStyles ?? {
       fillColor: [245, 245, 245],
       textColor: [0, 0, 0],
       fontStyle: 'bold',
     };
 
     // Prepare group headers if column groups exist
-    let groupHeaders: any[] = [];
+    let groupHeaders: GroupHeaderCell[][] = [];
     const columnIndexMap: { [key: string]: number } = {};
 
     if (columnGroups.length > 0) {
@@ -157,7 +204,7 @@ export class TableExportService {
       });
 
       // Create group header row
-      const groupRow: any[] = [];
+      const groupRow: GroupHeaderCell[] = [];
 
       columnGroups.forEach((group) => {
         const groupCols = group.columns.filter((colField) =>
@@ -216,7 +263,7 @@ export class TableExportService {
     }
 
     // Resolve group header styles
-    const groupHeaderStyles: any =
+    const groupHeaderStyles: GroupHeaderStyles =
       inputGroupHeaderStyles !== undefined
         ? inputGroupHeaderStyles
         : columnGroups.length > 0
@@ -224,7 +271,7 @@ export class TableExportService {
           : null;
 
     // Build table config
-    const tableConfig: any = {
+    const tableConfig: PdfTableConfig = {
       head:
         groupHeaders.length > 0
           ? [...groupHeaders, headers]
@@ -241,7 +288,7 @@ export class TableExportService {
     };
 
     // didParseCell: apply header/group header visual styles
-    tableConfig.didParseCell = (cellData: any) => {
+    tableConfig.didParseCell = (cellData: AutoTableCellData) => {
       // Group header row styling
       if (
         cellData.section === 'head' &&
@@ -274,10 +321,10 @@ export class TableExportService {
     };
 
     // didDrawCell: draw only the bottom divider line for each cell
-    tableConfig.didDrawCell = (cellData: any) => {
+    tableConfig.didDrawCell = (cellData: AutoTableCellData) => {
       try {
         const cell = cellData.cell;
-        const docRef: any = doc;
+        const docRef = doc as unknown as PdfLineDrawer;
         const lineColor = [200, 200, 200];
         const lineWidth = 0.5;
 
@@ -293,7 +340,7 @@ export class TableExportService {
       }
     };
 
-    autoTable(doc, tableConfig);
+    autoTable(doc, tableConfig as Parameters<typeof autoTable>[1]);
 
     doc.save(`${fileName}.pdf`);
   }

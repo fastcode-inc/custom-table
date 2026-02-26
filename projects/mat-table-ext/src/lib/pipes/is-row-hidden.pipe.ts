@@ -7,16 +7,16 @@ import { MatTableDataSource } from '@angular/material/table';
   pure: true,
 })
 export class IsRowHiddenPipe implements PipeTransform {
-  transform(
+  transform<T>(
     index: number,
-    hiddenRowIndices: number[],
-    rowHidingFilterFn?: ((row: any, index: number) => boolean) | null,
-    dataSource?: MatTableDataSource<any> | null
+    hiddenRowIndices: readonly number[],
+    rowHidingFilterFn?: ((row: T, index: number) => boolean) | null,
+    dataSource?: MatTableDataSource<T> | null
   ): boolean {
     if (hiddenRowIndices.includes(index)) {
       return true;
     }
-    if (rowHidingFilterFn && dataSource?.data?.[index]) {
+    if (rowHidingFilterFn && dataSource?.data?.[index] !== undefined) {
       return rowHidingFilterFn(dataSource.data[index], index);
     }
     return false;

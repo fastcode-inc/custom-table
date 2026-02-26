@@ -4,14 +4,18 @@ import { MatTableExtService } from '../../services/mat-table-ext.service';
 import { TemplateRef } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-import { EditingComponent } from './editing.component';
+import {
+  EditingComponent,
+  EditingDialogData,
+  EditingTemplateContext,
+} from './editing.component';
 
 describe('EditingComponent', () => {
   let component: EditingComponent;
   let fixture: ComponentFixture<EditingComponent>;
   let dialogRefSpy: jasmine.SpyObj<MatDialogRef<EditingComponent>>;
 
-  function configure(dialogData: any): void {
+  function configure(dialogData: EditingDialogData<Record<string, unknown>>): void {
     TestBed.resetTestingModule();
     dialogRefSpy = jasmine.createSpyObj<MatDialogRef<EditingComponent>>('MatDialogRef', ['close']);
 
@@ -83,15 +87,19 @@ describe('EditingComponent', () => {
         { field: 'id', type: 'number' },
         { field: 'role', type: 'selection', options: ['Admin', 'User'] },
       ],
-    } as any;
+    } as EditingDialogData<Record<string, unknown>>;
 
     component.setData(data);
 
     expect(component.keys).toEqual(['id', 'role']);
     expect(component.types['id']).toBe('number');
     expect(component.types['role']).toBe('selection');
-    expect((data.row as any).role.value).toBe('Admin');
-    expect((data.row as any).role.options).toEqual(['Admin', 'User']);
+    const roleSelection = (data.row as Record<string, unknown>)['role'] as {
+      value: unknown;
+      options?: string[];
+    };
+    expect(roleSelection.value).toBe('Admin');
+    expect(roleSelection.options).toEqual(['Admin', 'User']);
     expect(setTemplateRefSpy).toHaveBeenCalled();
   });
 
@@ -104,22 +112,29 @@ describe('EditingComponent', () => {
       ],
     });
 
-    const templateRef = {} as TemplateRef<any>;
+    const templateRef = {} as TemplateRef<EditingTemplateContext<Record<string, unknown>>>;
     component.columns = [
       { field: 'status', type: 'selection', options: ['open', 'closed'] },
       { field: 'name', type: 'string' },
-    ] as any;
-    component.setTemplateRef({ ...(component.dialogData as any), templateRef } as any);
+    ];
+    component.setTemplateRef({ ...component.dialogData, templateRef });
 
     expect(component.templateRef).toBe(templateRef);
     expect(component.templateKeys).toEqual(['status', 'name']);
     expect(component.templateTypes['status']).toBe('selection');
-    const statusValue = (component.templateRow as any).status?.value;
+    const statusValue =
+      (component.templateRow as Record<string, unknown>)['status'] as unknown;
     const normalizedStatus =
       statusValue && typeof statusValue === 'object' && 'value' in statusValue
-        ? (statusValue as any).value
+        ? (statusValue as { value: unknown }).value
         : statusValue;
-    expect(normalizedStatus).toBe('open');
+    const flattenedStatus =
+      normalizedStatus &&
+      typeof normalizedStatus === 'object' &&
+      'value' in normalizedStatus
+        ? (normalizedStatus as { value: unknown }).value
+        : normalizedStatus;
+    expect(flattenedStatus).toBe('open');
   });
 
   it('closeDialog should close with cell payload for cell edit mode', () => {
@@ -148,7 +163,7 @@ describe('EditingComponent', () => {
 
     component.isCellEdit = false;
     component.keys = ['status', 'title'];
-    component.types = { status: 'selection', title: 'string' } as any;
+    component.types = { status: 'selection', title: 'string' };
 
     component.closeDialog();
 
@@ -160,11 +175,11 @@ describe('EditingComponent', () => {
 
     component.closeTemplateDialog(
       {
-        priority: { value: 'High', options: ['Low', 'High'] } as any,
+        priority: { value: 'High', options: ['Low', 'High'] },
         note: 'Ready',
       },
       ['priority', 'note'],
-      { priority: 'selection', note: 'string' } as any,
+      { priority: 'selection', note: 'string' },
     );
 
     expect(dialogRefSpy.close).toHaveBeenCalledWith({ priority: 'High', note: 'Ready' });
@@ -184,7 +199,10 @@ describe('EditingComponent', () => {
     component.setSelectionValue('status', 'closed');
 
     expect(component.getSelectionValue('status')).toBe('closed');
-    expect((component.dialogData.row as any).status.value).toBe('closed');
+    const statusSelection = (component.dialogData.row as Record<string, unknown>)['status'] as {
+      value: unknown;
+    };
+    expect(statusSelection.value).toBe('closed');
   });
 
   it('selection helpers should safely handle non-selection field values', () => {
@@ -198,6 +216,6 @@ describe('EditingComponent', () => {
 
     component.setSelectionValue('plain', 'new');
 
-    expect((component.dialogData.row as any).plain).toBe('text');
+    expect((component.dialogData.row as Record<string, unknown>)['plain']).toBe('text');
   });
 });

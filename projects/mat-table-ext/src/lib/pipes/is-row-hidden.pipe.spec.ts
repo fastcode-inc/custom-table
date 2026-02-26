@@ -16,7 +16,7 @@ describe('IsRowHiddenPipe', () => {
 
   it('should return filter function result when index is not explicitly hidden', () => {
     const dataSource = new MatTableDataSource([{ id: 1 }, { id: 2 }]);
-    const filterFn = (row: any, index: number) => row.id === 2 && index === 1;
+    const filterFn = (row: { id: number }, index: number) => row.id === 2 && index === 1;
 
     const result = pipe.transform(1, [], filterFn, dataSource);
     expect(result).toBeTrue();

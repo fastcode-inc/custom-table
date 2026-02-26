@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MTExColumn } from '../../models/tableExtModels';
 
 import { FilterColumnsComponentComponent } from './filter-columns-component.component';
 
@@ -18,7 +19,7 @@ describe('FilterColumnsComponentComponent', () => {
       field: 'name',
       header: 'Name',
       type: 'string',
-    } as any;
+    } as MTExColumn;
     fixture.detectChanges();
   });
 

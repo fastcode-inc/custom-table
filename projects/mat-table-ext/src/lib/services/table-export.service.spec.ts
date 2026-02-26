@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import * as ExcelJS from 'exceljs';
 import * as FileSaver from 'file-saver';
+import { MTExColumn } from '../models/tableExtModels';
 
 import { TableExportService } from './table-export.service';
 
@@ -23,7 +24,7 @@ describe('TableExportService', () => {
     const fakeWorksheet = {
       addRow: addRowSpy,
       mergeCells: mergeCellsSpy,
-    } as any;
+    };
 
     const csvWriteBufferSpy = jasmine.createSpy('csvWriteBuffer').and.resolveTo(new ArrayBuffer(4));
     const xlsxWriteBufferSpy = jasmine.createSpy('xlsxWriteBuffer').and.resolveTo(new ArrayBuffer(4));
@@ -32,16 +33,19 @@ describe('TableExportService', () => {
       addWorksheet: jasmine.createSpy('addWorksheet').and.returnValue(fakeWorksheet),
       csv: { writeBuffer: csvWriteBufferSpy },
       xlsx: { writeBuffer: xlsxWriteBufferSpy },
-    } as any;
+    };
 
-    spyOn(ExcelJS as any, 'Workbook').and.returnValue(fakeWorkbook);
+    spyOn(
+      ExcelJS as unknown as { Workbook: () => unknown },
+      'Workbook'
+    ).and.returnValue(fakeWorkbook);
     const saveAsSpy = spyOn(FileSaver, 'saveAs');
 
     await service.exportTable({
       type: 'csv',
       fileName: 'report',
       visibleColumns: [
-        { field: 'id', header: 'ID', type: 'number' } as any,
+        { field: 'id', header: 'ID', type: 'number' } as MTExColumn,
       ],
       columnGroups: [],
       data: [{ id: 1 }],
@@ -62,7 +66,7 @@ describe('TableExportService', () => {
     const fakeWorksheet = {
       addRow: addRowSpy,
       mergeCells: jasmine.createSpy('mergeCells'),
-    } as any;
+    };
 
     const xlsxWriteBufferSpy = jasmine.createSpy('xlsxWriteBuffer').and.resolveTo(new ArrayBuffer(4));
 
@@ -70,16 +74,19 @@ describe('TableExportService', () => {
       addWorksheet: jasmine.createSpy('addWorksheet').and.returnValue(fakeWorksheet),
       csv: { writeBuffer: jasmine.createSpy('csvWriteBuffer').and.resolveTo(new ArrayBuffer(4)) },
       xlsx: { writeBuffer: xlsxWriteBufferSpy },
-    } as any;
+    };
 
-    spyOn(ExcelJS as any, 'Workbook').and.returnValue(fakeWorkbook);
+    spyOn(
+      ExcelJS as unknown as { Workbook: () => unknown },
+      'Workbook'
+    ).and.returnValue(fakeWorkbook);
     const saveAsSpy = spyOn(FileSaver, 'saveAs');
 
     await service.exportTable({
       type: 'xlsx',
       fileName: 'report',
       visibleColumns: [
-        { field: 'name', header: 'Name', type: 'string' } as any,
+        { field: 'name', header: 'Name', type: 'string' } as MTExColumn,
       ],
       columnGroups: [],
       data: [{ name: 'A' }, { name: 'B' }],

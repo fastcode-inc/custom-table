@@ -1,4 +1,4 @@
-import { Component, Input, ViewEncapsulation } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +15,6 @@ import { MTExColumn, MTExRowData } from '../../models/tableExtModels';
   templateUrl: './table-cell-editor.component.html',
   styleUrls: ['./table-cell-editor.component.scss'],
   standalone: true,
-  encapsulation: ViewEncapsulation.None,
   imports: [
     CommonModule,
     FormsModule,
@@ -44,10 +43,10 @@ export class TableCellEditorComponent<T extends MTExRowData = MTExRowData> {
   @Input() cellEditing: Record<string, boolean> = {};
 
   /** Custom inline editing template provided by consumer */
-  @Input() inlineEditingTemplateRef?: TemplateRef<any>;
+  @Input() inlineEditingTemplateRef?: TemplateRef<unknown>;
 
   /** Custom cell editing template provided by consumer */
-  @Input() cellEditingTemplateRef?: TemplateRef<any>;
+  @Input() cellEditingTemplateRef?: TemplateRef<unknown>;
 
   /** Data object for the inline editing template */
   @Input() inlineEditingData: Record<string, unknown> = {};

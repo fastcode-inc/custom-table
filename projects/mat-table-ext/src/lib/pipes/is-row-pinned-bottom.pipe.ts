@@ -6,7 +6,7 @@ import { Pipe, PipeTransform } from '@angular/core';
   pure: true,
 })
 export class IsRowPinnedBottomPipe implements PipeTransform {
-  transform(row: any, pinnedBottomRows: any[]): boolean {
+  transform(row: unknown, pinnedBottomRows: readonly unknown[]): boolean {
     return pinnedBottomRows.includes(row);
   }
 }

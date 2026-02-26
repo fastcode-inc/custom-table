@@ -1,11 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { Component, ViewChild } from '@angular/core';
-import { MatTableDataSource } from '@angular/material/table';
+import { MatTable, MatTableDataSource } from '@angular/material/table';
 import { BehaviorSubject } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { of } from 'rxjs';
+import { MTExColumn } from './models/tableExtModels';
 
 import { TableExportService } from './services/table-export.service';
 import { TablePrintService } from './services/table-print.service';
@@ -21,6 +22,10 @@ import { MatTableExtComponent } from './mat-table-ext.component';
       [dataSource]="dataSource"
       [columns]="columns"
       columnResizable
+      stripedRows="true"
+      rowHover="true"
+      showPaginator="false"
+      printButtonEnable="true"
       showToolbar="false"
     ></mat-table-ext>
   `,
@@ -28,10 +33,10 @@ import { MatTableExtComponent } from './mat-table-ext.component';
 class HostComponent {
   @ViewChild(MatTableExtComponent) table!: MatTableExtComponent;
   dataSource = new MatTableDataSource([{ id: 1, name: 'A' }]);
-  columns = [
+  columns: MTExColumn[] = [
     { field: 'id', header: 'ID', type: 'number' },
     { field: 'name', header: 'Name', type: 'string' },
-  ] as any;
+  ];
 }
 
 describe('MatTableExtComponent', () => {
@@ -91,7 +96,37 @@ describe('MatTableExtComponent', () => {
   it('should coerce boolean inputs using booleanAttribute transform', () => {
     const { table } = createHost();
     expect(table.columnResizable).toBeTrue();
+    expect(table.stripedRows).toBeTrue();
+    expect(table.rowHover).toBeTrue();
+    expect(table.showPaginator).toBeFalse();
+    expect(table.printButtonEnable).toBeTrue();
     expect(table.showToolbar).toBeFalse();
+  });
+
+  it('should attach and detach row pinning listeners when pinning is toggled', () => {
+    const { table } = createHost();
+    const tableAny = table as unknown as {
+      isViewInitialized: boolean;
+      attachResizeListener: () => void;
+      detachResizeListener: () => void;
+      clearResizeDebounceTimer: () => void;
+      updatePinnedRowOffsets: () => void;
+      enableRowPinning: boolean;
+    };
+
+    tableAny.isViewInitialized = true;
+    const attachSpy = spyOn(tableAny, 'attachResizeListener');
+    const detachSpy = spyOn(tableAny, 'detachResizeListener');
+    const clearTimerSpy = spyOn(tableAny, 'clearResizeDebounceTimer');
+    const updateOffsetsSpy = spyOn(tableAny, 'updatePinnedRowOffsets');
+
+    tableAny.enableRowPinning = true;
+    expect(attachSpy).toHaveBeenCalled();
+    expect(updateOffsetsSpy).toHaveBeenCalled();
+
+    tableAny.enableRowPinning = false;
+    expect(detachSpy).toHaveBeenCalled();
+    expect(clearTimerSpy).toHaveBeenCalled();
   });
 
   it('should toggle hidden row state and clear all hidden rows', () => {
@@ -111,7 +146,7 @@ describe('MatTableExtComponent', () => {
 
   it('should respect rowHidingFilterFn in isRowHidden', () => {
     const { table } = createHost();
-    table.rowHidingFilterFn = (_row: any, index: number) => index === 0;
+    table.rowHidingFilterFn = (_row: unknown, index: number) => index === 0;
 
     expect(table.isRowHidden(0)).toBeTrue();
     expect(table.isRowHidden(1)).toBeFalse();
@@ -119,8 +154,8 @@ describe('MatTableExtComponent', () => {
 
   it('should pin and unpin rows and expose pin position helpers', () => {
     const { table } = createHost();
-    const row = table.dataSource.data[0] as any;
-    table.table = { renderRows: () => {} } as any;
+    const row = table.dataSource.data[0];
+    table.table = { renderRows: () => {} } as unknown as MatTable<Record<string, unknown>>;
 
     table.pinRow(row, 'top');
     expect(table.isRowPinned(row)).toBeTrue();
@@ -137,9 +172,9 @@ describe('MatTableExtComponent', () => {
     const { table } = createHost();
     table.enableRowPinning = true;
 
-    const rowA = { id: 1, name: 'A' } as any;
-    const rowB = { id: 2, name: 'B' } as any;
-    const rowC = { id: 3, name: 'C' } as any;
+    const rowA: Record<string, unknown> = { id: 1, name: 'A' };
+    const rowB: Record<string, unknown> = { id: 2, name: 'B' };
+    const rowC: Record<string, unknown> = { id: 3, name: 'C' };
     table.dataSource = new MatTableDataSource([rowA, rowB, rowC]);
     table.pinnedTopRows = [rowA];
     table.pinnedBottomRows = [rowC];
@@ -151,7 +186,7 @@ describe('MatTableExtComponent', () => {
   it('should emit selection state through checkboxLabel and setSelectedRows', () => {
     const { table } = createHost();
     const selectionSpy = spyOn(table.selectionChanged, 'emit');
-    const row = { position: 0, id: 1 } as any;
+    const row = { position: 0, id: 1 };
 
     table.setSelectedRows(row, 0);
     expect(selectionSpy).toHaveBeenCalledWith({ row, index: 0, isSelected: true });

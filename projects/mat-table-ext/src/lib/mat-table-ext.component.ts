@@ -161,7 +161,6 @@ export class MatTableExtComponent<
   @Input()
   set dataSource(value: MatTableDataSource<T>) {
     if (!value) {
-      console.warn('MatTableExt: dataSource is required.');
       return;
     }
     this._dataSource = value;
@@ -177,7 +176,6 @@ export class MatTableExtComponent<
   @Input()
   set columns(value: MTExColumn<T>[]) {
     if (!Array.isArray(value)) {
-      console.warn('MatTableExt: columns must be an array.');
       this._columns = [];
       return;
     }
@@ -191,9 +189,6 @@ export class MatTableExtComponent<
   @Input()
   set pageSizeOptions(value: number[]) {
     if (!Array.isArray(value) || value.length === 0) {
-      console.warn(
-        'MatTableExt: pageSizeOptions must be a non-empty array. Using defaults [10, 50, 100].',
-      );
       this._pageSizeOptions = [10, 50, 100];
       return;
     }
@@ -203,12 +198,12 @@ export class MatTableExtComponent<
     return this._pageSizeOptions;
   }
 
-  @Input() columnResizable: boolean = false;
-  @Input() stripedRows: boolean = false;
-  @Input() rowHover: boolean = false;
+  @Input({ transform: booleanAttribute }) columnResizable: boolean = false;
+  @Input({ transform: booleanAttribute }) stripedRows: boolean = false;
+  @Input({ transform: booleanAttribute }) rowHover: boolean = false;
 
   private _inlineRowEditing = false;
-  @Input()
+  @Input({ transform: booleanAttribute })
   set inlineRowEditing(value: boolean) {
     this._inlineRowEditing = value;
     this.showHideColumn('edit', value);
@@ -216,11 +211,11 @@ export class MatTableExtComponent<
   }
   get inlineRowEditing(): boolean { return this._inlineRowEditing; }
 
-  @Input() inCellEditing: boolean = false;
-  @Input() cellPopupEditing: boolean = false;
+  @Input({ transform: booleanAttribute }) inCellEditing: boolean = false;
+  @Input({ transform: booleanAttribute }) cellPopupEditing: boolean = false;
 
   private _popupRowEditing = false;
-  @Input()
+  @Input({ transform: booleanAttribute })
   set popupRowEditing(value: boolean) {
     this._popupRowEditing = value;
     this.showHideColumn('popup', value);
@@ -229,7 +224,7 @@ export class MatTableExtComponent<
   get popupRowEditing(): boolean { return this._popupRowEditing; }
 
   private _enableDelete = false;
-  @Input()
+  @Input({ transform: booleanAttribute })
   set enableDelete(value: boolean) {
     this._enableDelete = value;
     this.showHideColumn('delete', value);
@@ -238,7 +233,7 @@ export class MatTableExtComponent<
   get enableDelete(): boolean { return this._enableDelete; }
 
   private _rowSelection = false;
-  @Input()
+  @Input({ transform: booleanAttribute })
   set rowSelection(value: boolean) {
     this._rowSelection = value;
     this.setRowSelection(value);
@@ -247,7 +242,7 @@ export class MatTableExtComponent<
   get rowSelection(): boolean { return this._rowSelection; }
 
   private _multiRowSelection = false;
-  @Input()
+  @Input({ transform: booleanAttribute })
   set multiRowSelection(value: boolean) {
     this._multiRowSelection = value;
     this.selection = new SelectionModel<T>(value, []);
@@ -256,7 +251,7 @@ export class MatTableExtComponent<
   get multiRowSelection(): boolean { return this._multiRowSelection; }
 
   private _stickyFooter = false;
-  @Input()
+  @Input({ transform: booleanAttribute })
   set stickyFooter(value: boolean) {
     this._stickyFooter = value;
     this.updatePinnedRowOffsets();
@@ -264,17 +259,17 @@ export class MatTableExtComponent<
   get stickyFooter(): boolean { return this._stickyFooter; }
 
   private _stickyHeader = false;
-  @Input()
+  @Input({ transform: booleanAttribute })
   set stickyHeader(value: boolean) {
     this._stickyHeader = value;
     this.updatePinnedRowOffsets();
   }
   get stickyHeader(): boolean { return this._stickyHeader; }
 
-  @Input() showFooterRow: boolean = false;
+  @Input({ transform: booleanAttribute }) showFooterRow: boolean = false;
 
   private _columnFilter = false;
-  @Input()
+  @Input({ transform: booleanAttribute })
   set columnFilter(value: boolean) {
     this._columnFilter = value;
     this.setColumnFilter(value);
@@ -282,10 +277,10 @@ export class MatTableExtComponent<
   }
   get columnFilter(): boolean { return this._columnFilter; }
 
-  @Input() loadingIndicator: boolean = false;
+  @Input({ transform: booleanAttribute }) loadingIndicator: boolean = false;
 
   private _sorting = false;
-  @Input()
+  @Input({ transform: booleanAttribute })
   set sorting(value: boolean) {
     this._sorting = value;
     if (this.dataSource) {
@@ -299,7 +294,7 @@ export class MatTableExtComponent<
   }
   get sorting(): boolean { return this._sorting; }
 
-  @Input() showToolbar: boolean = false;
+  @Input({ transform: booleanAttribute }) showToolbar: boolean = false;
   @Input() toolbarTitle: string = '';
   @Input() tableHeight: string = '';
   @Input() toolbarHeight: string = '50px';
@@ -308,11 +303,11 @@ export class MatTableExtComponent<
   @Input() toolbarTemplate:
     | TemplateRef<{ $implicit: MatTableExtComponent<T> }>
     | undefined;
-  @Input() columnHidable: boolean = false;
-  @Input() columnPinnable: boolean = false;
+  @Input({ transform: booleanAttribute }) columnHidable: boolean = false;
+  @Input({ transform: booleanAttribute }) columnPinnable: boolean = false;
 
   private _globalSearch = false;
-  @Input()
+  @Input({ transform: booleanAttribute })
   set globalSearch(value: boolean) {
     this._globalSearch = value;
     if (this.dataSource) {
@@ -323,7 +318,7 @@ export class MatTableExtComponent<
   get globalSearch(): boolean { return this._globalSearch; }
 
   private _expandRows = false;
-  @Input()
+  @Input({ transform: booleanAttribute })
   set expandRows(value: boolean) {
     this._expandRows = value;
     this.loadingIndicator = true;
@@ -346,11 +341,11 @@ export class MatTableExtComponent<
   }
   get expandRows(): boolean { return this._expandRows; }
 
-  @Input() dndColumns: boolean = false;
-  @Input() showPaginator: boolean = true;
-  @Input() showFirstLastButtons: boolean = false;
-  @Input() exportButtonEnable: boolean = false;
-  @Input() printButtonEnable: boolean = false;
+  @Input({ transform: booleanAttribute }) dndColumns: boolean = false;
+  @Input({ transform: booleanAttribute }) showPaginator: boolean = true;
+  @Input({ transform: booleanAttribute }) showFirstLastButtons: boolean = false;
+  @Input({ transform: booleanAttribute }) exportButtonEnable: boolean = false;
+  @Input({ transform: booleanAttribute }) printButtonEnable: boolean = false;
   @Input() toolbarTemplateRef!:
     | TemplateRef<{ $implicit: MatTableExtComponent<T> }>
     | undefined;
@@ -388,7 +383,7 @@ export class MatTableExtComponent<
   @Input() hiddenRowIndices: number[] = [];
 
   private _enableRowHiding = false;
-  @Input()
+  @Input({ transform: booleanAttribute })
   set enableRowHiding(value: boolean) {
     this._enableRowHiding = value;
     this.showHideColumn('hide', value);
@@ -397,19 +392,26 @@ export class MatTableExtComponent<
   get enableRowHiding(): boolean { return this._enableRowHiding; }
 
   private _enableRowPinning = false;
-  @Input()
+  @Input({ transform: booleanAttribute })
   set enableRowPinning(value: boolean) {
     this._enableRowPinning = value;
     this.showHideColumn('pin', value);
     if (value) {
       this.initializePinnedRows();
+      if (this.isViewInitialized) {
+        this.attachResizeListener();
+        this.updatePinnedRowOffsets();
+      }
+    } else {
+      this.detachResizeListener();
+      this.clearResizeDebounceTimer();
     }
     this.requestColumnSync();
   }
   get enableRowPinning(): boolean { return this._enableRowPinning; }
 
   private _enableRowFreezing = false;
-  @Input()
+  @Input({ transform: booleanAttribute })
   set enableRowFreezing(value: boolean) {
     this._enableRowFreezing = value;
     this.showHideColumn('freeze', value);
@@ -422,25 +424,6 @@ export class MatTableExtComponent<
   @Input() rowPinningFn?: (row: T, index: number) => 'top' | 'bottom' | null;
   @Input() rowHidingFilterFn?: (row: T, index: number) => boolean;
   @Input() pdfOrientation: 'portrait' | 'landscape' = 'portrait';
-  private inputPropertyKeys: string[] = [
-    'dataSource',
-    'columns',
-    'inlineRowEditing',
-    'popupRowEditing',
-    'enableDelete',
-    'enableRowFreezing',
-    'enableRowHiding',
-    'enableRowPinning',
-    'rowSelection',
-    'multiRowSelection',
-    'stickyHeader',
-    'stickyFooter',
-    'columnFilter',
-    'globalSearch',
-    'expandRows',
-    'sorting',
-    'columnGroups',
-  ];
 
   // Table outputs
   @Output() inlineChange: EventEmitter<RowChange<T>> = new EventEmitter<
@@ -502,7 +485,7 @@ export class MatTableExtComponent<
   hideShowMenuGroup: FormGroup = this.formBuilder.group({});
   menuX: number = 0;
   menuY: number = 0;
-  private dynamicDisplayedColumns: any[] = [
+  private dynamicDisplayedColumns: DisplayColumn[] = [
     ...ACTION_COLUMNS.map(name => ({ filter: false, name, show: false })),
     { filter: false, name: 'expand', show: false },
   ];
@@ -622,9 +605,7 @@ export class MatTableExtComponent<
           value !== null &&
           typeof value !== 'string'
         ) {
-          console.warn(
-            `MatTableExt: Input '${propName}' expected string, got ${typeof value}.`,
-          );
+          continue;
         }
       }
     }
@@ -1184,110 +1165,6 @@ export class MatTableExtComponent<
     }
   }
   /**
-   * @description set the properties of the table.
-   * @param changes changes captured each time user changes property value.
-   */
-  setPropertyValue(changes: SimpleChanges) {
-    let keys = Object.keys(changes);
-    keys.forEach((property) => {
-      if (this.inputPropertyKeys.includes(property)) {
-        this.setPropertiesMap[property](changes[property]);
-        this.requestColumnSync();
-      } else if (property == 'showToolbar') {
-        if (changes['columns']) {
-          this.setToolbarMenuControls(changes['columns'].currentValue);
-        } else {
-          this.setToolbarMenuControls(this.columnsArray);
-        }
-      }
-    });
-  }
-  /**
-   * @description This mapping is used to set and update changesin the table.
-   */
-  setPropertiesMap: Record<string, (value: SimpleChange) => void> = {
-    dataSource: (value: SimpleChange) => this.setTableDataSource(value),
-    columns: (value: SimpleChange) => this.setColumnsData(value.currentValue),
-    inlineRowEditing: (value: SimpleChange) =>
-      this.showHideColumn('edit', value.currentValue),
-    popupRowEditing: (value: SimpleChange) =>
-      this.showHideColumn('popup', value.currentValue),
-    enableDelete: (value: SimpleChange) =>
-      this.showHideColumn('delete', value.currentValue),
-    enableRowFreezing: (value: SimpleChange) =>
-      this.showHideColumn('freeze', value.currentValue),
-    enableRowHiding: (value: SimpleChange) =>
-      this.showHideColumn('hide', value.currentValue),
-    enableRowPinning: (value: SimpleChange) => {
-      this.showHideColumn('pin', value.currentValue);
-
-      if (value.currentValue) {
-        this.initializePinnedRows();
-        if (this.isViewInitialized) {
-          this.attachResizeListener();
-          this.updatePinnedRowOffsets();
-          setTimeout(() => this.syncColumnSizesFromTop(), 80);
-        }
-      } else {
-        this.detachResizeListener();
-        this.clearResizeDebounceTimer();
-      }
-    },
-    rowSelection: (value: SimpleChange) =>
-      this.setRowSelection(value.currentValue),
-    multiRowSelection: (value: SimpleChange) => {
-      this.selection = new SelectionModel<T>(value.currentValue, []);
-    },
-    stickyHeader: (value: SimpleChange) => {
-      this.stickyHeader = value.currentValue;
-      // Recalculate pinned row offsets when sticky header changes
-      this.updatePinnedRowOffsets();
-    },
-    stickyFooter: (value: SimpleChange) => {
-      this.stickyFooter = value.currentValue;
-      // Recalculate pinned row offsets when sticky footer changes
-      this.updatePinnedRowOffsets();
-    },
-    columnFilter: (value: SimpleChange) =>
-      this.setColumnFilter(value.currentValue),
-    globalSearch: (value: SimpleChange) =>
-      (this.dataSource.filterPredicate = this.createFilter()),
-    expandRows: (value: SimpleChange) => {
-      this.loadingIndicator = true;
-      this.dataSource = new MatTableDataSource(this.tableData);
-      if (value.currentValue == true) {
-        if (!this.displayedColumns.includes('expand')) {
-          this.displayedColumns.push('expand');
-          this.columnsToDisplayWithExpand = [...this.displayedColumns];
-        }
-      } else {
-        this.columnsToDisplayWithExpand = [...this.displayedColumns];
-        if (this.displayedColumns.includes('expand')) {
-          let index = this.displayedColumns.indexOf('expand');
-          this.displayedColumns.splice(index, 1);
-        }
-        this.expandedElement = null;
-      }
-      this.loadingDismissNeeded = true;
-      this.cdr.markForCheck();
-    },
-    sorting: (value: SimpleChange) => {
-      this.dataSource.sort = this.sort;
-      if (this.enableRowPinning) {
-        this.pinnedTopDataSource.sort = this.sort;
-        this.pinnedBtmDataSource.sort = this.sort;
-      }
-    },
-    columnGroups: (value: SimpleChange) => {
-      this.columnGroups = value.currentValue || [];
-      this.cdr.markForCheck();
-      // When group headers change, re-sync column sizes for pinned tables
-      if (this.enableRowPinning) {
-        this.requestColumnSync();
-      }
-    },
-  };
-  /**
    * @description used set data source for table.
    * @param value data source value from user.
    */
@@ -1347,19 +1224,19 @@ export class MatTableExtComponent<
   }
 
   /** Get visible DisplayColumns (where show === true). */
-  private getVisibleDisplayColumns(): any[] {
+  private getVisibleDisplayColumns(): DisplayColumn[] {
     return this.dynamicDisplayedColumns.filter(dc => dc.show);
   }
 
   /** From visible columns, extract data-column names (non-action). */
-  private getVisibleDataColumnNames(visible: any[]): string[] {
+  private getVisibleDataColumnNames(visible: DisplayColumn[]): string[] {
     return visible
       .filter(dc => !ACTION_COLUMNS.includes(dc.name))
       .map(dc => dc.name);
   }
 
   /** From visible columns, extract visible action column names (excluding 'select'). */
-  private getVisibleActionColumnNames(visible: any[]): string[] {
+  private getVisibleActionColumnNames(visible: DisplayColumn[]): string[] {
     return visible
       .filter(dc => ACTION_COLUMNS.includes(dc.name) && dc.name !== 'select')
       .map(dc => dc.name);
@@ -1657,12 +1534,6 @@ export class MatTableExtComponent<
    * @param position 'top' or 'bottom'
    */
   pinRow(row: T, position: 'top' | 'bottom'): void {
-    console.log('pinRow called:', {
-      row,
-      position,
-      enableRowPinning: this.enableRowPinning,
-    });
-
     // Remove from other position if exists
     this.unpinRow(row);
 
@@ -1732,7 +1603,7 @@ export class MatTableExtComponent<
    * @param row The row to check
    * @returns 'top', 'bottom', or null
    */
-  getRowPinPosition(row: any): 'top' | 'bottom' | null {
+  getRowPinPosition(row: T): 'top' | 'bottom' | null {
     if (this.pinnedTopRows.includes(row)) return 'top';
     if (this.pinnedBottomRows.includes(row)) return 'bottom';
     return null;
@@ -1742,7 +1613,7 @@ export class MatTableExtComponent<
    * @description Get rows for main data section (excluding pinned rows)
    * @returns Array of non-pinned rows
    */
-  getUnpinnedRows(): any[] {
+  getUnpinnedRows(): T[] {
     if (!this.dataSource?.data) return [];
     return this.dataSource.data.filter(
       (row) =>
@@ -1754,7 +1625,7 @@ export class MatTableExtComponent<
   /**
    * @description Get combined data source with pinned rows
    */
-  getCombinedDataSource(): any[] {
+  getCombinedDataSource(): T[] {
     if (!this.enableRowPinning || !this.dataSource?.data) {
       return this.dataSource?.data || [];
     }
@@ -1770,14 +1641,14 @@ export class MatTableExtComponent<
   /**
    * @description Check if row is pinned to top (for CSS class binding)
    */
-  isRowPinnedTop = (row: any): boolean => {
+  isRowPinnedTop = (row: T): boolean => {
     return this.pinnedTopRows.includes(row);
   };
 
   /**
    * @description Check if row is pinned to bottom (for CSS class binding)
    */
-  isRowPinnedBottom = (row: any): boolean => {
+  isRowPinnedBottom = (row: T): boolean => {
     return this.pinnedBottomRows.includes(row);
   };
 
@@ -1832,7 +1703,7 @@ export class MatTableExtComponent<
       (a) => a.name == columnName,
     )[0];
     let index = this.dynamicDisplayedColumns.findIndex(
-      (column: any) => column.name == columnName,
+      (column: DisplayColumn) => column.name == columnName,
     );
     if (index > -1) {
       this.dynamicDisplayedColumns.splice(index, 1);
@@ -1846,7 +1717,7 @@ export class MatTableExtComponent<
    * @description This method is used to update the position of  column in columns array according to its dropped position.
    * @param event CdkDragDrop used to update column position in columns array.
    */
-  onDrop(event: CdkDragDrop<any>) {
+  onDrop(event: CdkDragDrop<DisplayColumn[]>) {
     if (this.dndColumns) {
       let adjustedValue = 0;
       if (
@@ -1870,8 +1741,8 @@ export class MatTableExtComponent<
    * for both global and individual colum filtering.
    * @returns returns boolean value to filter rows in table.
    */
-  createFilter(): (data: any, filter: string) => boolean {
-    const tableFilterPredicate = (data: any, filter: string): boolean => {
+  createFilter(): (data: T, filter: string) => boolean {
+    const tableFilterPredicate = (data: T, filter: string): boolean => {
       let result: boolean = true;
       // search all column fields
       if (this.globalFilter) {
@@ -1894,17 +1765,17 @@ export class MatTableExtComponent<
       if (!result) {
         return false;
       }
-      let searchString = JSON.parse(filter);
+      let searchString = JSON.parse(filter) as Record<string, string>;
       //search single column field
       if (this.individualFilter) {
+        const individualFilterKey = this.individualFilter as keyof T;
+        const cellValue = data[individualFilterKey];
+        const searchValue = searchString[this.individualFilter] ?? '';
         return (
-          data[this.individualFilter]
-            .toString()
+          String(cellValue ?? '')
             .trim()
             .toLowerCase()
-            .indexOf(
-              searchString[this.individualFilter].toString().toLowerCase(),
-            ) !== -1
+            .indexOf(String(searchValue).toLowerCase()) !== -1
         );
       }
       return true;
@@ -1939,20 +1810,29 @@ export class MatTableExtComponent<
       this.requestColumnSync();
     }
   }
+
+  private isRowEditable(row: T): boolean {
+    return Boolean((row as unknown as { editable?: boolean }).editable);
+  }
+
+  private setRowEditable(row: T, editable: boolean): void {
+    (row as unknown as { editable?: boolean }).editable = editable;
+  }
+
   /**
    * @description This method will take row and its index enable inline editing tools on that row.
    * @param row row on which user wants to do edit.
    * @param index index of the row where inline editing will be enabled.
    */
-  enableInlineEditing(row: any, index: number) {
+  enableInlineEditing(row: T, index: number) {
     // Check if another row is currently in edit mode
-    const currentEditIndex = this.tableData.findIndex(
-      (r: any) => r['editable'] === true,
+    const currentEditIndex = this.tableData.findIndex((r) =>
+      this.isRowEditable(r),
     );
 
     if (currentEditIndex !== -1 && currentEditIndex !== index) {
       // Disable the previous row's edit mode
-      (this.tableData[currentEditIndex] as any)['editable'] = false;
+      this.setRowEditable(this.tableData[currentEditIndex], false);
       // Clear the temporary data for the previous row
       this.rowDataTemp['e' + currentEditIndex] = {} as T;
       // Restore original sizes when switching rows
@@ -1961,22 +1841,20 @@ export class MatTableExtComponent<
       }
     }
 
-    const rowData: any = {};
+    const rowData: Record<string, T> = {};
     rowData['e' + index] = { ...row };
     this.rowDataTemp = rowData;
 
     // Toggle editable immediately (no setTimeout) for OnPush change detection
-    (this.tableData[index] as any)['editable'] = !(
-      this.tableData[index] as any
-    )['editable'];
+    this.setRowEditable(this.tableData[index], !this.isRowEditable(this.tableData[index]));
     this.cdr.markForCheck();
 
     // If row is now in edit mode, sync sizes from this edited row
-    if ((this.tableData[index] as any)['editable'] && this.enableRowPinning) {
+    if (this.isRowEditable(this.tableData[index]) && this.enableRowPinning) {
       // Sync sizes on next CD cycle when DOM has edit controls
       this.requestEditedRowSync(index);
     } else if (
-      !(this.tableData[index] as any)['editable'] &&
+      !this.isRowEditable(this.tableData[index]) &&
       this.enableRowPinning
     ) {
       // Row was disabled, restore original sizes
@@ -2015,10 +1893,10 @@ export class MatTableExtComponent<
     if (this.currentRowIndex !== -1 && this.currentRowIndex !== index) {
       // Find and cancel the previous inline editing row
       const previousEditableRow = this.tableData.find(
-        (r: any, i: number) => i === this.currentRowIndex && r['editable'],
+        (r, i: number) => i === this.currentRowIndex && this.isRowEditable(r),
       );
       if (previousEditableRow) {
-        (previousEditableRow as any)['editable'] = false;
+        this.setRowEditable(previousEditableRow, false);
       }
       // Clear previous cell editing states
       Object.keys(this.cellEditing).forEach((key) => {
@@ -2049,11 +1927,10 @@ export class MatTableExtComponent<
    * @param index index of the row where inline editing will be enabled.
    */
   cancelInlineEditing(row: MTExRow, index: number) {
-    (this.tableData.filter((a: any, i: number) => i == index)[0] as any)[
-      'editable'
-    ] = !(this.tableData.filter((a: any, i: number) => i == index)[0] as any)[
-      'editable'
-    ];
+    const targetRow = this.tableData[index];
+    if (targetRow) {
+      this.setRowEditable(targetRow, !this.isRowEditable(targetRow));
+    }
     this.dataSource = new MatTableDataSource(this.tableData);
     this.rowDataTemp['e' + index] = {} as T;
     this.service.selectedRow.next(null);
@@ -2085,7 +1962,7 @@ export class MatTableExtComponent<
       index: index,
     };
     this.inlineChange.emit(data);
-    (this.tableData[index] as any)['editable'] = false;
+    this.setRowEditable(this.tableData[index], false);
 
     // Restore original sizes after saving edit mode
     if (this.enableRowPinning) {
@@ -2127,7 +2004,7 @@ export class MatTableExtComponent<
    * @param row row to be deleted.
    * @param index index of the row to be deleted.
    */
-  deleteRow(row: any, index: number) {
+  deleteRow(row: T, index: number) {
     // this.tableData.splice(index, 1);
     // this.dataSource = new MatTableDataSource(this.tableData);
     // this.dataSource.paginator = this.paginator;
@@ -2193,7 +2070,7 @@ export class MatTableExtComponent<
    * @param column column definition of the cell to edit.
    * @param rowIndex index of the row.
    */
-  openCellPopupDialog(row: any, column: MTExColumn<T>, rowIndex: number) {
+  openCellPopupDialog(row: T, column: MTExColumn<T>, rowIndex: number) {
     const dialogConfig = new MatDialogConfig();
     dialogConfig.disableClose = true;
     dialogConfig.width = '400px';
@@ -2211,9 +2088,10 @@ export class MatTableExtComponent<
     this.dialog
       .open(EditingComponent, dialogConfig)
       .afterClosed()
-      .subscribe((data) => {
+      .subscribe((data: { field: keyof T; value: unknown } | undefined) => {
         if (data && data.field && rowIndex > -1) {
-          (this.tableData[rowIndex] as any)[data.field] = data.value;
+          (this.tableData[rowIndex] as Record<keyof T, unknown>)[data.field] =
+            data.value;
           this.dataSource = new MatTableDataSource(this.tableData);
           let dataChange: RowChange<T> = {
             row: { ...this.tableData[rowIndex] } as T,
@@ -2251,13 +2129,13 @@ export class MatTableExtComponent<
    * @param row row from table.
    * @returns labels for selection column checkboxs.
    */
-  checkboxLabel(row?: any): string {
+  checkboxLabel(row?: T): string {
     if (!row) {
       return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
     }
-    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${
-      row.position + 1
-    }`;
+    const position =
+      ((row as unknown as { position?: number }).position ?? 0) + 1;
+    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${position}`;
   }
 
   /**
@@ -2355,14 +2233,14 @@ export class MatTableExtComponent<
    * @description This method is called when the table rows are scrolled.
    * @param event scroll event
    */
-  onScroll(event: any) {
+  onScroll(event: Event) {
     this.scroll.emit(event);
   }
   /**
    * @param row row to be toggled
    * @param index index of toggled row
    */
-  setSelectedRows(row: any, index: number) {
+  setSelectedRows(row: T, index: number) {
     this.selection.toggle(row);
     if (this.selection.isSelected(row)) {
       this.selectionChanged.emit({ row: row, index: index, isSelected: true });
@@ -2512,9 +2390,14 @@ export class MatTableExtComponent<
   async exportToPDF() {
     try {
       const visibleColumns = this.getVisibleColumns();
+      type PdfHeaderStyle = {
+        fillColor: [number, number, number];
+        textColor: [number, number, number];
+        fontStyle: 'bold' | 'normal';
+      };
 
       // Extract header styles from actual mat-table (stays in component — needs DOM access)
-      let headerStyles: any = {
+      let headerStyles: PdfHeaderStyle = {
         fillColor: [245, 245, 245],
         textColor: [0, 0, 0],
         fontStyle: 'bold',
@@ -2569,8 +2452,9 @@ export class MatTableExtComponent<
       }
 
       // Extract group header styles if groups exist
-      let groupHeaderStyles: any = null;
+      let groupHeaderStyles: PdfHeaderStyle | null = null;
       if (this.columnGroups.length > 0) {
+        groupHeaderStyles = { ...headerStyles };
         const groupHeaderCells =
           this.tableElement?.nativeElement?.querySelectorAll(
             '.group-header-cell',
@@ -2579,7 +2463,9 @@ export class MatTableExtComponent<
           const firstGroupHeader = groupHeaderCells[0] as HTMLElement;
           const computedStyles = window.getComputedStyle(firstGroupHeader);
 
-          groupHeaderStyles = {};
+          const computedGroupHeaderStyles: PdfHeaderStyle = {
+            ...headerStyles,
+          };
 
           const bgColor = computedStyles.backgroundColor;
           if (
@@ -2589,28 +2475,28 @@ export class MatTableExtComponent<
           ) {
             const rgb = bgColor.match(/\d+/g);
             if (rgb && rgb.length >= 3) {
-              groupHeaderStyles.fillColor = [
+              computedGroupHeaderStyles.fillColor = [
                 parseInt(rgb[0]),
                 parseInt(rgb[1]),
                 parseInt(rgb[2]),
               ];
             }
           } else {
-            groupHeaderStyles.fillColor = headerStyles.fillColor;
+            computedGroupHeaderStyles.fillColor = headerStyles.fillColor;
           }
 
           const textColor = computedStyles.color;
           if (textColor) {
             const rgb = textColor.match(/\d+/g);
             if (rgb && rgb.length >= 3) {
-              groupHeaderStyles.textColor = [
+              computedGroupHeaderStyles.textColor = [
                 parseInt(rgb[0]),
                 parseInt(rgb[1]),
                 parseInt(rgb[2]),
               ];
             }
           } else {
-            groupHeaderStyles.textColor = headerStyles.textColor;
+            computedGroupHeaderStyles.textColor = headerStyles.textColor;
           }
 
           const fontWeight = computedStyles.fontWeight;
@@ -2618,12 +2504,12 @@ export class MatTableExtComponent<
             fontWeight &&
             (fontWeight === 'bold' || parseInt(fontWeight) >= 600)
           ) {
-            groupHeaderStyles.fontStyle = 'bold';
+            computedGroupHeaderStyles.fontStyle = 'bold';
           } else {
-            groupHeaderStyles.fontStyle = 'normal';
+            computedGroupHeaderStyles.fontStyle = 'normal';
           }
-        } else {
-          groupHeaderStyles = { ...headerStyles };
+
+          groupHeaderStyles = computedGroupHeaderStyles;
         }
       }
 
@@ -2655,9 +2541,11 @@ export class MatTableExtComponent<
     return Number(value.split('_')[1]);
   }
 
-  getMergeIndex(merges: any[]) {
-    var arr: any[] = [];
-    merges.forEach((element: any) => {
+  getMergeIndex(
+    merges: Array<{ e: { r: number; c: number }; s: { r: number; c: number } }>,
+  ) {
+    const arr: Array<{ e: { r: number; c: number }; s: { r: number; c: number } }> = [];
+    merges.forEach((element) => {
       arr.push({
         e: {
           r: element.e.r == 0 ? element.e.r : element.e.r - 1,
