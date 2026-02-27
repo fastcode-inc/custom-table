@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Component, ViewChild } from '@angular/core';
 import { MatTable, MatTableDataSource } from '@angular/material/table';
+import { SimpleChange } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconRegistry } from '@angular/material/icon';
@@ -194,5 +195,45 @@ describe('MatTableExtComponent', () => {
 
     table.setSelectedRows(row, 0);
     expect(selectionSpy).toHaveBeenCalledWith({ row, index: 0, isSelected: false });
+  });
+
+  it('should emit validationWarning when required/typed inputs are invalid', () => {
+    const { table } = createHost();
+    const warningSpy = spyOn(table.validationWarning, 'emit');
+
+    table.dataSource = null as unknown as MatTableDataSource<Record<string, unknown>>;
+    table.columns = 'bad-columns' as unknown as MTExColumn[];
+    table.pageSizeOptions = [];
+
+    expect(warningSpy).toHaveBeenCalledWith(jasmine.objectContaining({
+      code: 'MISSING_DATASOURCE',
+      inputName: 'dataSource',
+      severity: 'warning',
+    }));
+    expect(warningSpy).toHaveBeenCalledWith(jasmine.objectContaining({
+      code: 'INVALID_COLUMNS',
+      inputName: 'columns',
+      severity: 'warning',
+    }));
+    expect(warningSpy).toHaveBeenCalledWith(jasmine.objectContaining({
+      code: 'INVALID_PAGE_SIZE_OPTIONS',
+      inputName: 'pageSizeOptions',
+      severity: 'warning',
+    }));
+  });
+
+  it('should emit validationWarning for invalid string input type during changes validation', () => {
+    const { table } = createHost();
+    const warningSpy = spyOn(table.validationWarning, 'emit');
+
+    (table as unknown as { ngOnChanges: (changes: Record<string, SimpleChange>) => void }).ngOnChanges({
+      toolbarTitle: new SimpleChange('', 123 as unknown as string, false),
+    });
+
+    expect(warningSpy).toHaveBeenCalledWith(jasmine.objectContaining({
+      code: 'INVALID_STRING_INPUT',
+      inputName: 'toolbarTitle',
+      severity: 'warning',
+    }));
   });
 });

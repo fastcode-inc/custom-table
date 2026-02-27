@@ -20,6 +20,7 @@ import {
 import {
   booleanAttribute,
   Component,
+  isDevMode,
   Input,
   OnChanges,
   OnInit,
@@ -92,6 +93,17 @@ import { IsRowPinnedTopPipe } from './pipes/is-row-pinned-top.pipe';
 import { IsRowPinnedBottomPipe } from './pipes/is-row-pinned-bottom.pipe';
 import { GetRowPinPositionPipe } from './pipes/get-row-pin-position.pipe';
 
+type MatTableExtValidationWarning = {
+  code:
+    | 'MISSING_DATASOURCE'
+    | 'INVALID_COLUMNS'
+    | 'INVALID_PAGE_SIZE_OPTIONS'
+    | 'INVALID_STRING_INPUT';
+  inputName: string;
+  message: string;
+  severity: 'warning';
+};
+
 /** Column names reserved for built-in action columns (select, edit, popup, etc.). */
 const ACTION_COLUMNS: readonly string[] = ['select', 'edit', 'popup', 'delete', 'freeze', 'hide', 'pin'];
 
@@ -147,6 +159,26 @@ export class MatTableExtComponent<
 >
   implements OnInit, OnChanges, AfterViewInit, AfterViewChecked, OnDestroy
 {
+  private warnInDev(message: string): void {
+    if (isDevMode()) {
+      console.warn(message);
+    }
+  }
+
+  private emitValidationWarning(
+    code: MatTableExtValidationWarning['code'],
+    inputName: string,
+    message: string,
+  ): void {
+    this.validationWarning.emit({
+      code,
+      inputName,
+      message,
+      severity: 'warning',
+    });
+    this.warnInDev(message);
+  }
+
   @ViewChild(MatMenuTrigger) menuTrigger!: MatMenuTrigger;
   @ViewChild('columnMenuTrigger') columnMenuTrigger!: MatMenuTrigger;
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -160,6 +192,11 @@ export class MatTableExtComponent<
   @Input()
   set dataSource(value: MatTableDataSource<T>) {
     if (!value) {
+      this.emitValidationWarning(
+        'MISSING_DATASOURCE',
+        'dataSource',
+        'MatTableExt: dataSource is required.',
+      );
       return;
     }
     this._dataSource = value;
@@ -175,6 +212,11 @@ export class MatTableExtComponent<
   @Input()
   set columns(value: MTExColumn<T>[]) {
     if (!Array.isArray(value)) {
+      this.emitValidationWarning(
+        'INVALID_COLUMNS',
+        'columns',
+        'MatTableExt: columns must be an array.',
+      );
       this._columns = [];
       return;
     }
@@ -188,6 +230,11 @@ export class MatTableExtComponent<
   @Input()
   set pageSizeOptions(value: number[]) {
     if (!Array.isArray(value) || value.length === 0) {
+      this.emitValidationWarning(
+        'INVALID_PAGE_SIZE_OPTIONS',
+        'pageSizeOptions',
+        'MatTableExt: pageSizeOptions must be a non-empty array. Using defaults [10, 50, 100].',
+      );
       this._pageSizeOptions = [10, 50, 100];
       return;
     }
@@ -445,6 +492,8 @@ export class MatTableExtComponent<
     position: 'top' | 'bottom' | null;
   }> = new EventEmitter<{ row: T; position: 'top' | 'bottom' | null }>();
   @Output() exportError = new EventEmitter<{ type: string; error: string }>();
+  @Output() validationWarning =
+    new EventEmitter<MatTableExtValidationWarning>();
   tableID = new Date().getTime();
   private columnPinningOptions: MTExColumnPinOption[] = [];
   exportMenuCtrl: boolean = false;
@@ -604,6 +653,11 @@ export class MatTableExtComponent<
           value !== null &&
           typeof value !== 'string'
         ) {
+          this.emitValidationWarning(
+            'INVALID_STRING_INPUT',
+            propName,
+            `MatTableExt: Input '${propName}' expected string, got ${typeof value}.`,
+          );
           continue;
         }
       }
