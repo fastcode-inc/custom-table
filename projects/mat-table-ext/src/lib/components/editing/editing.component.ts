@@ -32,10 +32,12 @@ import { MatIconModule } from '@angular/material/icon';
     MatDatepickerModule,
     MatNativeDateModule,
     MatIconModule,
-    TitleCasePipe
-  ]
+    TitleCasePipe,
+  ],
 })
-export class EditingComponent<T extends MTExRowData = MTExRowData> implements OnInit {
+export class EditingComponent<
+  T extends MTExRowData = MTExRowData,
+> implements OnInit {
   templateRef!: TemplateRef<EditingTemplateContext<T>>;
   keys: string[] = [];
   templateKeys: string[] = [];
@@ -47,37 +49,42 @@ export class EditingComponent<T extends MTExRowData = MTExRowData> implements On
   public cellColumn!: MTExColumn<T>;
   public cellValue: unknown;
   public cellField: string = '';
-  
+
   constructor(
     private dialogRef: MatDialogRef<EditingComponent<T>>,
     @Inject(MAT_DIALOG_DATA) public dialogData: EditingDialogData<T>,
-    private service: MatTableExtService<T>
-  ) { }
-  
+    private service: MatTableExtService<T>,
+  ) {}
+
   ngOnInit(): void {
     // Check if this is cell-level editing
     if (this.dialogData.isCellEdit) {
       this.isCellEdit = true;
       this.cellColumn = this.dialogData.column!;
       this.cellField = this.cellColumn.field;
-      this.cellValue = (this.dialogData.row as Record<string, unknown>)[this.cellField];
-      
+      this.cellValue = (this.dialogData.row as Record<string, unknown>)[
+        this.cellField
+      ];
+
       // Handle selection type
       if (this.cellColumn.type === 'selection') {
         this.types[this.cellField] = 'selection';
       } else {
         this.types[this.cellField] = this.cellColumn.type;
       }
-      
+
       this.templateRef = this.dialogData.templateRef!;
+      // Populate template context for cell popup custom template
+      this.templateRow = { ...this.dialogData.row };
+      this.columns = this.dialogData.column ? [this.dialogData.column] : [];
     } else {
       this.setData(this.dialogData);
     }
   }
-/**
- * @description This method is used to set data for editing.
- * @param value dialog Data
- */
+  /**
+   * @description This method is used to set data for editing.
+   * @param value dialog Data
+   */
   setData(value: EditingDialogData<T>) {
     const row = value.row as Record<string, unknown>;
     const types: Record<string, MTExColumnType> = {};
@@ -99,20 +106,22 @@ export class EditingComponent<T extends MTExRowData = MTExRowData> implements On
     this.types = types;
     this.setTemplateRef(value);
   }
-/**
- * @description This method is used to set the data when data comes in from cus template.
- * @param value template value
- */
+  /**
+   * @description This method is used to set the data when data comes in from cus template.
+   * @param value template value
+   */
   setTemplateRef(value: EditingDialogData<T>) {
     if (value.templateRef !== undefined) {
-      this.templateRow = { ...value.row as Partial<T> };
+      this.templateRow = { ...(value.row as Partial<T>) };
       const types: Record<string, MTExColumnType> = {};
       this.templateKeys = [];
       this.columns.forEach((column) => {
         this.templateKeys.push(column.field);
         if (column.type == 'selection') {
           types[column.field] = column.type;
-          const temp = (this.templateRow as Record<string, unknown>)[column.field];
+          const temp = (this.templateRow as Record<string, unknown>)[
+            column.field
+          ];
           (this.templateRow as Record<string, unknown>)[column.field] = {
             value: temp,
             options: column.options,
@@ -133,35 +142,39 @@ export class EditingComponent<T extends MTExRowData = MTExRowData> implements On
       // Return single cell data
       this.dialogRef.close({
         field: this.cellField,
-        value: this.cellValue
+        value: this.cellValue,
       });
     } else {
       // Return full row data
       const rowData = { ...this.dialogData.row } as Record<string, unknown>;
       this.keys.forEach((key: string) => {
         if (this.types[key] === 'selection') {
-          const temp = (rowData[key] as {value: unknown}).value;
+          const temp = (rowData[key] as { value: unknown }).value;
           rowData[key] = temp;
         }
       });
       this.dialogRef.close(rowData as T);
     }
-  }  /**
+  } /**
    * @description This method is called when the dialog is closed custom template action.
    * @param row row to be edited.
    * @param keys keys of columns
    * @param types column types
    */
-  closeTemplateDialog(row: Partial<T>, keys: string[], types: Record<string, MTExColumnType>) {
+  closeTemplateDialog = (
+    row: Partial<T>,
+    keys: string[],
+    types: Record<string, MTExColumnType>,
+  ) => {
     const rowData = { ...row } as Record<string, unknown>;
     keys.forEach((key: string) => {
       if (types[key] === 'selection') {
-        const temp = (rowData[key] as {value: unknown}).value;
+        const temp = (rowData[key] as { value: unknown }).value;
         rowData[key] = temp;
       }
     });
     this.dialogRef.close(rowData);
-  }
+  };
 
   getSelectionValue(key: string): unknown {
     return this.getSelectionObject(key)?.value;
@@ -180,10 +193,16 @@ export class EditingComponent<T extends MTExRowData = MTExRowData> implements On
     return this.getSelectionObject(key)?.options ?? [];
   }
 
-  private getSelectionObject(key: string): { value: unknown; options?: string[] } | null {
+  private getSelectionObject(
+    key: string,
+  ): { value: unknown; options?: string[] } | null {
     const row = this.dialogData.row as Record<string, unknown>;
     const value = row[key];
-    if (value && typeof value === 'object' && 'value' in (value as Record<string, unknown>)) {
+    if (
+      value &&
+      typeof value === 'object' &&
+      'value' in (value as Record<string, unknown>)
+    ) {
       return value as { value: unknown; options?: string[] };
     }
     return null;
@@ -204,9 +223,14 @@ export interface EditingTemplateData<T extends MTExRowData = MTExRowData> {
   columns: MTExColumn<T>[];
   columnKeys: string[];
   columnTypes: Record<string, MTExColumnType>;
-  closeDialog: (row: Partial<T>, keys: string[], types: Record<string, MTExColumnType>) => void;
+  closeDialog: (
+    row: Partial<T>,
+    keys: string[],
+    types: Record<string, MTExColumnType>,
+  ) => void;
 }
 
 export interface EditingTemplateContext<T extends MTExRowData = MTExRowData> {
   $implicit: EditingTemplateData<T>;
+  [key: string]: unknown;
 }
