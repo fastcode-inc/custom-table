@@ -232,5 +232,27 @@ export interface EditingTemplateData<T extends MTExRowData = MTExRowData> {
 
 export interface EditingTemplateContext<T extends MTExRowData = MTExRowData> {
   $implicit: EditingTemplateData<T>;
+  'data.row'?: Partial<T>;
+  'data.columns'?: MTExColumn<T>[];
+  'data.columnKeys'?: string[];
+  'data.columnTypes'?: Record<string, MTExColumnType>;
+  'data.closeDialog'?: (
+    row: Partial<T>,
+    keys: string[],
+    types: Record<string, MTExColumnType>,
+  ) => void;
+  'data.column'?: MTExColumn<T>;
+  data?: {
+    row: Partial<T>;
+    columns: MTExColumn<T>[];
+    column: MTExColumn<T>;
+    columnKeys: string[];
+    columnTypes: Record<string, MTExColumnType>;
+    closeDialog: (
+      row: Partial<T>,
+      keys: string[],
+      types: Record<string, MTExColumnType>,
+    ) => void;
+  };
   [key: string]: unknown;
 }
