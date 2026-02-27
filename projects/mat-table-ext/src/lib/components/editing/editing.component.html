@@ -149,5 +149,14 @@
     </div>
 }
 @if (templateRef) {
-    <ng-container [ngTemplateOutlet]="templateRef" [ngTemplateOutletContext]="{$implicit:{row:templateRow,columns:columns,columnKeys:templateKeys,columnTypes:templateTypes,closeDialog:closeTemplateDialog}}"></ng-container>
+    <ng-container [ngTemplateOutlet]="templateRef" [ngTemplateOutletContext]="{
+        $implicit:{row:templateRow,columns:columns,columnKeys:templateKeys,columnTypes:templateTypes,closeDialog:closeTemplateDialog},
+        'data.row':templateRow,
+        'data.columns':columns,
+        'data.columnKeys':templateKeys,
+        'data.columnTypes':templateTypes,
+        'data.closeDialog':closeTemplateDialog,
+        'data.column':cellColumn,
+        data:{row:templateRow,columns:columns,column:cellColumn,columnKeys:templateKeys,columnTypes:templateTypes,closeDialog:closeTemplateDialog}
+    }"></ng-container>
 }
