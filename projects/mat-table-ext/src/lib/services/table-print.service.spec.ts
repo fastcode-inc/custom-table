@@ -76,12 +76,103 @@ describe('TablePrintService', () => {
     expect(openSpy).toHaveBeenCalledWith('', '', 'width=900,height=650');
   });
 
+  it('sanitizeTableClone should handle table without header row and keep non-action cells', () => {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = `
+      <table>
+        <tr><td>Only Row</td></tr>
+      </table>
+    `;
+
+    const sanitized = service.sanitizeTableClone(wrapper, []);
+    expect(sanitized.querySelectorAll('tr').length).toBe(1);
+    expect(sanitized.textContent).toContain('Only Row');
+  });
+
+  it('should collect action column indices from header cells', () => {
+    const tableClone = document.createElement('table');
+    tableClone.innerHTML = `
+      <tr class="mat-mdc-header-row">
+        <th>Name</th>
+        <th class="action-column-cells">Action</th>
+      </tr>
+    `;
+
+    const getIndices = (service as unknown as {
+      getActionColumnIndices: (tableClone: HTMLElement) => number[];
+    }).getActionColumnIndices;
+
+    const indices = getIndices.call(service, tableClone);
+
+    expect(indices).toEqual([1]);
+  });
+
+  it('should not remove cells when action column index is out of range', () => {
+    const tableClone = document.createElement('table');
+    tableClone.innerHTML = `
+      <tr class="mat-mdc-header-row"><th>Name</th></tr>
+      <tr><td>Alpha</td></tr>
+    `;
+
+    const removeCells = (service as unknown as {
+      removeHiddenRowsAndActionCells: (
+        tableClone: HTMLElement,
+        hiddenRowIndexSet: Set<number>,
+        actionColumnIndices: number[]
+      ) => void;
+    }).removeHiddenRowsAndActionCells;
+
+    removeCells.call(service, tableClone, new Set<number>(), [5]);
+
+    const dataCell = tableClone.querySelector('tr:nth-child(2) td') as HTMLElement | null;
+    expect(dataCell?.textContent).toBe('Alpha');
+  });
+
+  it('should remove action cells when action column index exists', () => {
+    const tableClone = document.createElement('table');
+    tableClone.innerHTML = `
+      <tr class="mat-mdc-header-row"><th>Name</th><th class="action-column-cells">Action</th></tr>
+      <tr><td>Alpha</td><td>Edit</td></tr>
+    `;
+
+    const removeCells = (service as unknown as {
+      removeHiddenRowsAndActionCells: (
+        tableClone: HTMLElement,
+        hiddenRowIndexSet: Set<number>,
+        actionColumnIndices: number[]
+      ) => void;
+    }).removeHiddenRowsAndActionCells;
+
+    removeCells.call(service, tableClone, new Set<number>(), [1]);
+
+    const headerCells = tableClone.querySelectorAll('tr:nth-child(1) th');
+    const dataCells = tableClone.querySelectorAll('tr:nth-child(2) td');
+    expect(headerCells.length).toBe(1);
+    expect(dataCells.length).toBe(1);
+    expect((dataCells[0] as HTMLElement).textContent).toBe('Alpha');
+  });
+
   it('printTable should return when table element is missing', () => {
     const openSpy = spyOn(service, 'openPrintWindow');
 
     service.printTable(12345, []);
 
     expect(openSpy).not.toHaveBeenCalled();
+  });
+
+  it('printTable should return when popup blocker prevents opening print window', () => {
+    const tableContainer = document.createElement('div');
+    tableContainer.id = 'matTableExt321';
+    tableContainer.innerHTML = '<table><tr><td>Row</td></tr></table>';
+    document.body.appendChild(tableContainer);
+
+    const openSpy = spyOn(service, 'openPrintWindow').and.returnValue(null);
+    const sanitizeSpy = spyOn(service, 'sanitizeTableClone').and.callThrough();
+
+    service.printTable(321, []);
+
+    expect(openSpy).toHaveBeenCalled();
+    expect(sanitizeSpy).not.toHaveBeenCalled();
   });
 
   it('printTable should write content and trigger print flow', fakeAsync(() => {

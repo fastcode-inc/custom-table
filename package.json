@@ -6,7 +6,9 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:cov:lib": "ng test mat-table-ext --code-coverage --watch=false",
+    "test:cov:example": "ng test mat-table-ext-example --code-coverage --watch=false"
   },
   "dependencies": {
     "@angular/animations": "^20.3.5",

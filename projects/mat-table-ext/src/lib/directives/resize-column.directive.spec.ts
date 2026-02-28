@@ -1,6 +1,7 @@
 /// <reference types="jasmine" />
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ResizeColumnDirective } from './resize-column.directive';
 
 @Component({
@@ -57,6 +58,10 @@ describe('ResizeColumnDirective', () => {
 
   function getResizer(): HTMLElement | null {
     return hostElement.querySelector('#tableA .mat-mdc-header-cell .resize-holder') as HTMLElement | null;
+  }
+
+  function getDirective(): ResizeColumnDirective {
+    return fixture.debugElement.query(By.directive(ResizeColumnDirective)).injector.get(ResizeColumnDirective);
   }
 
   function dispatchMouseEvent(target: Document | Element, type: string, clientX: number): void {
@@ -150,5 +155,111 @@ describe('ResizeColumnDirective', () => {
 
     const tableAHeader = hostElement.querySelector('#tableA .mat-mdc-header-row .mat-mdc-header-cell:nth-child(1)') as HTMLElement;
     expect(tableAHeader.style.width).toBe('40px');
+  });
+
+  it('should safely handle guarded mouse handlers when internals are missing', () => {
+    const directive = getDirective() as unknown as {
+      columnsResizable: boolean;
+      table: HTMLElement | null;
+      resizerElement: HTMLElement | null;
+      onMouseDown: (event: MouseEvent) => void;
+      onMouseEnter: () => void;
+      onMouseLeave: () => void;
+    };
+
+    directive.columnsResizable = false;
+    directive.table = null;
+    directive.resizerElement = null;
+
+    expect(() => directive.onMouseDown(new MouseEvent('mousedown', { cancelable: true }))).not.toThrow();
+    expect(() => directive.onMouseEnter()).not.toThrow();
+    expect(() => directive.onMouseLeave()).not.toThrow();
+  });
+
+  it('should keep hover style on mouseleave while pressed and clear it on mouseup', () => {
+    const directive = getDirective() as unknown as {
+      resizerElement: HTMLElement | null;
+      pressed: boolean;
+      onMouseLeave: () => void;
+      onMouseUp: (event: MouseEvent) => void;
+    };
+    const resizer = getResizer() as HTMLElement;
+    resizer.style.backgroundColor = 'rgb(1, 2, 3)';
+    directive.resizerElement = resizer;
+
+    directive.pressed = true;
+    directive.onMouseLeave();
+    expect(resizer.style.backgroundColor).toBe('rgb(1, 2, 3)');
+
+    directive.pressed = false;
+    directive.onMouseUp(new MouseEvent('mouseup'));
+    expect(resizer.style.backgroundColor).toBe('');
+  });
+
+  it('should cover getRelatedTables fallback branches', () => {
+    const directive = getDirective() as unknown as {
+      table: HTMLElement | null;
+      getRelatedTables: () => HTMLElement[];
+    };
+
+    directive.table = null;
+    expect(directive.getRelatedTables()).toEqual([]);
+
+    const detachedTable = document.createElement('table');
+    directive.table = detachedTable;
+    expect(directive.getRelatedTables()).toEqual([detachedTable]);
+
+    const container = document.createElement('div');
+    container.id = 'tableContainer';
+    const plainTable = document.createElement('table');
+    container.appendChild(plainTable);
+    document.body.appendChild(container);
+
+    directive.table = plainTable;
+    expect(directive.getRelatedTables()).toEqual([plainTable]);
+
+    container.remove();
+  });
+
+  it('should fallback to current table in applyColumnWidthToRelatedTables and ignore non-elements', () => {
+    const directive = getDirective() as unknown as {
+      index: number;
+      table: HTMLElement | null;
+      relatedTables: HTMLElement[];
+      applyColumnWidthToRelatedTables: (width: number) => void;
+      applyWidthToElement: (element: Element | null, widthPx: string) => void;
+    };
+
+    const table = document.createElement('table');
+    const headerRow = document.createElement('tr');
+    headerRow.className = 'mat-mdc-header-row';
+    headerRow.appendChild(document.createElement('th'));
+    table.appendChild(headerRow);
+
+    directive.index = 0;
+    directive.table = table;
+    directive.relatedTables = [];
+
+    directive.applyColumnWidthToRelatedTables(77);
+    expect((headerRow.children[0] as HTMLElement).style.width).toBe('77px');
+
+    expect(() =>
+      directive.applyWidthToElement(document.createTextNode('x') as unknown as Element, '60px')
+    ).not.toThrow();
+  });
+
+  it('should return early in initializeResizer when parent table cannot be resolved', () => {
+    const directive = getDirective() as unknown as {
+      renderer: { parentNode: (node: unknown) => unknown };
+      resizerElement: HTMLElement | null;
+      initializeResizer: () => void;
+    };
+
+    spyOn(directive.renderer, 'parentNode').and.returnValue(null);
+    directive.resizerElement = null;
+
+    directive.initializeResizer();
+
+    expect(directive.resizerElement).toBeNull();
   });
 });
